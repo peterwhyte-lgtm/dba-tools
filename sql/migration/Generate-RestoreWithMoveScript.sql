@@ -32,7 +32,9 @@ DECLARE @NewDataRoot   nvarchar(260) = N'D:\SQLData';                   -- data 
 DECLARE @OldLogRoot    nvarchar(260) = N'L:\SQLLogs';                   -- log path prefix on SOURCE
 DECLARE @NewLogRoot    nvarchar(260) = N'L:\SQLLogs';                   -- log path prefix on TARGET
 DECLARE @StatsInterval int           = 5;
-DECLARE @WithReplace   bit           = 1;   -- 1 = WITH REPLACE (overwrites existing databases on target)
+DECLARE @WithReplace   bit           = 0;   -- 0 = no REPLACE. Set to 1 ONLY when overwriting an
+                                            -- existing database of the same name on the target is
+                                            -- intended. The safe value is the default on purpose.
 DECLARE @WithRecovery  bit           = 1;   -- 0 = NORECOVERY (leave in restoring state for diff/log chain)
 -- ─────────────────────────────────────────────────────────────────────────────
 
@@ -45,6 +47,12 @@ IF RIGHT(@NewLogRoot, 1) = N'\' SET @NewLogRoot = LEFT(@NewLogRoot, LEN(@NewLogR
 DECLARE @cmd   nvarchar(max);
 DECLARE @block nvarchar(max);
 DECLARE @crlf  nchar(2)  = CHAR(13) + CHAR(10);
+
+-- Every file whose path did NOT start with the configured prefix, so it was left pointing at
+-- the SOURCE path. Collected here as well as warned about inline, because the whole reason to
+-- generate a script is that it is long, and a comment 400 lines up is a comment nobody reads.
+DECLARE @unmatched TABLE (db sysname, logical_name sysname, file_type nvarchar(60),
+                          source_path nvarchar(260));
 
 SET @cmd =
     N'-- ================================================================' + @crlf +
@@ -119,6 +127,11 @@ BEGIN
               END
             + N'       ,MOVE N''' + REPLACE(@logical_name, N'''', N'''''') + N''' TO N''' + REPLACE(@new_path, N'''', N'''''') + N'''' + @crlf;
 
+        IF (@file_type = 'LOG'  AND LEFT(@old_path, LEN(@OldLogRoot))  <> @OldLogRoot)
+        OR (@file_type <> 'LOG' AND LEFT(@old_path, LEN(@OldDataRoot)) <> @OldDataRoot)
+            INSERT @unmatched (db, logical_name, file_type, source_path)
+            VALUES (@dbname, @logical_name, @file_type, @old_path);
+
         FETCH NEXT FROM file_cur INTO @logical_name, @old_path, @file_type;
     END
 
@@ -141,5 +154,35 @@ END
 
 CLOSE db_cur;
 DEALLOCATE db_cur;
+
+-- Summary of every file left on its source path, appended at the END of the generated script
+-- so it is the last thing read before the script is run.
+IF EXISTS (SELECT 1 FROM @unmatched)
+BEGIN
+    DECLARE @n int = (SELECT COUNT(*) FROM @unmatched);
+
+    SET @cmd = @cmd + @crlf
+        + N'-- ================================================================' + @crlf
+        + N'-- REVIEW BEFORE RUNNING: ' + CAST(@n AS nvarchar(10))
+        + N' file(s) were NOT remapped.' + @crlf
+        + N'-- Their paths do not start with @OldDataRoot ('  + @OldDataRoot + N')' + @crlf
+        + N'--                        or @OldLogRoot  ('      + @OldLogRoot  + N')' + @crlf
+        + N'-- Each MOVE below still points at the SOURCE path. Fix the roots and re-run this' + @crlf
+        + N'-- generator, or edit those MOVE targets by hand.' + @crlf
+        + N'-- ================================================================' + @crlf;
+
+    SELECT @cmd = @cmd
+        + N'--   [' + db + N'] ' + logical_name
+        + N' (' + file_type + N') -> ' + source_path + @crlf
+    FROM @unmatched
+    ORDER BY db, logical_name;
+
+    SET @cmd = @cmd
+        + N'-- ================================================================' + @crlf;
+END
+ELSE
+    SET @cmd = @cmd + @crlf
+        + N'-- All files matched the configured path prefixes. No MOVE target was left'  + @crlf
+        + N'-- pointing at a source path.' + @crlf;
 
 SELECT @cmd AS script;
