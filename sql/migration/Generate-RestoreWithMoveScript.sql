@@ -128,12 +128,15 @@ BEGIN
             ELSE @old_path
         END;
 
+        -- Short on purpose. This fires once per unmatched FILE, so a long sentence repeated
+        -- 18 times buries the DDL it is meant to annotate. The full explanation belongs in the
+        -- summary at the end of the output, and in the post, not on every line.
         SET @block = @block
             + CASE
                 WHEN @file_type = 'LOG' AND LEFT(@old_path, LEN(@OldLogRoot)) <> @OldLogRoot
-                    THEN N'       -- WARNING: source path does not start with @OldLogRoot (''' + @OldLogRoot + N'''), so NO remap was applied. The MOVE below still points at the SOURCE path. Set @OldLogRoot to match, or edit this line by hand.' + @crlf
+                    THEN N'       -- NOT REMAPPED: @OldLogRoot does not match. Target below is the SOURCE path.' + @crlf
                 WHEN @file_type <> 'LOG' AND LEFT(@old_path, LEN(@OldDataRoot)) <> @OldDataRoot
-                    THEN N'       -- WARNING: source path does not start with @OldDataRoot (''' + @OldDataRoot + N'''), so NO remap was applied. The MOVE below still points at the SOURCE path. Set @OldDataRoot to match, or edit this line by hand.' + @crlf
+                    THEN N'       -- NOT REMAPPED: @OldDataRoot does not match. Target below is the SOURCE path.' + @crlf
                 ELSE N''
               END
             + N'       ,MOVE N''' + REPLACE(@logical_name, N'''', N'''''') + N''' TO N''' + REPLACE(@new_path, N'''', N'''''') + N'''' + @crlf;
