@@ -229,8 +229,10 @@ ELSE
             N'-- All files matched the configured path prefixes. No MOVE target was left' + @crlf
           + N'-- pointing at a source path.' + @crlf);
 
--- One row per database, plus the preamble and the summary. ORDER BY seq and copy the whole
--- `script` column to get the single script this used to return.
-SELECT seq, database_name, files, unmapped, status, script
+-- ONE COLUMN, and it is the DDL. One row per database, plus the preamble that declares @ts and
+-- the summary that says what was not remapped. Copy the column, run it on the target.
+-- The counts above are used to build the warnings and the summary; they are deliberately NOT
+-- returned as columns, because this script's job is to emit restore DDL, not to report on itself.
+SELECT script AS restore_script
 FROM @out
 ORDER BY seq;
