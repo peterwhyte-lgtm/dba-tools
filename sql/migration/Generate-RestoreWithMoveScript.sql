@@ -54,18 +54,29 @@ DECLARE @crlf  nchar(2)  = CHAR(13) + CHAR(10);
 DECLARE @unmatched TABLE (db sysname, logical_name sysname, file_type nvarchar(60),
                           source_path nvarchar(260));
 
-SET @cmd =
+-- ONE ROW PER DATABASE, not a single text blob. A blob makes you hand-edit out the databases you
+-- did not want and scroll to find the warnings. A grid lets you sort on `unmapped`, see at a
+-- glance which databases are ready, and copy only the rows you are actually migrating.
+-- seq 0 is the preamble and seq 9999 the summary, so ORDER BY seq and copying the whole `script`
+-- column still yields one valid script, exactly as before.
+DECLARE @out TABLE (seq int, database_name sysname NULL, files int NULL, unmapped int NULL,
+                    status nvarchar(60) NULL, script nvarchar(max));
+
+INSERT @out (seq, database_name, files, unmapped, status, script)
+VALUES (0, NULL, NULL, NULL, N'-- preamble, run once',
     N'-- ================================================================' + @crlf +
     N'-- RESTORE with MOVE script' + @crlf +
     N'-- Source  : ' + @@SERVERNAME + @crlf +
     N'-- Generated: ' + CONVERT(nvarchar(30), GETDATE(), 120) + @crlf +
     N'-- Backup path : ' + @BackupPath + @crlf +
-    N'-- Data : ' + @OldDataRoot + N' → ' + @NewDataRoot + @crlf +
-    N'-- Logs : ' + @OldLogRoot  + N' → ' + @NewLogRoot  + @crlf +
+    N'-- Data root : ' + @OldDataRoot + N' -> ' + @NewDataRoot + @crlf +
+    N'-- Log  root : ' + @OldLogRoot  + N' -> ' + @NewLogRoot  + @crlf +
+    N'-- A root is applied ONLY to files whose path already starts with it. Check the' + @crlf +
+    N'-- unmapped column per database, and the summary row, for what it did NOT cover.' + @crlf +
     N'-- ================================================================' + @crlf +
     N'-- Set @ts to the actual timestamp of your backup files.' + @crlf +
     N'DECLARE @ts varchar(15) = ''yyyyMMdd_HHmmss''; -- REPLACE WITH ACTUAL TIMESTAMP' + @crlf +
-    N'DECLARE @path nvarchar(500);' + @crlf;
+    N'DECLARE @path nvarchar(500);' + @crlf);
 
 -- One block per database using file layout from sys.master_files
 DECLARE @dbname       nvarchar(128);
@@ -138,16 +149,28 @@ BEGIN
     CLOSE file_cur;
     DEALLOCATE file_cur;
 
-    -- Assemble the full RESTORE statement
-    SET @cmd = @cmd + @crlf
-        + N'SET @path = ''' + @BackupPath + N'\' + @dbname + N'_FULL_'' + @ts + ''.bak'';' + @crlf
+    -- Assemble the full RESTORE statement as this database's own row
+    DECLARE @db_files    int = (SELECT COUNT(*) FROM sys.master_files mf
+                                INNER JOIN sys.databases d ON mf.database_id = d.database_id
+                                WHERE d.name = @dbname);
+    DECLARE @db_unmapped int = (SELECT COUNT(*) FROM @unmatched WHERE db = @dbname);
+
+    INSERT @out (seq, database_name, files, unmapped, status, script)
+    VALUES (
+        (SELECT COUNT(*) FROM @out),
+        @dbname, @db_files, @db_unmapped,
+        CASE WHEN @db_unmapped = 0 THEN N'ready'
+             WHEN @db_unmapped = @db_files THEN N'REVIEW: no file remapped'
+             ELSE N'REVIEW: ' + CAST(@db_unmapped AS nvarchar(10)) + N' of '
+                  + CAST(@db_files AS nvarchar(10)) + N' not remapped' END,
+          N'SET @path = ''' + @BackupPath + N'\' + @dbname + N'_FULL_'' + @ts + ''.bak'';' + @crlf
         + N'RESTORE DATABASE [' + @dbname + N'] FROM DISK = @path' + @crlf
         + N'    WITH' + @crlf
         + CASE WHEN @WithReplace   = 1 THEN N'         REPLACE,' + @crlf  ELSE N'' END
         + CASE WHEN @WithRecovery  = 0 THEN N'         NORECOVERY,' + @crlf ELSE N'' END
         + N'         STATS = ' + CAST(@StatsInterval AS nvarchar(3)) + @crlf
         + @block
-        + N';' + @crlf;
+        + N';' + @crlf);
 
     FETCH NEXT FROM db_cur INTO @dbname;
 END
@@ -155,19 +178,21 @@ END
 CLOSE db_cur;
 DEALLOCATE db_cur;
 
--- Summary of every file left on its source path, appended at the END of the generated script
--- so it is the last thing read before the script is run.
-IF EXISTS (SELECT 1 FROM @unmatched)
-BEGIN
-    DECLARE @n int = (SELECT COUNT(*) FROM @unmatched);
+-- The summary row. Also PREPENDED to the preamble when NOTHING matched, because a run where no
+-- file was remapped is a misconfiguration, not a script with some caveats: read top-down, the
+-- header would otherwise announce a root mapping that did not happen to a single file.
+DECLARE @n     int = (SELECT COUNT(*) FROM @unmatched);
+DECLARE @files int = (SELECT ISNULL(SUM(files), 0) FROM @out WHERE database_name IS NOT NULL);
 
-    SET @cmd = @cmd + @crlf
-        + N'-- ================================================================' + @crlf
-        + N'-- REVIEW BEFORE RUNNING: ' + CAST(@n AS nvarchar(10))
-        + N' file(s) were NOT remapped.' + @crlf
+IF @n > 0
+BEGIN
+    SET @cmd =
+          N'-- ================================================================' + @crlf
+        + N'-- REVIEW BEFORE RUNNING: ' + CAST(@n AS nvarchar(10)) + N' of '
+        + CAST(@files AS nvarchar(10)) + N' file(s) were NOT remapped.' + @crlf
         + N'-- Their paths do not start with @OldDataRoot ('  + @OldDataRoot + N')' + @crlf
         + N'--                        or @OldLogRoot  ('      + @OldLogRoot  + N')' + @crlf
-        + N'-- Each MOVE below still points at the SOURCE path. Fix the roots and re-run this' + @crlf
+        + N'-- Those MOVE targets still point at the SOURCE path. Fix the roots and re-run this' + @crlf
         + N'-- generator, or edit those MOVE targets by hand.' + @crlf
         + N'-- ================================================================' + @crlf;
 
@@ -177,12 +202,35 @@ BEGIN
     FROM @unmatched
     ORDER BY db, logical_name;
 
-    SET @cmd = @cmd
-        + N'-- ================================================================' + @crlf;
+    SET @cmd = @cmd + N'-- ================================================================' + @crlf;
+
+    INSERT @out (seq, database_name, files, unmapped, status, script)
+    VALUES (9999, NULL, @files, @n,
+            CASE WHEN @n = @files THEN N'STOP: nothing was remapped'
+                 ELSE N'REVIEW: ' + CAST(@n AS nvarchar(10)) + N' file(s)' END,
+            @cmd);
+
+    -- Nothing matched at all: say so at the TOP too, where it cannot be scrolled past.
+    IF @n = @files
+        UPDATE @out
+        SET script = N'-- ****************************************************************' + @crlf
+                   + N'-- STOP. NOT ONE FILE WAS REMAPPED, so every MOVE below points at the' + @crlf
+                   + N'-- SOURCE path and this script moves nothing. @OldDataRoot / @OldLogRoot' + @crlf
+                   + N'-- do not match the real paths on ' + @@SERVERNAME + N'.' + @crlf
+                   + N'-- Set them from what the source actually reports, then re-run.' + @crlf
+                   + N'-- ****************************************************************' + @crlf
+                   + script,
+            status = N'-- STOP: roots match nothing'
+        WHERE seq = 0;
 END
 ELSE
-    SET @cmd = @cmd + @crlf
-        + N'-- All files matched the configured path prefixes. No MOVE target was left'  + @crlf
-        + N'-- pointing at a source path.' + @crlf;
+    INSERT @out (seq, database_name, files, unmapped, status, script)
+    VALUES (9999, NULL, @files, 0, N'all remapped',
+            N'-- All files matched the configured path prefixes. No MOVE target was left' + @crlf
+          + N'-- pointing at a source path.' + @crlf);
 
-SELECT @cmd AS script;
+-- One row per database, plus the preamble and the summary. ORDER BY seq and copy the whole
+-- `script` column to get the single script this used to return.
+SELECT seq, database_name, files, unmapped, status, script
+FROM @out
+ORDER BY seq;
