@@ -5,7 +5,10 @@ Purpose     : Generate RESTORE DATABASE scripts with WITH MOVE for all online us
               Run on SOURCE server. Supply the backup path and path prefix mappings for
               data and log files before executing the output on TARGET.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-generate-restore-with-move-script/)
-Requires    : VIEW ANY DATABASE, VIEW SERVER STATE
+Requires    : VIEW ANY DEFINITION (sys.master_files). Verified 2026-09-05 against SQL Server 2025
+              with a login holding nothing else: VIEW ANY DEFINITION alone returns every file,
+              while VIEW ANY DATABASE alone and VIEW SERVER STATE alone each return zero rows.
+              No DMV is read, so VIEW SERVER STATE is not needed.
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
