@@ -3,7 +3,7 @@ Script Name : Get-ServerRoleMembers
 Category    : security-and-permissions
 Purpose     : List members of every fixed and user-defined server role — the comprehensive server-privilege audit.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-permissions-and-role-membership/)
-Requires    : VIEW ANY DATABASE
+Requires    : VIEW ANY DEFINITION (sysadmin and securityadmin have it implicitly)
 Related     : Get-SysadminMembers — the sysadmin-only focused check (health-check member)
 */
 -- SAFE:ReadOnly

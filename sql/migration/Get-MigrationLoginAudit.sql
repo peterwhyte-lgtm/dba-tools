@@ -3,7 +3,7 @@ Script Name : Get-MigrationLoginAudit
 Category    : migration
 Purpose     : Audits all server-level principals that need to be migrated — SQL logins, Windows logins, and server roles — with migration risk and action per login type.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-migration-login-audit-and-post-migration-validation/)
-Requires    : VIEW ANY DATABASE, VIEW SERVER STATE
+Requires    : VIEW ANY DEFINITION (sysadmin and securityadmin have it implicitly)
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low

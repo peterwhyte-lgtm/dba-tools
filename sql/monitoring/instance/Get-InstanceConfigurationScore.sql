@@ -3,7 +3,7 @@ Script Name : Get-InstanceConfigurationScore
 Category    : monitoring
 Purpose     : Scores the SQL Server instance across ~20 key configuration checks. Returns PASS/WARN/FAIL per item with finding and recommended action. Run this first when taking ownership of a new instance.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-instance-configuration-score/)
-Requires    : VIEW ANY DATABASE, VIEW SERVER STATE
+Requires    : VIEW ANY DEFINITION, VIEW SERVER STATE, VIEW ANY DATABASE, db_datareader on msdb
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low

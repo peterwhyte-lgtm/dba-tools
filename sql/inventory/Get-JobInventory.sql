@@ -3,7 +3,7 @@ Script Name : Get-JobInventory
 Category    : migration
 Purpose     : Inventory SQL Agent jobs with owner for migration dependency checks.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-login-and-job-inventory/)
-Requires    : db_datareader on msdb
+Requires    : db_datareader on msdb, plus VIEW ANY DEFINITION to resolve job owner names (the job rows return either way; an owner only resolves if that login is visible to you)
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low

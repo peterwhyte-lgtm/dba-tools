@@ -3,7 +3,7 @@ Script Name : Get-SqlAgentJobOverview
 Category    : configuration-and-environment
 Purpose     : Show all SQL Agent jobs with enabled state, owner, and last run outcome.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-sql-agent-job-overview/)
-Requires    : db_datareader on msdb
+Requires    : db_datareader on msdb, plus VIEW ANY DEFINITION to resolve job owner names (the job rows return either way; an owner only resolves if that login is visible to you)
 HealthCheck : Yes
 */
 -- SAFE:ReadOnly
