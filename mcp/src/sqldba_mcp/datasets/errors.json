@@ -290,6 +290,26 @@
   "ms_docs": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-3013-database-engine-error"
  },
  {
+  "error_number": 3102,
+  "severity": 16,
+  "title": "Cannot restore, the database is in use by this session",
+  "message": "RESTORE cannot process database 'X' because it is in use by this session. It is recommended that the master database be used when performing this operation.",
+  "meaning": "Nothing is wrong with the backup or the target. You are connected to the database you are restoring over. Switch the session to master and run it again.",
+  "category": "Backup and restore",
+  "url": "https://sqldba.blog/sql-server-restore-terminating-abnormally-3013-3241/",
+  "ms_docs": null
+ },
+ {
+  "error_number": 3132,
+  "severity": 16,
+  "title": "Striped backup, not every member was provided",
+  "message": "The media set has 2 media families but only 1 are provided. All members must be provided.",
+  "meaning": "The backup is striped across several files and you listed only some of them. Name every file in the set. The opposite mistake gives 3231.",
+  "category": "Backup and restore",
+  "url": "https://sqldba.blog/how-to-restore-a-database-in-sql-server/",
+  "ms_docs": null
+ },
+ {
   "error_number": 3154,
   "severity": 16,
   "title": "The backup set holds a backup of a database other than the existing one",
@@ -297,6 +317,16 @@
   "meaning": "Restoring over a different database needs WITH REPLACE, and deserves a pause first.",
   "category": "Backup and restore",
   "url": "https://sqldba.blog/sql-server-backup-set-different-database-3154/",
+  "ms_docs": null
+ },
+ {
+  "error_number": 3156,
+  "severity": 16,
+  "title": "File cannot be restored to that path",
+  "message": "File 'X' cannot be restored to 'Y'. Use WITH MOVE to identify a valid location for the file.",
+  "meaning": "Usually arrives right after 3634. The target folder does not exist, or the service account cannot write there. Nothing is wrong with the backup.",
+  "category": "Backup and restore",
+  "url": "https://sqldba.blog/sql-server-restore-terminating-abnormally-3013-3241/",
   "ms_docs": null
  },
  {
@@ -310,11 +340,31 @@
   "ms_docs": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-3201-database-engine-error"
  },
  {
+  "error_number": 3231,
+  "severity": 16,
+  "title": "Separate backups listed as one media set",
+  "message": "The media loaded on \"X\" is formatted to support 1 media families, but 2 media families are expected according to the backup device specification.",
+  "meaning": "The files you listed are separate backups, not members of one stripe. The opposite mistake to 3132.",
+  "category": "Backup and restore",
+  "url": "https://sqldba.blog/how-to-restore-a-database-in-sql-server/",
+  "ms_docs": null
+ },
+ {
   "error_number": 3241,
   "severity": 16,
   "title": "Media family on device is incorrectly formed",
   "message": "The media family on device 'X' is incorrectly formed. SQL Server cannot process this media family.",
   "meaning": "Wrong file, truncated copy, or a backup from a newer version being restored to an older one.",
+  "category": "Backup and restore",
+  "url": "https://sqldba.blog/sql-server-restore-terminating-abnormally-3013-3241/",
+  "ms_docs": null
+ },
+ {
+  "error_number": 3287,
+  "severity": 16,
+  "title": "The backup file is truncated",
+  "message": "The file ID 1 on device 'X' is incorrectly formed and can not be read.",
+  "meaning": "The copy did not finish. Different from 3241, which means the file is not a backup at all; this one names the file ID it could not read.",
   "category": "Backup and restore",
   "url": "https://sqldba.blog/sql-server-restore-terminating-abnormally-3013-3241/",
   "ms_docs": null
@@ -328,6 +378,16 @@
   "category": "Corruption and hardware",
   "url": "https://sqldba.blog/sql-server-cannot-recover-master-3417/",
   "ms_docs": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-3417-database-engine-error"
+ },
+ {
+  "error_number": 3634,
+  "severity": 16,
+  "title": "The operating system refused the restore target",
+  "message": "The operating system returned the error 'X' while attempting 'Y' on 'Z'.",
+  "meaning": "The OS refused the path, and 3156 normally follows it. The folder is missing or the service account cannot write there.",
+  "category": "Backup and restore",
+  "url": "https://sqldba.blog/sql-server-restore-terminating-abnormally-3013-3241/",
+  "ms_docs": null
  },
  {
   "error_number": 4060,
@@ -428,6 +488,46 @@
   "category": "Blocking, deadlocks and memory",
   "url": "https://sqldba.blog/sql-server-memory-errors-701-8645/",
   "ms_docs": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-8645-database-engine-error"
+ },
+ {
+  "error_number": 8928,
+  "severity": 16,
+  "title": "Page could not be processed",
+  "message": "Object ID X, index ID Y, partition ID Z, alloc unit ID W (type ...): Page (1:368) could not be processed.  See other errors for details.",
+  "meaning": "The summary line of a CHECKDB run, and it says so: read the other errors. One damaged page produces 8939, 8928, 8980 and 8978 together, which CHECKDB counts as four consistency errors on a single page rather than four faults.",
+  "category": "Corruption and hardware",
+  "url": "https://sqldba.blog/sql-server-dbcc-checkdb-corruption-found/",
+  "ms_docs": null
+ },
+ {
+  "error_number": 8939,
+  "severity": 16,
+  "title": "Table error, an internal test failed on the page",
+  "message": "Table error: Object ID X, index ID Y, partition ID Z, alloc unit ID W (type ...), page (1:368). Test (IS_OFF (BUF_IOERR, pBUF->bstat)) failed. Values are 133129 and -4.",
+  "meaning": "An internal consistency test failed on the page itself. This is the one that describes the damage rather than its consequences.",
+  "category": "Corruption and hardware",
+  "url": "https://sqldba.blog/sql-server-dbcc-checkdb-corruption-found/",
+  "ms_docs": null
+ },
+ {
+  "error_number": 8978,
+  "severity": 16,
+  "title": "Page is missing a reference from the previous page",
+  "message": "Table error: Object ID X, index ID Y, partition ID Z, alloc unit ID W (type ...). Page (1:384) is missing a reference from previous page (1:368). Possible chain linkage problem.",
+  "meaning": "The page chain is broken. Seen alongside 8939 and 8980 when a single page has gone; it describes the hole the damaged page left behind.",
+  "category": "Corruption and hardware",
+  "url": "https://sqldba.blog/sql-server-dbcc-checkdb-corruption-found/",
+  "ms_docs": null
+ },
+ {
+  "error_number": 8980,
+  "severity": 16,
+  "title": "Index node refers to a child page that was not found",
+  "message": "Table error: Object ID X, index ID Y, partition ID Z, alloc unit ID W (type ...). Index node page (1:376), slot 0 refers to child page (1:368) and previous child (0:0), but they were not encountered.",
+  "meaning": "The index B-tree still points at the damaged page. Another view of the same fault, not a second one.",
+  "category": "Corruption and hardware",
+  "url": "https://sqldba.blog/sql-server-dbcc-checkdb-corruption-found/",
+  "ms_docs": null
  },
  {
   "error_number": 9002,
