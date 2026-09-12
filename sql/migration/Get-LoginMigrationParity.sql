@@ -17,6 +17,10 @@ Notes       : Get-PostMigrationValidation.sql compares COUNTS. A count matches w
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+-- The server_roles column uses FOR XML PATH ... .value(), an XML data type method, which
+-- requires QUOTED_IDENTIFIER ON. sqlcmd defaults it OFF, so without this the whole script
+-- fails with Msg 1934 rather than returning a row.
+SET QUOTED_IDENTIFIER ON;
 
 /*
   DESIGN: deliberately one flat, ordered, deterministic row per login so a plain text diff

@@ -1,5 +1,53 @@
 [
  {
+  "question": "I enabled TCP/IP and it still does not work.",
+  "answer": "The protocol change only takes effect when the SQL Server service restarts. Restart it, then confirm with the listening-ports check in Step 2 that something is bound to the port before testing from outside again.",
+  "post_title": "Cannot Connect to SQL Server: The Checks in the Order That Finds It",
+  "url": "https://sqldba.blog/cannot-connect-to-sql-server/"
+ },
+ {
+  "question": "It works on the server but not from my machine. Why?",
+  "answer": "Local connections use Shared Memory, which needs no port and no firewall rule, so a server with TCP/IP disabled or a firewall blocking 1433 looks perfectly healthy when you test it from the console. Steps 2 and 3 are the ones that find it: enable TCP/IP, restart the service, then test the port from the client.",
+  "post_title": "Cannot Connect to SQL Server: The Checks in the Order That Finds It",
+  "url": "https://sqldba.blog/cannot-connect-to-sql-server/"
+ },
+ {
+  "question": "Should I just tick Trust Server Certificate?",
+  "answer": "For a lab or a dev box, yes, and get on with your day. For production it means the client stops checking who it is talking to, so the better fix is a certificate the client trusts. Both options and the reasoning are in the certificate chain post linked in Step 5.",
+  "post_title": "Cannot Connect to SQL Server: The Checks in the Order That Finds It",
+  "url": "https://sqldba.blog/cannot-connect-to-sql-server/"
+ },
+ {
+  "question": "What is the difference between error 26 and error 40?",
+  "answer": "26 means the client could not even work out which port to use, which only happens with named instances and the SQL Browser. 40 (and 10061 underneath it) means the client knew the address and port and nothing was listening there. 26 is a Browser or naming problem, 40 is a service, protocol or firewall problem.",
+  "post_title": "Cannot Connect to SQL Server: The Checks in the Order That Finds It",
+  "url": "https://sqldba.blog/cannot-connect-to-sql-server/"
+ },
+ {
+  "question": "Can I take a backup of a database that is in RESTORING?",
+  "answer": "No. BACKUP DATABASE fails with the same Msg 927, followed by Msg 3013, BACKUP DATABASE is terminating abnormally. If you need a backup, the database has to be recovered first, and that is only the right move when it is genuinely stranded.",
+  "post_title": "Database Cannot Be Opened \u2013 It Is in the Middle of a Restore",
+  "url": "https://sqldba.blog/database-cannot-be-opened-it-is-in-the-middle-of-a-restore/"
+ },
+ {
+  "question": "Does WITH RECOVERY lose data?",
+  "answer": "It keeps everything already restored. What it loses is the option to apply any further log backups, so if there were logs still to come, the whole chain has to be restored again from the full backup. Check msdb.dbo.restorehistory first if you are not sure how far it got.",
+  "post_title": "Database Cannot Be Opened \u2013 It Is in the Middle of a Restore",
+  "url": "https://sqldba.blog/database-cannot-be-opened-it-is-in-the-middle-of-a-restore/"
+ },
+ {
+  "question": "How long can a restore sit at a low percent_complete?",
+  "answer": "Longer than feels comfortable. Data files are zeroed on creation unless instant file initialization is enabled, and that phase reports almost no progress. As long as the row in sys.dm_exec_requests is still there it is working. A row that disappears without the database coming ONLINE is the failure case, and the error log says why.",
+  "post_title": "Database Cannot Be Opened \u2013 It Is in the Middle of a Restore",
+  "url": "https://sqldba.blog/database-cannot-be-opened-it-is-in-the-middle-of-a-restore/"
+ },
+ {
+  "question": "Is this the same as RECOVERY PENDING or \"In Recovery\"?",
+  "answer": "No. RESTORING means a restore chain was left open, on purpose or by accident. In Recovery and RECOVERY PENDING are crash recovery after a restart or a lost file, and running RESTORE... WITH RECOVERY against those does nothing useful.",
+  "post_title": "Database Cannot Be Opened \u2013 It Is in the Middle of a Restore",
+  "url": "https://sqldba.blog/database-cannot-be-opened-it-is-in-the-middle-of-a-restore/"
+ },
+ {
   "question": "A backup job reports success. Is that enough?",
   "answer": "No. A successful backup job proves a file was written, not that it can be restored. The chain matters as much as the individual file: a missing differential or a broken log sequence leaves you with backups that cannot be restored to the point you need.",
   "post_title": "DBA Scripts: Backups and Recovery",
@@ -13,7 +61,7 @@
  },
  {
   "question": "How do I know my recovery model is actually right?",
-  "answer": "Match it to the recovery you have promised. FULL recovery without log backups gives you no point-in-time recovery and an ever-growing log, which is the worst of both. If you genuinely only need last night's backup, SIMPLE is the honest setting. SQL Server Transaction Log Full, in Related Scripts below, covers that in full.",
+  "answer": "Match it to the recovery you have promised. FULL recovery without log backups gives you no point-in-time recovery and an ever-growing log, which is the worst of both. If you genuinely only need last night's backup, SIMPLE is the honest setting.",
   "post_title": "DBA Scripts: Backups and Recovery",
   "url": "https://sqldba.blog/dba-scripts-backups-and-recovery/"
  },
@@ -25,7 +73,7 @@
  },
  {
   "question": "Should I be verifying backups with RESTORE VERIFYONLY?",
-  "answer": "It is worth doing and it is not sufficient. VERIFYONLY checks the backup is readable and internally consistent; it does not prove the database inside is free of corruption. Pair it with regular DBCC CHECKDB on the source. DBCC CHECKDB Found Corruption, in Related Scripts below, covers that in full.",
+  "answer": "It is worth doing and it is not sufficient. VERIFYONLY checks the backup is readable and internally consistent; it does not prove the database inside is free of corruption. Pair it with regular DBCC CHECKDB on the source.",
   "post_title": "DBA Scripts: Backups and Recovery",
   "url": "https://sqldba.blog/dba-scripts-backups-and-recovery/"
  },
@@ -43,7 +91,7 @@
  },
  {
   "question": "What is the difference between blocking and a deadlock?",
-  "answer": "Blocking is one session waiting for another to release something, and it resolves once the first finishes. A deadlock is a cycle that cannot resolve, so SQL Server picks a victim and kills it. Blocking is a delay; a deadlock is an error someone has already seen. Reading and Fixing a SQL Server Deadlock, in Related Scripts below, covers that in full.",
+  "answer": "Blocking is one session waiting for another to release something, and it resolves once the first finishes. A deadlock is a cycle that cannot resolve, so SQL Server picks a victim and kills it. Blocking is a delay; a deadlock is an error someone has already seen.",
   "post_title": "DBA Scripts: Blocking and Locking",
   "url": "https://sqldba.blog/dba-scripts-blocking-and-locking/"
  },
@@ -186,18 +234,6 @@
   "url": "https://sqldba.blog/dba-scripts-create-login-activity-session/"
  },
  {
-  "question": "Does an Extended Events login trace slow the server down?",
-  "answer": "Not meaningfully. Extended Events is built to have low overhead, that\u2019s the entire design point over the older SQL Trace. Capturing just login and failed-login events, as this session does, is a tiny fraction of the server\u2019s overall event volume.",
-  "post_title": "DBA Scripts: Create Login Activity Session",
-  "url": "https://sqldba.blog/dba-scripts-create-login-activity-session/"
- },
- {
-  "question": "How do I see who is connecting to a SQL Server instance?",
-  "answer": "Extended Events is the practical answer. This script sets up a session that captures the sqlserver.login event with the caller\u2019s hostname, application, and account name, then you query the rolling output files with T-SQL. Server-side audit and the default trace can do something similar, but Extended Events is lighter and easier to query directly.",
-  "post_title": "DBA Scripts: Create Login Activity Session",
-  "url": "https://sqldba.blog/dba-scripts-create-login-activity-session/"
- },
- {
   "question": "How do I see who is connecting to a SQL Server instance?",
   "answer": "Extended Events is the practical answer. This script sets up a session that captures the sqlserver.login event with the caller\u2019s hostname, application, and account name, then you query the rolling output files with T-SQL. Server-side audit and the default trace can do something similar, but Extended Events is lighter and easier to query directly.",
   "post_title": "DBA Scripts: Create Login Activity Session",
@@ -232,6 +268,36 @@
   "answer": "Because sessions outlive the person who created them. Inheriting a server often means inheriting sessions nobody can explain, still writing to disk, and removing them cleanly is its own task.",
   "post_title": "DBA Scripts: Extended Events Tracing",
   "url": "https://sqldba.blog/dba-scripts-extended-events-tracing/"
+ },
+ {
+  "question": "Does running this script change anything?",
+  "answer": "No. It returns the ALTER USER statements as text and stops. The single EXEC sp_executesql inside it runs the query that collects the orphan list, not a fix, which is why it is classed SAFE:ReadOnly. You copy the output into a new window and run it yourself.",
+  "post_title": "DBA Scripts: Fix Orphaned Users",
+  "url": "https://sqldba.blog/dba-scripts-fix-orphaned-users/"
+ },
+ {
+  "question": "Should I use sp_change_users_login instead?",
+  "answer": "No. Microsoft\u2019s documentation for sp_change_users_login states that the feature \u201cwill be removed in a future version of SQL Server\u201d and to \u201cuse ALTER USER instead\u201d. That is what this script generates.",
+  "post_title": "DBA Scripts: Fix Orphaned Users",
+  "url": "https://sqldba.blog/dba-scripts-fix-orphaned-users/"
+ },
+ {
+  "question": "What about read-only databases?",
+  "answer": "They are scanned, and their orphans are listed with a note that the database must be set READ_WRITE before the ALTER USER will run. Earlier versions skipped them, which quietly hid real orphans on readable secondaries and archive copies.",
+  "post_title": "DBA Scripts: Fix Orphaned Users",
+  "url": "https://sqldba.blog/dba-scripts-fix-orphaned-users/"
+ },
+ {
+  "question": "Why are some users never reported as orphaned?",
+  "answer": "Contained database users authenticate inside the database and have no server login to match, so they cannot be orphaned. The script only considers principals whose authentication_type_desc is INSTANCE. Windows users and groups are included; their AD SID does not change, so they orphan only when the login itself is gone.",
+  "post_title": "DBA Scripts: Fix Orphaned Users",
+  "url": "https://sqldba.blog/dba-scripts-fix-orphaned-users/"
+ },
+ {
+  "question": "Why does it say \u201ccannot auto-fix\u201d instead of just fixing it?",
+  "answer": "Because it maps users to logins by name, and where no login of that name exists there is nothing safe to map to. Guessing a different login would hand one person\u2019s permissions to another. Create the missing login and re-run, or map that user by hand.",
+  "post_title": "DBA Scripts: Fix Orphaned Users",
+  "url": "https://sqldba.blog/dba-scripts-fix-orphaned-users/"
  },
  {
   "question": "Does this recreate job history, or just the job definitions?",
@@ -354,16 +420,58 @@
   "url": "https://sqldba.blog/dba-scripts-generate-login-script/"
  },
  {
-  "question": "What does the \"source path does not start with @OldDataRoot\" warning mean?",
-  "answer": "Your configured @OldDataRoot or @OldLogRoot doesn't match what a database's file path actually starts with, so the string substitution that builds the new MOVE path can't be trusted for that file. Check the real path named in the warning and correct the MOVE target by hand.",
+  "question": "Can I restore just a few databases?",
+  "answer": "Yes. Set @Databases to a comma-separated list, for example N'Sales,Payroll'. Leave it NULL for every online user database.",
   "post_title": "DBA Scripts: Generate Restore With Move Script",
   "url": "https://sqldba.blog/dba-scripts-generate-restore-with-move-script/"
  },
  {
-  "question": "Why wasn't a full physical restore tested?",
-  "answer": "The test instance's smallest backup was under 1MB, but RESTORE pre-allocates full data and log file sizes regardless, over 2.5GB combined against well under a gigabyte of free disk at the time. SET NOEXEC ON validated the generated syntax and object references instead, which is what was actually achievable without failing on disk space rather than proving anything about the script.",
+  "question": "Do I run this on the source server or the target?",
+  "answer": "On the source. It reads that server\u2019s msdb backup history and the file layout recorded in the backups, so running it on the target would describe the wrong machine. It only SELECT s, so it is safe on a production source.",
   "post_title": "DBA Scripts: Generate Restore With Move Script",
   "url": "https://sqldba.blog/dba-scripts-generate-restore-with-move-script/"
+ },
+ {
+  "question": "Does it cover system databases, or databases that are offline?",
+  "answer": "Neither. It filters on database_id > 4 and state_desc = N'ONLINE'. If a database you expected is missing from the output, check its state, and check the -- NO FULL BACKUP line at the top.",
+  "post_title": "DBA Scripts: Generate Restore With Move Script",
+  "url": "https://sqldba.blog/dba-scripts-generate-restore-with-move-script/"
+ },
+ {
+  "question": "What about a database with more than two files?",
+  "answer": "Handled. It writes one MOVE per file recorded in the backup, however many there are, with data files going to @NewDataRoot and log files to @NewLogRoot.",
+  "post_title": "DBA Scripts: Generate Restore With Move Script",
+  "url": "https://sqldba.blog/dba-scripts-generate-restore-with-move-script/"
+ },
+ {
+  "question": "Why read the logical names from msdb instead of the live database?",
+  "answer": "Because the backup is the authority on what is inside it. If a file was added to the database after the backup was taken, a MOVE built from the live layout names a file the backup does not contain, and the restore fails with Logical file 'X' is not part of database 'Y' (error 3234). Reading msdb.dbo.backupfile avoids that without needing access to the.bak.",
+  "post_title": "DBA Scripts: Generate Restore With Move Script",
+  "url": "https://sqldba.blog/dba-scripts-generate-restore-with-move-script/"
+ },
+ {
+  "question": "Can I run it on production?",
+  "answer": "No. It is SAFE:CreatesObjects with IMPACT:High, and it creates databases on whatever instance the connection points at. Lab and test instances only.",
+  "post_title": "DBA Scripts: Generate Test Databases",
+  "url": "https://sqldba.blog/dba-scripts-generate-test-databases/"
+ },
+ {
+  "question": "How do I clean up afterwards?",
+  "answer": "There is deliberately no cleanup step in the script, because a script that drops databases by prefix is a far more dangerous thing to have lying around than one that creates them. Drop them by hand, or generate the statements first and read them before running: SELECT 'DROP DATABASE [' + name + '];' FROM sys.databases WHERE name LIKE 'migdb!_%' ESCAPE '!';",
+  "post_title": "DBA Scripts: Generate Test Databases",
+  "url": "https://sqldba.blog/dba-scripts-generate-test-databases/"
+ },
+ {
+  "question": "Is it safe to run twice?",
+  "answer": "Yes. Each name carries a random suffix, and the script skips any name that already exists, so a second run adds a second batch rather than failing or overwriting. That also means the count grows every time you run it \u2014 two runs at the defaults leaves twenty databases, not ten.",
+  "post_title": "DBA Scripts: Generate Test Databases",
+  "url": "https://sqldba.blog/dba-scripts-generate-test-databases/"
+ },
+ {
+  "question": "Why not just restore the same database ten times?",
+  "answer": "Because most of what you want to test at scale is per-database overhead rather than data: how long a backup sweep takes across many databases, whether a maintenance job scales, how the instance behaves with hundreds of log files. Small empty databases reproduce that faithfully and cost almost nothing.",
+  "post_title": "DBA Scripts: Generate Test Databases",
+  "url": "https://sqldba.blog/dba-scripts-generate-test-databases/"
  },
  {
   "question": "What does an unmapped user in the output mean?",
@@ -523,7 +631,7 @@
  },
  {
   "question": "Why would msdb say a database has no backups when I know one was taken?",
-  "answer": "Backup history in msdb can be pruned by cleanup jobs or maintenance plans. If NO_FULL_BACKUP looks wrong for a database you're confident was backed up, check the actual backup files on disk before assuming the backup never happened.",
+  "answer": "Backup history in msdb can be pruned by cleanup jobs or maintenance plans. If NO_FULL_BACKUP looks wrong for a database you\u2019re confident was backed up, check the actual backup files on disk before assuming the backup never happened.",
   "post_title": "DBA Scripts: Get Backup Coverage",
   "url": "https://sqldba.blog/dba-scripts-get-backup-coverage/"
  },
@@ -613,14 +721,32 @@
  },
  {
   "question": "Is killing the head blocker always safe?",
-  "answer": "No. Confirm what the session is doing first via sys.dm_tran_locks and the current statement. A legitimate long transaction (a big migration, an overnight batch) will roll back if killed, which can take as long as the transaction already ran. Killing is the right call for a genuinely stuck or forgotten transaction, not a blanket first response.",
-  "post_title": "DBA Scripts: Get Blocking Sessions",
+  "answer": "No. Confirm what it is doing first, through sys.dm_tran_locks and the statement text. A legitimate long transaction such as a migration or an overnight batch will roll back when killed, and the rollback can take as long as the work took to get there, with the locks still held throughout. Killing is right for a genuinely stuck or forgotten transaction, not as a first response.",
+  "post_title": "DBA Scripts: Get Blocking Summary",
+  "url": "https://sqldba.blog/dba-scripts-get-blocking-sessions/"
+ },
+ {
+  "question": "The blocking has cleared. Can I still find out what caused it?",
+  "answer": "Not from this script. It reads live DMVs, so it shows only what is happening at the instant you run it, with no history behind it. For blocking that comes and goes you need something capturing continuously: the blocking collector job in this toolkit, or an Extended Events session. Microsoft's guide to understanding and resolving blocking covers the monitoring options in full.",
+  "post_title": "DBA Scripts: Get Blocking Summary",
+  "url": "https://sqldba.blog/dba-scripts-get-blocking-sessions/"
+ },
+ {
+  "question": "Two rows came back. Which one do I deal with?",
+  "answer": "Read head_blocker_wait_type. A session listed as a blocker whose own wait type is itself a lock wait is blocked as well, so it is a symptom rather than the cause. The row that is not waiting on a lock is the real head, and clearing it usually clears the rest. That is a chain. If it runs more than a node or two deep, Blocking Chains walks it properly rather than leaving you to read session ids off against each other.",
+  "post_title": "DBA Scripts: Get Blocking Summary",
   "url": "https://sqldba.blog/dba-scripts-get-blocking-sessions/"
  },
  {
   "question": "What\u2019s the difference between blocking and a deadlock?",
-  "answer": "Blocking is one session waiting for another to release a lock, it resolves on its own once the blocker finishes or is killed. A deadlock is two (or more) sessions each waiting on a lock the other holds, with no way for either to proceed, SQL Server detects this and kills one session automatically to break the cycle. See Deadlock Summary for the deadlock-specific script.",
-  "post_title": "DBA Scripts: Get Blocking Sessions",
+  "answer": "Blocking is one session waiting for another to release a lock, and it resolves on its own once the blocker finishes or is killed. A deadlock is two or more sessions each holding a lock the other needs, with no way forward, so SQL Server detects the cycle and kills one automatically. Blocking needs you; a deadlock has already resolved itself by the time you read about it. Deadlock Summary covers that side.",
+  "post_title": "DBA Scripts: Get Blocking Summary",
+  "url": "https://sqldba.blog/dba-scripts-get-blocking-sessions/"
+ },
+ {
+  "question": "Why does head_blocker_statement show more than the statement that took the lock?",
+  "answer": "Because sys.dm_exec_sql_text returns the entire batch for the handle, not the single statement executing now. On a long procedure or a multi statement batch you get the opening lines, which is often not the line holding the lock. It is usually enough to identify the application, which is what you need during an incident. When it is not, sys.dm_tran_locks carries the exact resources held.",
+  "post_title": "DBA Scripts: Get Blocking Summary",
   "url": "https://sqldba.blog/dba-scripts-get-blocking-sessions/"
  },
  {
@@ -697,7 +823,7 @@
  },
  {
   "question": "Where does SQL Server store backup history?",
-  "answer": "In msdb, mainly backupset, backupmediafamily, and backupfile. This history persists until msdb 's own maintenance jobs prune it, so it's usually available well beyond the two months this script defaults to.",
+  "answer": "In msdb, mainly backupset, backupmediafamily, and backupfile. This history persists until msdb 's own maintenance jobs prune it, so it's usually available well beyond the 2 months this script defaults to.",
   "post_title": "DBA Scripts: Get Database Backup History",
   "url": "https://sqldba.blog/dba-scripts-get-database-backup-history/"
  },
@@ -745,7 +871,7 @@
  },
  {
   "question": "What does log_reuse_wait_desc mean in SQL Server?",
-  "answer": "It names the specific reason a transaction log's inactive VLFs can't be reused, and therefore why the log isn't shrinking back down after activity. NOTHING means there's no blocker. Any other value, most commonly LOG_BACKUP, names exactly what needs to happen before the log can reclaim that space. SQL Server Transaction Log Full, in Related Scripts below, covers that in full.",
+  "answer": "It names the specific reason a transaction log's inactive VLFs can't be reused, and therefore why the log isn't shrinking back down after activity. NOTHING means there's no blocker. Any other value, most commonly LOG_BACKUP, names exactly what needs to happen before the log can reclaim that space.",
   "post_title": "DBA Scripts: Get Database Health",
   "url": "https://sqldba.blog/dba-scripts-get-database-health/"
  },
@@ -754,6 +880,30 @@
   "answer": "Because full backups don't touch the transaction log's reuse status, only a log backup does, on FULL or BULK_LOGGED recovery. A database on FULL recovery without a scheduled log backup job will grow its log indefinitely regardless of how often full backups run.",
   "post_title": "DBA Scripts: Get Database Health",
   "url": "https://sqldba.blog/dba-scripts-get-database-health/"
+ },
+ {
+  "question": "Does restoring a database onto a newer instance change its compatibility level?",
+  "answer": "Only when it has to. A restore or attach keeps the level the database came with, so a database three versions behind stays three versions behind. If that level is older than the lowest the target instance supports, SQL Server raises it to that minimum. Either way you do not get the instance default unless you set it yourself.",
+  "post_title": "DBA Scripts: Get Database Inventory",
+  "url": "https://sqldba.blog/dba-scripts-get-database-inventory/"
+ },
+ {
+  "question": "I ran this as a login that is not sysadmin and got fewer databases than I expected.",
+  "answer": "That is sys.databases doing what it is supposed to. A login only sees the databases it owns or has permission to see, so without VIEW ANY DATABASE you get a short list with no error and no warning. Check the permission before you treat the inventory as complete.",
+  "post_title": "DBA Scripts: Get Database Inventory",
+  "url": "https://sqldba.blog/dba-scripts-get-database-inventory/"
+ },
+ {
+  "question": "What is the difference between is_read_only and user_access_desc?",
+  "answer": "is_read_only is whether writes are refused. user_access_desc is who is allowed in at all. A database can be fully writable and still be sitting in SINGLE_USER from a maintenance operation nobody reversed, and that will stop a migration step just as hard as read only will.",
+  "post_title": "DBA Scripts: Get Database Inventory",
+  "url": "https://sqldba.blog/dba-scripts-get-database-inventory/"
+ },
+ {
+  "question": "log_reuse_wait_desc says NOTHING but the log is clearly not being reused.",
+  "answer": "The column reports what blocked reuse the last time SQL Server tried, not what is blocking it at the moment you look. Take a log backup or let a checkpoint run, then query it again, because a stale NOTHING and a genuine NOTHING look identical here.",
+  "post_title": "DBA Scripts: Get Database Inventory",
+  "url": "https://sqldba.blog/dba-scripts-get-database-inventory/"
  },
  {
   "question": "Do these counters reset?",
@@ -774,6 +924,12 @@
   "url": "https://sqldba.blog/dba-scripts-get-database-io-usage/"
  },
  {
+  "question": "Do I need sysadmin to run this?",
+  "answer": "For most of it, no \u2014 VIEW SERVER STATE covers the session count and the configuration rows. The xp_cmdshell value_in_use and the registry read behind force encryption both want sysadmin, so without it those two rows are the ones that quietly come back wrong rather than erroring.",
+  "post_title": "DBA Scripts: Get Database Mail and xp_cmdshell Configuration",
+  "url": "https://sqldba.blog/dba-scripts-get-database-mail-and-xp-cmd-shell/"
+ },
+ {
   "question": "Does disabling xp_cmdshell break anything?",
   "answer": "Only if something is actively relying on it. Check for SQL Agent jobs, linked application code, or maintenance scripts that call xp_cmdshell before disabling it in production.",
   "post_title": "DBA Scripts: Get Database Mail and xp_cmdshell Configuration",
@@ -781,7 +937,13 @@
  },
  {
   "question": "Is xp_cmdshell always a security risk?",
-  "answer": "It expands what's possible from a compromised session, so it's a risk in proportion to who can execute it and whether the instance has other vulnerabilities (like SQL injection in an application) that could reach it. It's not automatically dangerous on a locked-down, sysadmin-only instance, but it's disabled by default for good reason.",
+  "answer": "It expands what\u2019s possible from a compromised session, so it\u2019s a risk in proportion to who can execute it and whether the instance has other vulnerabilities (like SQL injection in an application) that could reach it. It\u2019s not automatically dangerous on a locked-down, sysadmin-only instance, but it\u2019s disabled by default for good reason.",
+  "post_title": "DBA Scripts: Get Database Mail and xp_cmdshell Configuration",
+  "url": "https://sqldba.blog/dba-scripts-get-database-mail-and-xp-cmd-shell/"
+ },
+ {
+  "question": "Why does ntlm connections show a configured value of 0 when the running value is higher?",
+  "answer": "Because that row is not a configuration setting. It is a live count of sessions authenticating with NTLM, and the script reports a hardcoded 0 in the configured column simply to keep the result set one shape. The same is true of force encryption, which is read from the registry. On those two rows a difference between the columns means nothing at all.",
   "post_title": "DBA Scripts: Get Database Mail and xp_cmdshell Configuration",
   "url": "https://sqldba.blog/dba-scripts-get-database-mail-and-xp-cmd-shell/"
  },
@@ -814,6 +976,30 @@
   "answer": "No, dropping a snapshot only removes the snapshot itself, the source database is completely unaffected. The one thing to confirm first is that nothing (a report, a rollback plan, a test process) still depends on reading from that specific snapshot.",
   "post_title": "DBA Scripts: Get Database Snapshot Inventory",
   "url": "https://sqldba.blog/dba-scripts-get-database-snapshot-inventory/"
+ },
+ {
+  "question": "Do copy-only backups affect these warnings?",
+  "answer": "For log backups, deliberately not. The log-backup check ignores copy-only backups, because a copy-only log backup writes a valid file and truncates nothing, so counting it would clear WARN:log-backup-overdue while the log carried on growing. Full backups are treated the opposite way and copy-only fulls still count, because a copy-only full is a perfectly good restore base.",
+  "post_title": "DBA Scripts: Get Database Summary",
+  "url": "https://sqldba.blog/dba-scripts-get-database-summary/"
+ },
+ {
+  "question": "Does a blank notes column mean my backups are restorable?",
+  "answer": "No, and it is worth being clear about the difference. Every backup check here reads msdb history and asks two things: does a row exist, and is it recent enough. It says nothing about whether the file is still on disk, whether the chain has a gap, or whether a restore would actually succeed. A blank notes column means nothing has been missed recently, not that you are covered.",
+  "post_title": "DBA Scripts: Get Database Summary",
+  "url": "https://sqldba.blog/dba-scripts-get-database-summary/"
+ },
+ {
+  "question": "I renamed a database and now it reads WARN:never-backed-up.",
+  "answer": "msdb.dbo.backupset records the name the database had when the backup ran, and this script joins on that name, so a rename orphans the whole history until the next backup runs under the new name. You get the same effect after restoring onto a new server, where msdb starts empty and every database reads as never backed up on day one.",
+  "post_title": "DBA Scripts: Get Database Summary",
+  "url": "https://sqldba.blog/dba-scripts-get-database-summary/"
+ },
+ {
+  "question": "days_since_full is NULL. Is that the same as WARN:never-backed-up?",
+  "answer": "For a user database, yes, they are the same fact shown twice: no full backup means there is no date to count from. For a system database it is neither, because the backup checks only apply to database_id > 4. That is why master and msdb can show an empty backup date and a blank notes column at the same time.",
+  "post_title": "DBA Scripts: Get Database Summary",
+  "url": "https://sqldba.blog/dba-scripts-get-database-summary/"
  },
  {
   "question": "Does SQL Server always pick the same session as the deadlock victim?",
@@ -870,16 +1056,34 @@
   "url": "https://sqldba.blog/dba-scripts-get-edition-feature-usage/"
  },
  {
-  "question": "How is this different from the Extended Events Tracing pillar?",
-  "answer": "The pillar covers scripts that create specific diagnostic XE sessions for a targeted investigation (decommission audits, login activity, SP execution tracing). This script is the inventory check, what\u2019s currently running, built-in or custom, regardless of which script (if any) created it.",
-  "post_title": "DBA Scripts: Get Extended Events Sessions",
-  "url": "https://sqldba.blog/dba-scripts-get-extended-events-sessions/"
+  "question": "A message is filed under a category I would not expect.",
+  "answer": "Categories are keyword matched and the first match wins, so an entry only ever lands in one bucket. A completion notice reading \u201cDatabase backed up\u201d does not contain the word backup, so it falls through to IO Issue instead of Backup / Restore. That is why latest_message is in the output: the category tells you where to look, the message tells you what you are looking at.",
+  "post_title": "DBA Scripts: Get Error Log Patterns",
+  "url": "https://sqldba.blog/dba-scripts-get-error-log-patterns/"
  },
  {
-  "question": "Why does a session disappear from the results after a restart?",
-  "answer": "Sessions aren\u2019t automatically recreated on restart unless they were created WITH (STARTUP_STATE = ON). A session that vanishes after a restart was either transient by design or needs that startup option added if it\u2019s meant to be permanent.",
-  "post_title": "DBA Scripts: Get Extended Events Sessions",
-  "url": "https://sqldba.blog/dba-scripts-get-extended-events-sessions/"
+  "question": "Can I trust a zero in Corruption / Integrity?",
+  "answer": "Within the window it reads, yes, and more than you could before. That branch is tested ahead of Backup and IO and it matches the forms the log actually writes, including Error: 823, Error: 824, Error: 825, the \u201clogical consistency-based I/O error\u201d text, suspect_pages, and a CHECKDB run that reported findings. A clean CHECKDB is filed as Informational so it cannot pad the count.",
+  "post_title": "DBA Scripts: Get Error Log Patterns",
+  "url": "https://sqldba.blog/dba-scripts-get-error-log-patterns/"
+ },
+ {
+  "question": "I asked for 24 hours and only got a handful of entries.",
+  "answer": "The read is against error log file 0, the current one, and nothing else. If the log was recycled inside your window, by sp_cycle_errorlog or an instance restart, everything before the recycle sits in an archive file this script never opens. Raising @HoursBack will not help, because those entries are in a file it is not reading.",
+  "post_title": "DBA Scripts: Get Error Log Patterns",
+  "url": "https://sqldba.blog/dba-scripts-get-error-log-patterns/"
+ },
+ {
+  "question": "I get a permission error running it.",
+  "answer": "xp_readerrorlog is what gates this script, and it needs membership of securityadmin or sysadmin. VIEW SERVER STATE on its own is not enough, so a monitoring account that runs the rest of this toolkit happily can still fail here.",
+  "post_title": "DBA Scripts: Get Error Log Patterns",
+  "url": "https://sqldba.blog/dba-scripts-get-error-log-patterns/"
+ },
+ {
+  "question": "Why is a clean CHECKDB not counted as an error?",
+  "answer": "Because both of its wordings contain the word errors. \u201cFinished without errors\u201d and \u201cfound 0 allocation errors and 0 consistency errors\u201d would otherwise be swept into Error / Failure by a keyword match, and a successful integrity check would inflate the very count you are scanning for trouble.",
+  "post_title": "DBA Scripts: Get Error Log Patterns",
+  "url": "https://sqldba.blog/dba-scripts-get-error-log-patterns/"
  },
  {
   "question": "What does a read-only filegroup at low free % mean?",
@@ -892,6 +1096,36 @@
   "answer": "Autogrow and out-of-space errors happen at the file level, inside a specific filegroup. A database can show comfortable free space overall while one filegroup, often the default one receiving new objects, is nearly full. This script isolates that.",
   "post_title": "DBA Scripts: Get Filegroup Space",
   "url": "https://sqldba.blog/dba-scripts-get-filegroup-space/"
+ },
+ {
+  "question": "Are heaps always bad?",
+  "answer": "No, tiny, static lookup tables can be heaps safely. Anything large or frequently updated should not be.",
+  "post_title": "DBA Scripts: Get Heaps",
+  "url": "https://sqldba.blog/dba-scripts-get-heaps/"
+ },
+ {
+  "question": "Do heaps affect delete performance?",
+  "answer": "Yes. Deleted space is not reclaimed until a rebuild.",
+  "post_title": "DBA Scripts: Get Heaps",
+  "url": "https://sqldba.blog/dba-scripts-get-heaps/"
+ },
+ {
+  "question": "Was forwarded_fetch_count removed in SQL Server 2025?",
+  "answer": "No. It is still a returned column of sys.dm_db_index_operational_stats, and Microsoft still documents it for SQL Server 2025. Re-running this script against a 2025 RTM CU8 lab instance on 2026-09-01 returned the column with a value of 0 on every heap, which is a real reading rather than a missing column. An earlier version of this page said the column had been removed. That was wrong, and it has been corrected.",
+  "post_title": "DBA Scripts: Get Heaps",
+  "url": "https://sqldba.blog/dba-scripts-get-heaps/"
+ },
+ {
+  "question": "What is a heap?",
+  "answer": "A heap is a table without a clustered index. SQL Server stores its rows without any guaranteed order, which leads to full scans, forwarded records, and poor delete behaviour.",
+  "post_title": "DBA Scripts: Get Heaps",
+  "url": "https://sqldba.blog/dba-scripts-get-heaps/"
+ },
+ {
+  "question": "Why do forwarded records matter?",
+  "answer": "They force SQL Server to perform extra IO to chase pointers, slowing down lookups and scans.",
+  "post_title": "DBA Scripts: Get Heaps",
+  "url": "https://sqldba.blog/dba-scripts-get-heaps/"
  },
  {
   "question": "How do I know if a query has an implicit conversion problem?",
@@ -1032,6 +1266,30 @@
   "url": "https://sqldba.blog/dba-scripts-get-last-node-blip/"
  },
  {
+  "question": "Do log shipping secondaries show up?",
+  "answer": "Yes. Every RESTORE LOG is recorded, so a log shipping secondary shows a restore every few minutes with restore_type of Log and days_since_restore at 0. That is expected and is not a DR test; look for the Full and Differential restores when you are checking whether backups have been proven.",
+  "post_title": "DBA Scripts: Get Last Restore History",
+  "url": "https://sqldba.blog/dba-scripts-get-last-restore-history/"
+ },
+ {
+  "question": "How far back does the history go?",
+  "answer": "As far back as msdb has kept it. SQL Server never trims backup and restore history on its own, so on an instance nobody has cleaned up it goes back to the first restore ever run there. If a maintenance plan runs the History Cleanup task, anything older than its retention is gone, which is why an old restore can vanish from this list without anyone restoring anything.",
+  "post_title": "DBA Scripts: Get Last Restore History",
+  "url": "https://sqldba.blog/dba-scripts-get-last-restore-history/"
+ },
+ {
+  "question": "What does the NO RESTORE HISTORY row mean?",
+  "answer": "That msdb on this instance has never recorded a restore. On a lab that is normal. On a production instance it means no restore has ever been tested here, or the history has been cleaned out, and either way the backups are unproven until someone restores one.",
+  "post_title": "DBA Scripts: Get Last Restore History",
+  "url": "https://sqldba.blog/dba-scripts-get-last-restore-history/"
+ },
+ {
+  "question": "Why is a database missing from the list?",
+  "answer": "It only appears if it has been restored on this instance, because msdb.dbo.restorehistory is instance-local. A database that was restored on another server and then attached, detached or migrated here has no row, and neither does one whose history was purged by sp_delete_backuphistory or a maintenance plan cleanup task.",
+  "post_title": "DBA Scripts: Get Last Restore History",
+  "url": "https://sqldba.blog/dba-scripts-get-last-restore-history/"
+ },
+ {
   "question": "Does a catch-all mapping always mean a problem?",
   "answer": "Not automatically, some environments deliberately use one shared service account for simplicity. But it does mean anyone with access to run a query through that linked server inherits that identity\u2019s full permissions on the remote side, worth confirming it\u2019s an intentional choice, not a forgotten default.",
   "post_title": "DBA Scripts: Get Linked Servers",
@@ -1075,13 +1333,13 @@
  },
  {
   "question": "How is this different from Permissions and Role Membership?",
-  "answer": "Permissions and Role Membership answers \u201cwhat can this login actually do,\u201d explicit grants, role memberships, server roles. Get-LoginInventory just answers \u201cwhat logins exist,\u201d a plain checklist, useful specifically when you need a source list to build a migration script from, not an access audit.",
+  "answer": "Permissions and Role Membership answers \"what can this login actually do,\" explicit grants, role memberships, server roles. Get-LoginInventory just answers \"what logins exist,\" a plain checklist, useful specifically when you need a source list to build a migration script from, not an access audit.",
   "post_title": "DBA Scripts: Get Login and Job Inventory",
   "url": "https://sqldba.blog/dba-scripts-get-login-and-job-inventory/"
  },
  {
-  "question": "Why does Get-JobInventory show \u201c(unknown)\u201d for some job owners?",
-  "answer": "A job\u2019s owner_sid no longer matching any current server login, usually because the original owner login was dropped after the job was created. Worth investigating and reassigning to a current login before it becomes a real problem, an unowned job can fail unexpectedly depending on how SQL Agent resolves execution context.",
+  "question": "Why does Get-JobInventory show \"(unknown)\" for some job owners?",
+  "answer": "A job's owner_sid no longer matching any current server login, usually because the original owner login was dropped after the job was created. Worth investigating and reassigning to a current login before it becomes a real problem, an unowned job can fail unexpectedly depending on how SQL Agent resolves execution context.",
   "post_title": "DBA Scripts: Get Login and Job Inventory",
   "url": "https://sqldba.blog/dba-scripts-get-login-and-job-inventory/"
  },
@@ -1254,6 +1512,12 @@
   "url": "https://sqldba.blog/dba-scripts-get-open-transactions/"
  },
  {
+  "question": "The open transaction belongs to a scheduled job. Is that different?",
+  "answer": "Yes, and it changes what fixing it means. Killing the session frees the transaction, but the job runs again on its next schedule and does exactly the same thing, so you have bought time rather than fixed anything. Treat it as a design question instead. A job that opens a transaction at the start of its run and commits at the end holds locks and pins the log for its entire duration, even while it is doing nothing interesting. Committing in batches, or moving the transaction inside the loop so each unit of work commits on its own, usually removes the problem without the job losing anything. It is worth checking your own monitoring and collector jobs specifically. They run constantly, nobody watches them, and a collector holding a transaction open for the length of its run is easy to miss precisely because it is supposed to be there.",
+  "post_title": "DBA Scripts: Get Open Transactions",
+  "url": "https://sqldba.blog/dba-scripts-get-open-transactions/"
+ },
+ {
   "question": "Why does sql_text show NULL for some rows?",
   "answer": "SQL text is only available for a session with a currently active request. A session that\u2019s sleeping with an open transaction already finished its last statement, the transaction itself is just still open, so there\u2019s no current request to read text from.",
   "post_title": "DBA Scripts: Get Open Transactions",
@@ -1351,7 +1615,7 @@
  },
  {
   "question": "Does enabling Query Store slow anything down?",
-  "answer": "The overhead is generally small (single-digit percent, workload-dependent) and it\u2019s on by default for new databases since SQL Server 2016\u2019s successors. For most workloads the visibility is worth the cost; test on a representative workload if you\u2019re cautious.",
+  "answer": "The overhead is generally small (single-digit percent, workload-dependent) and it is on by default for new databases from SQL Server 2022. For most workloads the visibility is worth the cost; test on a representative workload if you\u2019re cautious.",
   "post_title": "DBA Scripts: Get Query Store Top Queries",
   "url": "https://sqldba.blog/dba-scripts-get-query-store-top-queries/"
  },
@@ -1440,14 +1704,32 @@
   "url": "https://sqldba.blog/dba-scripts-get-service-broker-health-and-database-mail-queue/"
  },
  {
+  "question": "Can this tell a proper service account from someone\u2019s personal login?",
+  "answer": "No, and it does not pretend to. DOMAIN\\svc_sql and DOMAIN\\peter are indistinguishable from the account name alone, so both are reported the same way: OK - dedicated service account. That OK only means the account is not LocalSystem or NetworkService. It is not a check that anyone has confirmed the account is a real service account. It is worth confirming, because a personal account is the one that takes the service down at the next password expiry, and it usually happens while that person is on leave.",
+  "post_title": "DBA Scripts: Get Services Information",
+  "url": "https://sqldba.blog/dba-scripts-get-services-information/"
+ },
+ {
+  "question": "Is NT Service\\MSSQLSERVER a managed service account?",
+  "answer": "No, and the distinction matters if anyone ever audits you on it. That is a virtual account: local to the machine, created per service, with its password managed by Windows. A managed service account is a domain account named DOMAIN\\ACCOUNTNAME$, and a group managed service account is the same thing shared across several servers. Microsoft's reference keeps all three separate. Virtual accounts are the Microsoft default and are the right answer for a standalone instance that never reaches off the box. You want an MSA or gMSA when the service needs to authenticate somewhere else, such as a backup share or a linked server.",
+  "post_title": "DBA Scripts: Get Services Information",
+  "url": "https://sqldba.blog/dba-scripts-get-services-information/"
+ },
+ {
   "question": "Is running SQL Server as LocalSystem actually dangerous?",
-  "answer": "Yes, on a shared or multi-role server. LocalSystem has unrestricted access to the local machine, well beyond what the SQL Server process needs. A dedicated service account, managed service account, or group managed service account (gMSA) keeps the blast radius contained if the account is ever compromised.",
+  "answer": "Yes, on a shared or multi-role server. LocalSystem has unrestricted access to the local machine, well beyond what the SQL Server process needs. A virtual account, managed service account or gMSA keeps the blast radius contained if the account is ever compromised.",
+  "post_title": "DBA Scripts: Get Services Information",
+  "url": "https://sqldba.blog/dba-scripts-get-services-information/"
+ },
+ {
+  "question": "Why is Launchpad flagged when Browser and Full-text are not?",
+  "answer": "Browser and Full-text are exempt from the Manual warning, and Browser from the stopped warning, because they are not always required. Anything else optional is not exempt: a stopped Launchpad on an instance that never runs R or Python will show a WARN. That is a judgement call the script leaves to you rather than encoding. Read the risk columns as prompts, not verdicts.",
   "post_title": "DBA Scripts: Get Services Information",
   "url": "https://sqldba.blog/dba-scripts-get-services-information/"
  },
  {
   "question": "Why is SQL Server Agent set to Manual instead of Automatic?",
-  "answer": "Usually an oversight from the original build rather than a deliberate choice. Automatic is correct for almost every production instance, since Agent-dependent jobs (backups, maintenance, collectors) need it running after every reboot without manual intervention.",
+  "answer": "Usually an oversight from the original build rather than a deliberate choice. Automatic is correct for almost every production instance, since Agent-dependent jobs (backups, maintenance, collectors) need it running after every reboot without anyone intervening.",
   "post_title": "DBA Scripts: Get Services Information",
   "url": "https://sqldba.blog/dba-scripts-get-services-information/"
  },
@@ -1471,7 +1753,7 @@
  },
  {
   "question": "Why does a job show no last run date at all?",
-  "answer": "It has never executed since it was created, either because it\u2019s disabled, its schedule hasn\u2019t triggered yet, or it was created without a schedule and is meant to be run manually.",
+  "answer": "It has never executed since it was created, either because it's disabled, its schedule hasn't triggered yet, or it was created without a schedule and is meant to be run manually.",
   "post_title": "DBA Scripts: Get SQL Agent Job Overview",
   "url": "https://sqldba.blog/dba-scripts-get-sql-agent-job-overview/"
  },
@@ -1542,6 +1824,12 @@
   "url": "https://sqldba.blog/dba-scripts-get-sysadmin-members/"
  },
  {
+  "question": "Why does the script return fewer rows than I expect?",
+  "answer": "Almost always permissions. Listing every member of sysadmin needs VIEW ANY DEFINITION, which sysadmin and securityadmin hold implicitly. Without it SQL Server returns only the principals you can see instead of raising an error, so the result looks like a short, healthy list. Run the HAS_PERMS_BY_NAME check above before trusting a small number.",
+  "post_title": "DBA Scripts: Get Sysadmin Members",
+  "url": "https://sqldba.blog/dba-scripts-get-sysadmin-members/"
+ },
+ {
   "question": "Why don\u2019t I see members of Windows groups?",
   "answer": "SQL Server stores only the Windows group as the sysadmin member. Individual users are resolved by Active Directory, so you\u2019ll need to inspect the group\u2019s membership outside SQL Server.",
   "post_title": "DBA Scripts: Get Sysadmin Members",
@@ -1602,20 +1890,68 @@
   "url": "https://sqldba.blog/dba-scripts-get-top-cpu-queries/"
  },
  {
+  "question": "Can Resource Governor lock me out of my own instance?",
+  "answer": "A classifier function can, yes. It runs for every new session, so a slow one causes connection timeouts and a wrong one can route your own sessions into a starved pool. Microsoft\u2019s advice is to keep classifiers simple and avoid data access inside them. The way back in is the dedicated administrator connection, which is not subject to classification at all. Enabling it and knowing how to use it before you turn Resource Governor on is the difference between a five minute fix and a restart.",
+  "post_title": "DBA Scripts: Get Trace Flags and Resource Governor Configuration",
+  "url": "https://sqldba.blog/dba-scripts-get-trace-flags-and-resource-governor/"
+ },
+ {
+  "question": "Do I still need trace flags 1204 and 1222 now that Extended Events exists?",
+  "answer": "Almost certainly not. Microsoft\u2019s deadlocks guide is explicit on both halves of this: the system_health session captures xml_deadlock_report events by default, and because that session is enabled by default you do not need to configure a separate session to capture deadlock information. The same guide advises avoiding trace flags 1204 and 1222 on workload-intensive systems that are experiencing deadlocks, which is exactly the situation that makes somebody reach for them. Both flags predate Extended Events, and they write deadlock detail to the error log because that was the only place to put it at the time. Finding either one set on an inherited server usually means it was switched on during an incident years ago and never switched off. Deadlock Summary reads the graph straight out of system_health, and deadlock troubleshooting covers what to do with it.",
+  "post_title": "DBA Scripts: Get Trace Flags and Resource Governor Configuration",
+  "url": "https://sqldba.blog/dba-scripts-get-trace-flags-and-resource-governor/"
+ },
+ {
   "question": "Does Resource Governor being disabled mean it\u2019s not configured at all?",
-  "answer": "No, pools and workload groups can exist (as seen in the default / internal rows here) even while rg_enabled = False. Disabled just means the configuration isn\u2019t active, re-enabling with ALTER RESOURCE GOVERNOR RECONFIGURE would immediately activate whatever pools and classifier are already defined.",
+  "answer": "No. Pools and workload groups can exist, as the default and internal rows in the output above show, while rg_enabled is 0. Disabled means the configuration is not being applied. Running ALTER RESOURCE GOVERNOR RECONFIGURE would immediately activate whatever pools and classifier are already defined, which is worth reading before you enable it on a server you inherited.",
+  "post_title": "DBA Scripts: Get Trace Flags and Resource Governor Configuration",
+  "url": "https://sqldba.blog/dba-scripts-get-trace-flags-and-resource-governor/"
+ },
+ {
+  "question": "I ran DBCC TRACEOFF and the flag came back after a restart. Why?",
+  "answer": "Because it was set as a -T startup parameter on the service, not at runtime. DBCC TRACEOFF clears the flag from the running instance either way, so it looks like it worked, and the flag returns the next time SQL Server starts. Check the startup parameters in SQL Server Configuration Manager. If the flag is listed there, that is where it has to be removed, and the change needs a restart to take effect.",
   "post_title": "DBA Scripts: Get Trace Flags and Resource Governor Configuration",
   "url": "https://sqldba.blog/dba-scripts-get-trace-flags-and-resource-governor/"
  },
  {
   "question": "Is it safe to just remove a trace flag I don\u2019t recognize?",
-  "answer": "Not without understanding why it\u2019s there first. Some trace flags fix a specific documented issue, removing one blindly can reintroduce the exact problem it was set to work around. Check the description this script provides, then confirm against Microsoft\u2019s own documentation before changing anything in production.",
+  "answer": "Not without understanding why it\u2019s there first. Some trace flags fix a specific documented issue, removing one blindly can reintroduce the exact problem it was set to work around. Check the description this script provides, confirm it against the Microsoft trace flag reference, then decide.",
   "post_title": "DBA Scripts: Get Trace Flags and Resource Governor Configuration",
   "url": "https://sqldba.blog/dba-scripts-get-trace-flags-and-resource-governor/"
  },
  {
+  "question": "Which of these trace flags still do anything on SQL Server 2022 or 2025?",
+  "answer": "Fewer than you would expect. Of the 35 flags this script describes, roughly half have no effect on SQL Server 2016 and later. 1117 and 1118 were replaced by AUTOGROW_ALL_FILES and MIXED_PAGE_ALLOCATION. 2371, 6498, 8048 and 8075 are all controlled by the engine now. 7412 does nothing from SQL Server 2019, and 7752 (which the QDS_LOADDB wait post covers in its own right) stopped mattering there too. 845 has been the Standard edition default since SQL Server 2012 and Microsoft state it must not be used. 460 is the odd one out: it is governed by compatibility level rather than version, and it is the flag behind the truncation message that does not name the column. That is what the current_status column is for. The flag is still reported as ON in every one of those cases, which is precisely why they survive migration after migration.",
+  "post_title": "DBA Scripts: Get Trace Flags and Resource Governor Configuration",
+  "url": "https://sqldba.blog/dba-scripts-get-trace-flags-and-resource-governor/"
+ },
+ {
+  "question": "Why is classifier_function NULL when I know a classifier exists?",
+  "answer": "If you are running an older copy of this script, the name resolution was the problem rather than the configuration. Microsoft require the classifier function to live in the master database, but OBJECT_NAME resolves against whichever database you are connected to. Run it from a user database and the name comes back NULL even when a classifier is configured and working. The version on this page passes DB_ID(N\u2019master\u2019) as the second argument to both OBJECT_NAME and OBJECT_SCHEMA_NAME, so it resolves from any database. If it still returns NULL while rg_state reads ENABLED, that is the real finding: the configuration is inert.",
+  "post_title": "DBA Scripts: Get Trace Flags and Resource Governor Configuration",
+  "url": "https://sqldba.blog/dba-scripts-get-trace-flags-and-resource-governor/"
+ },
+ {
+  "question": "How often should I check transaction log sizes?",
+  "answer": "As part of regular maintenance, daily for critical systems, weekly for others, especially after heavy transactions or if disk space becomes constrained.",
+  "post_title": "DBA Scripts: Get Transaction Log Size and Usage",
+  "url": "https://sqldba.blog/dba-scripts-get-transaction-log-size-and-usage/"
+ },
+ {
+  "question": "What is Transaction Log Size and Usage?",
+  "answer": "It indicates how much space the transaction log occupies, how much is used, free space, and the percentage used, helping DBAs monitor log health and growth.",
+  "post_title": "DBA Scripts: Get Transaction Log Size and Usage",
+  "url": "https://sqldba.blog/dba-scripts-get-transaction-log-size-and-usage/"
+ },
+ {
+  "question": "Why does my log show 100% used even after a backup?",
+  "answer": "Those are two different columns, and the difference is the whole answer. A log backup frees space inside the file; it does not make the file smaller, so log_size_mb stays exactly where it was. What should move is log_used_pct \u2014 a backup that truncates successfully drops it. So if the percentage is still near 100 after a log backup, truncation did not happen, and the reason is sitting in log_reuse_wait_desc: an open transaction, an availability replica that has not caught up, replication that has not read the log yet. Read that column next. DBCC SHRINKFILE is the wrong reach here \u2014 it cannot free space that something is still holding, and on a log that is genuinely full it does nothing at all.",
+  "post_title": "DBA Scripts: Get Transaction Log Size and Usage",
+  "url": "https://sqldba.blog/dba-scripts-get-transaction-log-size-and-usage/"
+ },
+ {
   "question": "How long should I wait before trusting \u201cunused\u201d results?",
-  "answer": "At least 2-4 weeks of representative workload for most OLTP systems, longer if the environment has monthly or quarterly jobs. Check sqlserver_start_time to see how long the current stats window actually covers.",
+  "answer": "At least 2-4 weeks of representative workload for most OLTP systems, longer if the environment has monthly or quarterly jobs. Check sqlserver_start_time in sys.dm_os_sys_info to see how long the current stats window actually covers.",
   "post_title": "DBA Scripts: Get Unused Indexes",
   "url": "https://sqldba.blog/dba-scripts-get-unused-indexes/"
  },
@@ -1855,7 +2191,7 @@
  },
  {
   "question": "What is worth checking before an install rather than after?",
-  "answer": "Everything painful to change later: drive layout, service accounts, collation, and tempdb file configuration. Collation in particular is effectively permanent once databases exist. SQL Server Collation and the Cross-Database Trap, in Related Scripts below, covers that in full.",
+  "answer": "Everything painful to change later: drive layout, service accounts, collation, and tempdb file configuration. Collation in particular is effectively permanent once databases exist.",
   "post_title": "DBA Scripts: SQL Server Installation and Patching",
   "url": "https://sqldba.blog/dba-scripts-installation-and-patching/"
  },
@@ -1873,7 +2209,7 @@
  },
  {
   "question": "How often should DBCC CHECKDB run?",
-  "answer": "Weekly is a reasonable default for most systems, more often for anything where corruption would be expensive to discover late. The point is knowing when it last ran successfully, which is a question a surprising number of estates cannot answer. DBCC CHECKDB Found Corruption, in Related Scripts below, covers that in full.",
+  "answer": "Weekly is a reasonable default for most systems, more often for anything where corruption would be expensive to discover late. The point is knowing when it last ran successfully, which is a question a surprising number of estates cannot answer.",
   "post_title": "DBA Scripts: Maintenance and Automation",
   "url": "https://sqldba.blog/dba-scripts-maintenance-and-automation/"
  },
@@ -1939,7 +2275,7 @@
  },
  {
   "question": "How do I check compatibility before moving to a newer version?",
-  "answer": "Look at deprecated feature usage and compatibility level before the move, not after. A database restored to a newer instance keeps its old compatibility level, which delays the problem to the day someone changes it. Compatibility Levels: What Actually Changes, in Related Scripts below, covers that in full.",
+  "answer": "Look at deprecated feature usage and compatibility level before the move, not after. A database restored to a newer instance keeps its old compatibility level, which delays the problem to the day someone changes it.",
   "post_title": "DBA Scripts: SQL Server Migration Script Generators",
   "url": "https://sqldba.blog/dba-scripts-migration-script-generators/"
  },
@@ -1987,7 +2323,7 @@
  },
  {
   "question": "Is high CXPACKET a problem on its own?",
-  "answer": "Not by itself. Parallelism waits are normal on a server running parallel plans; they become a signal when paired with an unsuitable MAXDOP or a cost threshold left at the default of 5, which sends trivial queries parallel. Get MAXDOP Configuration, in Related Scripts below, covers that in full.",
+  "answer": "Not by itself. Parallelism waits are normal on a server running parallel plans; they become a signal when paired with an unsuitable MAXDOP or a cost threshold left at the default of 5, which sends trivial queries parallel.",
   "post_title": "DBA Scripts: Performance and Troubleshooting",
   "url": "https://sqldba.blog/dba-scripts-performance-and-troubleshooting/"
  },
@@ -2029,7 +2365,7 @@
  },
  {
   "question": "Are missing index recommendations safe to apply?",
-  "answer": "Treat them as evidence, not instructions. Each one is generated for a single query with no awareness of the indexes you already have or the write cost of another one. Read them next to index usage stats and consolidate before creating. Get Missing Indexes, in Related Scripts below, covers that in full.",
+  "answer": "Treat them as evidence, not instructions. Each one is generated for a single query with no awareness of the indexes you already have or the write cost of another one. Read them next to index usage stats and consolidate before creating.",
   "post_title": "DBA Scripts: Query and Performance Tuning",
   "url": "https://sqldba.blog/dba-scripts-query-and-performance-tuning/"
  },
@@ -2047,7 +2383,7 @@
  },
  {
   "question": "Where should I start when a query is slow?",
-  "answer": "With what the server is waiting on, not with the query text. The wait tells you whether you are looking at I/O, locking, CPU or a memory grant, and those four lead to completely different fixes. Troubleshoot RESOURCE_SEMAPHORE Waits, in Related Scripts below, covers that in full.",
+  "answer": "With what the server is waiting on, not with the query text. The wait tells you whether you are looking at I/O, locking, CPU or a memory grant, and those four lead to completely different fixes.",
   "post_title": "DBA Scripts: Query and Performance Tuning",
   "url": "https://sqldba.blog/dba-scripts-query-and-performance-tuning/"
  },
@@ -2107,7 +2443,7 @@
  },
  {
   "question": "What should I check first on a server I have never seen?",
-  "answer": "Version and edition, then whatever has been changed from the defaults. Edition determines which features are even legal to use, and non-default configuration is where the surprises live: MAXDOP, max memory, and trace flags someone set years ago for a reason nobody recorded. Get MAXDOP Configuration, in Related Scripts below, covers that in full.",
+  "answer": "Version and edition, then whatever has been changed from the defaults. Edition determines which features are even legal to use, and non-default configuration is where the surprises live: MAXDOP, max memory, and trace flags someone set years ago for a reason nobody recorded.",
   "post_title": "DBA Scripts: Server and Configuration",
   "url": "https://sqldba.blog/dba-scripts-server-and-configuration/"
  },
@@ -2118,8 +2454,26 @@
   "url": "https://sqldba.blog/dba-scripts-server-and-configuration/"
  },
  {
+  "question": "Do I need sysadmin to run these?",
+  "answer": "Mostly no. Version, edition, hardware and configuration reads need VIEW SERVER STATE, and the database inventory needs VIEW ANY DATABASE or you will silently get a short list. The linked server credential check is the one that genuinely needs more, because the permissions it reports are the ones it has to read.",
+  "post_title": "DBA Scripts: Server Inventory",
+  "url": "https://sqldba.blog/dba-scripts-server-inventory/"
+ },
+ {
+  "question": "How often is this worth re-running?",
+  "answer": "Version, edition and patch level on whatever schedule your patching runs, because that is the one that changes underneath you. Configuration and linked servers when something changes or before a migration. The hardware read only when the box does.",
+  "post_title": "DBA Scripts: Server Inventory",
+  "url": "https://sqldba.blog/dba-scripts-server-inventory/"
+ },
+ {
   "question": "Is a linked server inventory really part of an inventory?",
   "answer": "Yes, and it is the part people forget. Linked servers are how a problem on one instance becomes a problem on another, and they carry credentials, so they are a security question as much as an inventory one.",
+  "post_title": "DBA Scripts: Server Inventory",
+  "url": "https://sqldba.blog/dba-scripts-server-inventory/"
+ },
+ {
+  "question": "What does this pillar deliberately not cover?",
+  "answer": "Space and growth, which is the Storage and Capacity pillar, and anything about workload: waits, blocking and query performance all assume you have already been through this. Inventory tells you what a server is, not how well it is running.",
   "post_title": "DBA Scripts: Server Inventory",
   "url": "https://sqldba.blog/dba-scripts-server-inventory/"
  },
@@ -2209,13 +2563,13 @@
  },
  {
   "question": "Does a recent full backup mean the database is fully protected?",
-  "answer": "Not on its own. A FULL recovery model database also needs regular log backup s for point-in-time recovery. Check all three columns, full, differential, and log, not just the full backup date.",
+  "answer": "Not on its own. A FULL recovery model database also needs regular log backups for point-in-time recovery. Check all three columns, full, differential, and log, not just the full backup date.",
   "post_title": "DBA Scripts: Get Last Database Backup Times",
   "url": "https://sqldba.blog/get-last-database-backup-times-in-sql-server/"
  },
  {
   "question": "How often should I check last backup times?",
-  "answer": "As part of every routine health check, and always as a first step on any server you didn't personally configure. It takes one query and answers the single most important question about a database's recoverability.",
+  "answer": "As part of every routine health check, and always as a first step on any server you didn\u2019t personally configure. It takes one query and answers the single most important question about a database\u2019s recoverability.",
   "post_title": "DBA Scripts: Get Last Database Backup Times",
   "url": "https://sqldba.blog/get-last-database-backup-times-in-sql-server/"
  },
@@ -2244,8 +2598,26 @@
   "url": "https://sqldba.blog/github-copilot-in-ssms/"
  },
  {
+  "question": "I granted it and nothing changed.",
+  "answer": "Look for a DENY, including one inherited from a Windows group. DENY always beats GRANT, no matter which is more specific or which came last.",
+  "post_title": "Grant VIEW SERVER STATE in SQL Server",
+  "url": "https://sqldba.blog/grant-view-server-state-in-sql-server/"
+ },
+ {
   "question": "Is VIEW SERVER STATE safe to grant?",
   "answer": "Yes. It is read-only. It exposes what the server is doing, sessions, waits, query text and plans, and grants no ability to change anything, read user data or alter security. It is the correct alternative to handing out sysadmin.",
+  "post_title": "Grant VIEW SERVER STATE in SQL Server",
+  "url": "https://sqldba.blog/grant-view-server-state-in-sql-server/"
+ },
+ {
+  "question": "The DMV returns 1 row instead of the whole instance.",
+  "answer": "That is the same permission problem wearing a disguise. Without VIEW SERVER STATE several DMVs quietly show you only your own session rather than erroring.",
+  "post_title": "Grant VIEW SERVER STATE in SQL Server",
+  "url": "https://sqldba.blog/grant-view-server-state-in-sql-server/"
+ },
+ {
+  "question": "The message says VIEW SERVER PERFORMANCE STATE, not VIEW SERVER STATE. Which do I grant?",
+  "answer": "Either. SQL Server 2022 split VIEW SERVER STATE into two narrower children, VIEW SERVER PERFORMANCE STATE for the performance DMVs and VIEW SERVER SECURITY STATE for the security ones, and the denial now names the one the DMV needs. GRANT VIEW SERVER STATE covers both; grant the narrower one when the login genuinely only needs that half.",
   "post_title": "Grant VIEW SERVER STATE in SQL Server",
   "url": "https://sqldba.blog/grant-view-server-state-in-sql-server/"
  },
@@ -2287,7 +2659,7 @@
  },
  {
   "question": "How do I update SSMS to the latest version?",
-  "answer": "Open the Visual Studio Installer, find the SSMS entry and click Update. Since SSMS 21 there is no separate download to chase, the installer handles updates, and SSMS 22 ships them roughly monthly. For more than one machine, the scripted install and update does the same thing silently.",
+  "answer": "Open the Visual Studio Installer, find the SSMS entry and click Update. Since SSMS 21 there is no separate download to chase, the installer handles updates, and SSMS 22 has been shipping them every 1 to 2 weeks (22.9.0, 22.9.1, 22.9.2 and 22.10.0 all landed between 11 August and 8 September 2026). For more than one machine, the scripted install and update does the same thing silently.",
   "post_title": "Install and Update SQL Server Management Studio (SSMS)",
   "url": "https://sqldba.blog/install-and-update-sql-server-management-studio-ssms/"
  },
@@ -2296,6 +2668,30 @@
   "answer": "The Visual Studio Installer, deliberately, when you choose to. Update-on-close and in-app update prompts are fine for a personal workstation, but on a shared or controlled system they make it easy to lose track of when the client actually changed.",
   "post_title": "Install and Update SQL Server Management Studio (SSMS)",
   "url": "https://sqldba.blog/install-and-update-sql-server-management-studio-ssms/"
+ },
+ {
+  "question": "Do I need Windows Terminal for SQL Server work?",
+  "answer": "Not strictly \u2014 sqlcmd, PowerShell and SSMS all work without it. What it changes is the day: tabs and panes mean one window holding an elevated PowerShell, a WSL shell and a plain prompt at once, which is most of what remote SQL Server work looks like.",
+  "post_title": "Installing Windows Terminal on Windows",
+  "url": "https://sqldba.blog/installing-windows-terminal-on-windows/"
+ },
+ {
+  "question": "Is Windows Terminal the same as PowerShell?",
+  "answer": "No, and the distinction matters when something fails. Windows Terminal is the window; PowerShell, Command Prompt and WSL are shells that run inside it. If a script fails, the shell and its execution policy are what to look at, not the terminal.",
+  "post_title": "Installing Windows Terminal on Windows",
+  "url": "https://sqldba.blog/installing-windows-terminal-on-windows/"
+ },
+ {
+  "question": "It is installed but wt does nothing. Why?",
+  "answer": "Almost always because the shell was open before the install and its PATH is stale. Close it and open a new one. If it still fails, launch from the Start menu once, which is enough to register the app execution alias.",
+  "post_title": "Installing Windows Terminal on Windows",
+  "url": "https://sqldba.blog/installing-windows-terminal-on-windows/"
+ },
+ {
+  "question": "Which install method should I pick?",
+  "answer": "On a single machine, the Microsoft Store, because updates then look after themselves. On anything you build repeatedly, winget, because it is one line and it is already on the machine. Chocolatey and Scoop are worth it only if you already run one of them.",
+  "post_title": "Installing Windows Terminal on Windows",
+  "url": "https://sqldba.blog/installing-windows-terminal-on-windows/"
  },
  {
   "question": "Do I have to declare all thirteen columns?",
@@ -2322,6 +2718,42 @@
   "url": "https://sqldba.blog/log-and-filter-sp-who2-results/"
  },
  {
+  "question": "Does SQL Server check the database when I set it?",
+  "answer": "No, and this is the whole problem. Tested on SQL Server 2025: ALTER LOGIN accepted a default database in which the login had no user at all, with no warning. The next connection attempt for that login then failed. The setting is recorded faithfully and validated only at login time.",
+  "post_title": "Set the Default Database for a SQL Server Login",
+  "url": "https://sqldba.blog/set-the-default-database-for-a-sql-server-login/"
+ },
+ {
+  "question": "Is master a sensible default?",
+  "answer": "It is the safe default rather than a good one, and that is why SQL Server uses it. A login whose default is master will always connect, but people then create objects in master by accident because they forgot to switch. Point application logins at the database they actually use.",
+  "post_title": "Set the Default Database for a SQL Server Login",
+  "url": "https://sqldba.blog/set-the-default-database-for-a-sql-server-login/"
+ },
+ {
+  "question": "Should I use sp_defaultdb?",
+  "answer": "No. It still ships and it still works, but it is deprecated and Microsoft has said so for years. ALTER LOGIN is the supported route, works for Windows and SQL logins alike, and is what every current script uses.",
+  "post_title": "Set the Default Database for a SQL Server Login",
+  "url": "https://sqldba.blog/set-the-default-database-for-a-sql-server-login/"
+ },
+ {
+  "question": "What is the difference between default database and default schema?",
+  "answer": "Different things at different levels. The default database belongs to the login and decides which database you land in when you connect. The default schema belongs to a user inside one database and decides how unqualified object names resolve. A new user gets dbo. Changing one has no effect on the other.",
+  "post_title": "Set the Default Database for a SQL Server Login",
+  "url": "https://sqldba.blog/set-the-default-database-for-a-sql-server-login/"
+ },
+ {
+  "question": "Why do my logins point at databases that no longer exist?",
+  "answer": "Because dropping a database does not tidy up the logins that referenced it. Verified: after the database was dropped, the login still had its name recorded as the default. That is a quiet landmine after any decommission, and the audit query below finds them in one pass.",
+  "post_title": "Set the Default Database for a SQL Server Login",
+  "url": "https://sqldba.blog/set-the-default-database-for-a-sql-server-login/"
+ },
+ {
+  "question": "Will changing it affect people who are already connected?",
+  "answer": "No. It applies to the next connection. Anyone already connected keeps the session they have, which is why a change made during the day often appears to have done nothing until people reconnect the following morning.",
+  "post_title": "Set the Default Database for a SQL Server Login",
+  "url": "https://sqldba.blog/set-the-default-database-for-a-sql-server-login/"
+ },
+ {
   "question": "Does sp_whoisactive need sysadmin?",
   "answer": "No. It needs VIEW SERVER STATE to see other sessions\u2019 activity, the same permission the DMVs behind it require. Granting that is covered in Grant VIEW SERVER STATE in SQL Server.",
   "post_title": "sp_who vs sp_who2 vs sp_whoisactive in SQL Server",
@@ -2338,6 +2770,36 @@
   "answer": "Most of them are SQL Server\u2019s own background tasks rather than anything you started, and those are never candidates for KILL. Do not go by the number: on a SQL Server 2025 instance checked for this post, system sessions ran as high as 98 and the lowest user session was 56, so the old 50-and-below rule would have misread it. Filter on sys.dm_exec_sessions.is_user_process = 1 instead.",
   "post_title": "sp_who vs sp_who2 vs sp_whoisactive in SQL Server",
   "url": "https://sqldba.blog/sp-who-vs-sp-who2-vs-sp-whoisactive/"
+ },
+ {
+  "question": "Do I need to stop SQL Server Agent first?",
+  "answer": "Not to run the statement, but it helps. Agent holds connections to msdb, and those connections are part of what the ALTER is waiting on. Stopping Agent removes a reconnecting source of exactly the sessions you are trying to clear, which often lets a plain ENABLE_BROKER complete without forcing anything.",
+  "post_title": "SQL Server: ALTER DATABASE SET ENABLE_BROKER Taking a Long Time (Fix)",
+  "url": "https://sqldba.blog/sql-server-alter-database-set-enable-broker-hanging/"
+ },
+ {
+  "question": "How long should I wait before forcing it?",
+  "answer": "There is no useful timeout, because it will wait indefinitely. The question is not how long it has run, it is whether it is genuinely blocked. Run the sys.dm_exec_requests check below. If it names a blocking session, you are waiting on something real and you can decide whether to wait it out. If it does not, forcing the change will not help either.",
+  "post_title": "SQL Server: ALTER DATABASE SET ENABLE_BROKER Taking a Long Time (Fix)",
+  "url": "https://sqldba.blog/sql-server-alter-database-set-enable-broker-hanging/"
+ },
+ {
+  "question": "Is WITH ROLLBACK IMMEDIATE safe on a production database?",
+  "answer": "It is predictable rather than safe. It disconnects every other session and rolls back their in-flight transactions, so the cost is whatever those sessions were doing. On msdb that is usually tolerable because the workload is Agent jobs and mail. On a user database in the middle of a batch it is not. The rollback also has to finish before the change applies, so a long transaction does not disappear instantly just because you killed it.",
+  "post_title": "SQL Server: ALTER DATABASE SET ENABLE_BROKER Taking a Long Time (Fix)",
+  "url": "https://sqldba.blog/sql-server-alter-database-set-enable-broker-hanging/"
+ },
+ {
+  "question": "The command completed. Why is Database Mail still not sending?",
+  "answer": "Broker being enabled is a precondition, not the whole path. Check the mail queue itself and whether the Mail host is started, because a queue that stalled while broker was disabled does not always resume on its own. Service Broker Health and Database Mail Queue reads both in 1 pass.",
+  "post_title": "SQL Server: ALTER DATABASE SET ENABLE_BROKER Taking a Long Time (Fix)",
+  "url": "https://sqldba.blog/sql-server-alter-database-set-enable-broker-hanging/"
+ },
+ {
+  "question": "Will this survive the next failover?",
+  "answer": "Only on the node you ran it against. msdb is per instance, so the fix has to be applied on every replica. If you have only fixed the active node, the next failover puts you back where you started.",
+  "post_title": "SQL Server: ALTER DATABASE SET ENABLE_BROKER Taking a Long Time (Fix)",
+  "url": "https://sqldba.blog/sql-server-alter-database-set-enable-broker-hanging/"
  },
  {
   "question": "How do I see what is really in the backup file?",
@@ -2395,7 +2857,7 @@
  },
  {
   "question": "Is TRUSTWORTHY involved?",
-  "answer": "Sometimes, but treat it separately. A database that relies on EXECUTE AS reaching outside itself needs either TRUSTWORTHY ON (broad, discouraged) or module signing (narrow, preferred). If your 15517 appeared after a restore, fix the owner first; TRUSTWORTHY also resets to OFF on every restore (measured on SQL Server 2025: ON before the backup, OFF after the restore) and is its own follow-up decision, not an automatic switch to flip.",
+  "answer": "Sometimes, but treat it separately. A database that relies on EXECUTE AS reaching outside itself needs either TRUSTWORTHY ON (broad, discouraged) or module signing (narrow, preferred). If your 15517 appeared after a restore, fix the owner first; TRUSTWORTHY resets to OFF when the backup is restored as a new database or after the original was dropped (measured on SQL Server 2025: ON before the backup, OFF after the restore), while a RESTORE WITH REPLACE over the same database kept it ON in the same test, so check is_trustworthy_on rather than assuming. Either way it is its own follow-up decision, not an automatic switch to flip.",
   "post_title": "Cannot Execute As the Database Principal (Error 15517)",
   "url": "https://sqldba.blog/sql-server-cannot-execute-as-database-principal-15517/"
  },
@@ -2412,8 +2874,20 @@
   "url": "https://sqldba.blog/sql-server-cannot-execute-as-database-principal-15517/"
  },
  {
+  "question": "Why does it say dbo does not exist? dbo always exists.",
+  "answer": "The user dbo exists; the login it maps to does not. dbo is a mapping to the database owner\u2019s SID, and when that SID matches no login on the instance, impersonating dbo has no identity to resolve to. Fix the owner, not the user.",
+  "post_title": "Cannot Execute As the Database Principal (Error 15517)",
+  "url": "https://sqldba.blog/sql-server-cannot-execute-as-database-principal-15517/"
+ },
+ {
   "question": "Did any rows get inserted before it failed?",
   "answer": "For a single statement, no. The statement is terminated and the whole thing rolls back, so you do not get a partial row. A multi-row VALUES list is still one statement, so the same applies: all of it or none of it.",
+  "post_title": "Cannot Insert the Value NULL Into Column (Error 515)",
+  "url": "https://sqldba.blog/sql-server-cannot-insert-the-value-null-515/"
+ },
+ {
+  "question": "It is an ORM or an application doing the insert.",
+  "answer": "Then cause one is far more likely than cause two, because those layers usually send every column. Something in the object is null where the column is not nullable. The message names the column, which maps back to the property.",
   "post_title": "Cannot Insert the Value NULL Into Column (Error 515)",
   "url": "https://sqldba.blog/sql-server-cannot-insert-the-value-null-515/"
  },
@@ -2424,10 +2898,22 @@
   "url": "https://sqldba.blog/sql-server-cannot-insert-the-value-null-515/"
  },
  {
+  "question": "The message names a column I did not touch.",
+  "answer": "Then you probably left it out. Omitting a NOT NULL column with no default gives the same message as inserting NULL into it. Compare the named column against your column list first, before looking at the data.",
+  "post_title": "Cannot Insert the Value NULL Into Column (Error 515)",
+  "url": "https://sqldba.blog/sql-server-cannot-insert-the-value-null-515/"
+ },
+ {
   "question": "Why does my default constraint not work?",
   "answer": "Because you are passing the column explicitly with a NULL value. A default only applies when the column is absent from the statement. Verified on SQL Server 2025: with a default in place, omitting the column succeeded and passing NULL still raised 515.",
   "post_title": "Cannot Insert the Value NULL Into Column (Error 515)",
   "url": "https://sqldba.blog/sql-server-cannot-insert-the-value-null-515/"
+ },
+ {
+  "question": "It worked yesterday and fails today.",
+  "answer": "Three usual culprits: the service account password changed or the account locked, antivirus started scanning the backup folder (operating system error 32), or the share was recreated, which resets share permissions even when NTFS permissions survive.",
+  "post_title": "Cannot Open Backup Device: Operating System Error 5 (Access Is Denied)",
+  "url": "https://sqldba.blog/sql-server-cannot-open-backup-device/"
  },
  {
   "question": "The path works when I test it, so why does the backup fail?",
@@ -2440,6 +2926,18 @@
   "answer": "Mapped drives belong to a user session and SQL Server does not have yours. The drive letter does not exist for the service, which is why you get operating system error 2 or 3 rather than 5. Always use the UNC path.",
   "post_title": "Cannot Open Backup Device: Operating System Error 5 (Access Is Denied)",
   "url": "https://sqldba.blog/sql-server-cannot-open-backup-device/"
+ },
+ {
+  "question": "Everyone started getting 4060 at once.",
+  "answer": "Stop looking at logins. Something happened to the database. A database left in SINGLE_USER after maintenance is the classic version, and it locks out everyone except whoever holds the one connection.",
+  "post_title": "Cannot Open Database Requested by the Login (Errors 4060 and 4064)",
+  "url": "https://sqldba.blog/sql-server-cannot-open-database-4060/"
+ },
+ {
+  "question": "I am locked out of SSMS entirely.",
+  "answer": "That is 4064, the default database one. On the connection dialog use Options, Connection Properties, Connect to database and type master. Then run ALTER LOGIN... WITH DEFAULT_DATABASE = [master].",
+  "post_title": "Cannot Open Database Requested by the Login (Errors 4060 and 4064)",
+  "url": "https://sqldba.blog/sql-server-cannot-open-database-4060/"
  },
  {
   "question": "Is this a password problem?",
@@ -2532,6 +3030,12 @@
   "url": "https://sqldba.blog/sql-server-column-name-or-number-of-supplied-values-213/"
  },
  {
+  "question": "My INSERT... EXEC used to work and now it does not.",
+  "answer": "The procedure's result set changed, most likely after an upgrade or a patch. System procedures do this between versions. Run the procedure on its own, count the columns it actually returns now, and rebuild the target table to match.",
+  "post_title": "Column Name or Number of Supplied Values Does Not Match (Error 213)",
+  "url": "https://sqldba.blog/sql-server-column-name-or-number-of-supplied-values-213/"
+ },
+ {
   "question": "Why did TRY/CATCH not catch this?",
   "answer": "Because a static INSERT with the wrong column count fails at compile time, before the batch runs, so there is no runtime error to catch and the batch aborts. Verified on SQL Server 2025. Wrap it in sp_executesql and it compiles separately, at which point it is catchable.",
   "post_title": "Column Name or Number of Supplied Values Does Not Match (Error 213)",
@@ -2542,6 +3046,12 @@
   "answer": "Because at the point it fails, SQL Server is comparing two shapes rather than validating a value. It knows the counts do not line up; it has no single column to blame. Compare your column list with sys.columns for the table and the mismatch is usually obvious.",
   "post_title": "Column Name or Number of Supplied Values Does Not Match (Error 213)",
   "url": "https://sqldba.blog/sql-server-column-name-or-number-of-supplied-values-213/"
+ },
+ {
+  "question": "I added a WHERE clause to filter out the bad rows and it still fails.",
+  "answer": "There is no guaranteed evaluation order. The optimiser may compute the conversion before the filter, so a query can work for months and then fail after a plan change with no deployment to blame. Use TRY_CONVERT, which cannot raise.",
+  "post_title": "Conversion Failed When Converting the varchar Value to Data Type int (Error 245)",
+  "url": "https://sqldba.blog/sql-server-conversion-failed-245/"
  },
  {
   "question": "Is ISNUMERIC good enough for the check?",
@@ -2628,10 +3138,28 @@
   "url": "https://sqldba.blog/sql-server-database-cannot-be-opened-945/"
  },
  {
+  "question": "I closed every window and it still fails.",
+  "answer": "Object Explorer holds its own connection and reconnects on its own. Expanding the database node is enough to take one. Run the statement from a window whose context is master, and trust sys.dm_exec_sessions rather than the SSMS interface.",
+  "post_title": "The Database Could Not Be Exclusively Locked to Perform the Operation (Error 5030)",
+  "url": "https://sqldba.blog/sql-server-database-could-not-be-exclusively-locked-5030/"
+ },
+ {
+  "question": "I set SINGLE_USER and now I cannot get back in.",
+  "answer": "An application pool has taken the one available connection. Find the holder in sys.dm_exec_sessions from master, KILL it, then run SET MULTI_USER immediately. If you keep losing the race, stop the application or take the database offline.",
+  "post_title": "The Database Could Not Be Exclusively Locked to Perform the Operation (Error 5030)",
+  "url": "https://sqldba.blog/sql-server-database-could-not-be-exclusively-locked-5030/"
+ },
+ {
   "question": "Is WITH ROLLBACK IMMEDIATE safe?",
   "answer": "It is decisive, not safe. It rolls back every open transaction in that database rather than waiting for them, so it belongs in a maintenance window. Other people\u2019s in-flight work is what gets rolled back.",
   "post_title": "The Database Could Not Be Exclusively Locked to Perform the Operation (Error 5030)",
   "url": "https://sqldba.blog/sql-server-database-could-not-be-exclusively-locked-5030/"
+ },
+ {
+  "question": "Can I catch 1205 in TRY/CATCH and retry?",
+  "answer": "Yes. Unlike a compile-time error, 1205 is raised while the batch runs, so a CATCH block sees it and can re-run the whole transaction, which the victim has already had rolled back. Bound the retries and add a short delay, and treat the retry as a way of surviving the symptom, not as the fix: the access-order problem above is still there.",
+  "post_title": "Reading and Fixing a SQL Server Deadlock",
+  "url": "https://sqldba.blog/sql-server-deadlock-troubleshooting/"
  },
  {
   "question": "Can I stop my transaction being chosen as the victim?",
@@ -2641,7 +3169,7 @@
  },
  {
   "question": "Is a deadlock the same as blocking?",
-  "answer": "No, and confusing them wastes time. Blocking is one transaction waiting, and it resolves on its own when the other finishes. A deadlock is two transactions waiting on each other, which can never resolve, so SQL Server kills one. If you are seeing Msg 1222 instead, that is a lock timeout, which is blocking. Lock Request Time Out (1222), in Related Scripts below, covers that in full.",
+  "answer": "No, and confusing them wastes time. Blocking is one transaction waiting, and it resolves on its own when the other finishes. A deadlock is two transactions waiting on each other, which can never resolve, so SQL Server kills one. If you are seeing Msg 1222 instead, that is a lock timeout, which is blocking.",
   "post_title": "Reading and Fixing a SQL Server Deadlock",
   "url": "https://sqldba.blog/sql-server-deadlock-troubleshooting/"
  },
@@ -2650,6 +3178,36 @@
   "answer": "The system_health extended events session captures deadlock graphs by default and is running on every modern instance. You do not need to set up a trace to catch the next one, the last several are usually already there.",
   "post_title": "Reading and Fixing a SQL Server Deadlock",
   "url": "https://sqldba.blog/sql-server-deadlock-troubleshooting/"
+ },
+ {
+  "question": "Can I take differentials in SIMPLE recovery?",
+  "answer": "Yes. SIMPLE blocks log backups, not differentials, and Microsoft's own SIMPLE model restore example uses one. What you lose is point in time recovery: your best possible recovery point becomes your last full or differential.",
+  "post_title": "SQL Server Differential vs Log Backup: Which One Restores What, and How the Chain Breaks",
+  "url": "https://sqldba.blog/sql-server-differential-vs-log-backup/"
+ },
+ {
+  "question": "Do I restore every differential, or just one?",
+  "answer": "Just the most recent. A differential is cumulative, not incremental: each one contains everything changed since the base, not since the previous differential. Restore the full, then the latest differential, then the log backups taken after it.",
+  "post_title": "SQL Server Differential vs Log Backup: Which One Restores What, and How the Chain Breaks",
+  "url": "https://sqldba.blog/sql-server-differential-vs-log-backup/"
+ },
+ {
+  "question": "Does a full backup truncate the log?",
+  "answer": "No, and this is a persistent myth. Under FULL or BULK_LOGGED, truncation follows a log backup, not a data backup. A full backup actually blocks truncation while it runs, which shows up as ACTIVE_BACKUP_OR_RESTORE in log_reuse_wait_desc. A full backup does include enough of the log to make the restored database consistent, which is probably where the confusion started.",
+  "post_title": "SQL Server Differential vs Log Backup: Which One Restores What, and How the Chain Breaks",
+  "url": "https://sqldba.blog/sql-server-differential-vs-log-backup/"
+ },
+ {
+  "question": "Is msdb history the same as having the backups?",
+  "answer": "No, and treating it as such has ended careers. msdb history is deleted by sp_delete_backuphistory, does not exist on a different server, and Microsoft warns that physical_device_name cannot be relied on as a restore path. The history tells you what the chain looked like. Only the files let you use it.",
+  "post_title": "SQL Server Differential vs Log Backup: Which One Restores What, and How the Chain Breaks",
+  "url": "https://sqldba.blog/sql-server-differential-vs-log-backup/"
+ },
+ {
+  "question": "Why did my restore fail with a broken LSN chain?",
+  "answer": "Usually one of 3 things. A log backup is missing from the sequence, someone recovered the database part way through with WITH RECOVERY instead of NORECOVERY, or the differential you are restoring belongs to a different full than the one you restored. The query above answers the third in seconds: match the differential's differential_base_lsn against the checkpoint_lsn of your fulls.",
+  "post_title": "SQL Server Differential vs Log Backup: Which One Restores What, and How the Chain Breaks",
+  "url": "https://sqldba.blog/sql-server-differential-vs-log-backup/"
  },
  {
   "question": "Is IGNORE_DUP_KEY a fix?",
@@ -2707,7 +3265,7 @@
  },
  {
   "question": "Which severity levels should actually wake someone up?",
-  "answer": "Severity 17 and above. Below that the statement failed but the server is fine, and it belongs in a morning report rather than a phone call. Severity 20 to 25 close the connection and get written to the error log, so those are the ones worth alerting on.",
+  "answer": "Severity 17 and above. Below that the statement failed but the server is fine, and it belongs in a morning report rather than a phone call. Severity 20 and above close the connection and get written to the error log, so those are the ones worth alerting on.",
   "post_title": "SQL Server Error Severities Explained",
   "url": "https://sqldba.blog/sql-server-error-severities-explained/"
  },
@@ -2716,6 +3274,12 @@
   "answer": "Severity 20 and above terminate the connection, so the client often sees a generic transport failure rather than the real message. The SQL Server error log has the truth, which is why almost every post in this series starts by reading it.",
   "post_title": "SQL Server Error Severities Explained",
   "url": "https://sqldba.blog/sql-server-error-severities-explained/"
+ },
+ {
+  "question": "The error is not listed here.",
+  "answer": "The pool grows as errors come up. In the meantime sys.messages holds every message text and severity the instance knows about, and the severity alone tells you whether you are dealing with a statement problem or a server problem. Error Severities Explained, first in Related Scripts below, is the page that turns that number into a decision.",
+  "post_title": "SQL Server Errors: The Complete Guide",
+  "url": "https://sqldba.blog/sql-server-errors/"
  },
  {
   "question": "Where does SQL Server keep the real error?",
@@ -2738,6 +3302,18 @@
  {
   "question": "Can I remove PRIMARY?",
   "answer": "No. PRIMARY holds the database metadata and cannot be removed or left empty. If your goal is to get user data off PRIMARY, that is done by moving objects elsewhere and changing the default filegroup, not by removing it.",
+  "post_title": "The Filegroup Cannot Be Removed Because It Is Not Empty (Error 5042)",
+  "url": "https://sqldba.blog/sql-server-filegroup-cannot-be-removed-not-empty-5042/"
+ },
+ {
+  "question": "DBCC SHRINKFILE with EMPTYFILE is failing.",
+  "answer": "Usually because there is nowhere for the pages to go. EMPTYFILE moves them to other files in the same filegroup, so it cannot work on the only file unless the file is already empty. It will also stop on objects it cannot move, which points you back at what is still on the filegroup.",
+  "post_title": "The Filegroup Cannot Be Removed Because It Is Not Empty (Error 5042)",
+  "url": "https://sqldba.blog/sql-server-filegroup-cannot-be-removed-not-empty-5042/"
+ },
+ {
+  "question": "I dropped the table and it still will not remove.",
+  "answer": "The files are still there. Dropping objects and removing files are two separate steps, and the filegroup counts as non-empty while it still owns a file. Run REMOVE FILE for each file, then remove the filegroup.",
   "post_title": "The Filegroup Cannot Be Removed Because It Is Not Empty (Error 5042)",
   "url": "https://sqldba.blog/sql-server-filegroup-cannot-be-removed-not-empty-5042/"
  },
@@ -2820,6 +3396,30 @@
   "url": "https://sqldba.blog/sql-server-foreign-key-conflict-547/"
  },
  {
+  "question": "CPU is high but nothing is running. What now?",
+  "answer": "Check what else is on the box: backup agents, antivirus scanning data files, a second instance, SSRS or SSIS on the same server. Then check the OS side with the topology script, because Windows trimming SQL Server's working set shows up as I/O and CPU that no query explains.",
+  "post_title": "SQL Server High CPU: What to Check First, in Order",
+  "url": "https://sqldba.blog/sql-server-high-cpu/"
+ },
+ {
+  "question": "How do I know whether it was always like this?",
+  "answer": "Query Store, if it was on, has the history per query and shows the plan change. Without it, the wait stats since the last restart give a rough shape, and the cumulative counters reset when the service restarts, so check the start time before trusting them.",
+  "post_title": "SQL Server High CPU: What to Check First, in Order",
+  "url": "https://sqldba.blog/sql-server-high-cpu/"
+ },
+ {
+  "question": "Should I lower MAXDOP to fix high CPU?",
+  "answer": "Almost never as the first move. Lowering MAXDOP makes every parallel query slower to reduce the CPU one of them is burning, which is the wrong trade. Find the query first (Steps 2 and 3); MAXDOP and cost threshold get set from the published guidance afterwards, and usually the fix is raising cost threshold, not lowering MAXDOP.",
+  "post_title": "SQL Server High CPU: What to Check First, in Order",
+  "url": "https://sqldba.blog/sql-server-high-cpu/"
+ },
+ {
+  "question": "Task Manager says sqlservr.exe is at 100 percent. Is that the same thing?",
+  "answer": "It is the same symptom seen from outside. SQL Server will use every core it is allowed to when there is work, so the number on its own is not a fault; what matters is whether the work is legitimate. Step 1 answers that in one interval: a busy server with sensible waits is fine, a busy server running one runaway query is not.",
+  "post_title": "SQL Server High CPU: What to Check First, in Order",
+  "url": "https://sqldba.blog/sql-server-high-cpu/"
+ },
+ {
   "question": "Does error 102 appear in the SQL Server error log?",
   "answer": "No. sys.messages shows is_event_logged = 0 for 102, 156 and 105 alike. There is no server-side record to go back for, so whatever the application captured at the time is all the evidence there will be.",
   "post_title": "Incorrect Syntax Near in SQL Server (Error 102)",
@@ -2838,6 +3438,12 @@
   "url": "https://sqldba.blog/sql-server-incorrect-syntax-near-102/"
  },
  {
+  "question": "The query works on my dev server and fails in production. Same script, same version.",
+  "answer": "Compare compatibility_level on the two databases, not the two instances. The engine version being identical is not enough, and a database restored from an older server keeps its old level indefinitely. This is the single most common cause of a 102 that \"should not happen\".",
+  "post_title": "Incorrect Syntax Near in SQL Server (Error 102)",
+  "url": "https://sqldba.blog/sql-server-incorrect-syntax-near-102/"
+ },
+ {
   "question": "Why does the error point at something that is obviously correct?",
   "answer": "Because the quoted token is where the parser stopped, not where the statement went wrong. In the measured TRIM(LEADING '0' FROM '007') case it blamed '0', a perfectly valid literal, when the unrecognised keyword was LEADING just before it. Read leftwards from the token, not at it.",
   "post_title": "Incorrect Syntax Near in SQL Server (Error 102)",
@@ -2852,6 +3458,24 @@
  {
   "question": "Could this be a permissions problem instead?",
   "answer": "Not directly. Referencing an object you have no rights on returns Msg 229, naming the object and the permission, and a cross-database reference with no user account in the target returns Msg 916. Both were measured rather than assumed. Permissions do reach you through the back door though: you cannot see an object you have no rights on, so OBJECT_ID() returns NULL and any tool that probes with it will tell you the object does not exist. Use HAS_PERMS_BY_NAME to tell \"absent\" apart from \"not for you\".",
+  "post_title": "Invalid Object Name in SQL Server (Error 208)",
+  "url": "https://sqldba.blog/sql-server-invalid-object-name-208/"
+ },
+ {
+  "question": "It works for me but not for my colleague.",
+  "answer": "Almost always the default schema. An unqualified name resolves against the caller\u2019s schema first, so two people can run identical SQL and read different tables. Qualifying every object as schema.object removes the whole class of problem.",
+  "post_title": "Invalid Object Name in SQL Server (Error 208)",
+  "url": "https://sqldba.blog/sql-server-invalid-object-name-208/"
+ },
+ {
+  "question": "It works in SSMS and fails in the application.",
+  "answer": "Different database. Check DB_NAME() in both, then the connection string: the query is identical, the context is not.",
+  "post_title": "Invalid Object Name in SQL Server (Error 208)",
+  "url": "https://sqldba.blog/sql-server-invalid-object-name-208/"
+ },
+ {
+  "question": "My editor underlines the table in red but the query runs fine.",
+  "answer": "SSMS IntelliSense keeps a local cache of object names and does not notice objects created in another window or by another person. Press Ctrl + Shift + R to refresh it. The server was never involved.",
   "post_title": "Invalid Object Name in SQL Server (Error 208)",
   "url": "https://sqldba.blog/sql-server-invalid-object-name-208/"
  },
@@ -2916,10 +3540,46 @@
   "url": "https://sqldba.blog/sql-server-lock-request-timeout-1222/"
  },
  {
+  "question": "The timeout happened but nothing is blocking now. What was it?",
+  "answer": "Almost certainly a session that was sleeping with an open transaction and has since closed or committed. The locks went with it, so there is nothing left to see. Have the blocked-request query above ready for the next one, or capture it continuously with the Get Open Transactions script below.",
+  "post_title": "Lock Request Time Out Period Exceeded (Error 1222)",
+  "url": "https://sqldba.blog/sql-server-lock-request-timeout-1222/"
+ },
+ {
   "question": "Why did I get a timeout at all, when SQL Server waits forever by default?",
   "answer": "Something set one. Check SELECT @@LOCK_TIMEOUT. SSMS sets it in some dialogs, which is why people meet this while clicking around Object Explorer, and ORMs often set it globally in connection setup.",
   "post_title": "Lock Request Time Out Period Exceeded (Error 1222)",
   "url": "https://sqldba.blog/sql-server-lock-request-timeout-1222/"
+ },
+ {
+  "question": "Can this bite me in SIMPLE recovery?",
+  "answer": "Yes, and this is the most common misunderstanding on the topic. SIMPLE means you cannot take log backups, so LOG_BACKUP will never appear. It does not mean the log cannot fill. ACTIVE_TRANSACTION stops truncation under every recovery model, so one forgotten open transaction will grow a SIMPLE database's log until the disk does.",
+  "post_title": "SQL Server Log Won\u2019t Truncate: What log_reuse_wait_desc Is Telling You",
+  "url": "https://sqldba.blog/sql-server-log-reuse-wait-desc/"
+ },
+ {
+  "question": "I took a log backup and it still says LOG_BACKUP.",
+  "answer": "If that log had never been backed up before, that is expected. Microsoft: \u201cIf the log has never been backed up, you must create two log backups to permit the Database Engine to truncate the log to the point of the last backup.\u201d Take a second one. If it persists past that, re-run the query, because the reason has probably changed to something else.",
+  "post_title": "SQL Server Log Won\u2019t Truncate: What log_reuse_wait_desc Is Telling You",
+  "url": "https://sqldba.blog/sql-server-log-reuse-wait-desc/"
+ },
+ {
+  "question": "Is there an official query for this?",
+  "answer": "Not a short one. The sys.databases reference page has three examples and none of them touch this column. What Microsoft does publish is a roughly 150 line diagnostic script, and it lives on the error 9002 troubleshooting page, not on the catalog view page. The three-column query above is the version you can actually remember at 2am.",
+  "post_title": "SQL Server Log Won\u2019t Truncate: What log_reuse_wait_desc Is Telling You",
+  "url": "https://sqldba.blog/sql-server-log-reuse-wait-desc/"
+ },
+ {
+  "question": "My log is still huge after I fixed the wait. Why?",
+  "answer": "Because truncation and shrinking are different things. Truncation frees space inside the file for reuse. It never makes the file smaller on disk. Microsoft puts it plainly: \u201cShrinking a log file alone can't solve the problem of a full log file. Instead, you must discover why the log file is full and can't be truncated.\u201d Fix the reason first, then decide whether the file is genuinely the wrong size.",
+  "post_title": "SQL Server Log Won\u2019t Truncate: What log_reuse_wait_desc Is Telling You",
+  "url": "https://sqldba.blog/sql-server-log-reuse-wait-desc/"
+ },
+ {
+  "question": "Why does my value not appear in Microsoft's list?",
+  "answer": "Ids 10, 11 and 12 are documented only as \u201cFor internal use only\u201d with no published description, and they are expected to be rare and short-lived. If you catch one, re-query rather than investigate. Anything else is worth reporting, because the documented set is small and stable.",
+  "post_title": "SQL Server Log Won\u2019t Truncate: What log_reuse_wait_desc Is Telling You",
+  "url": "https://sqldba.blog/sql-server-log-reuse-wait-desc/"
  },
  {
   "question": "How do I find out who disabled it?",
@@ -3012,6 +3672,12 @@
   "url": "https://sqldba.blog/sql-server-login-untrusted-domain-18452/"
  },
  {
+  "question": "I am using SQL Server authentication and still got 18452.",
+  "answer": "Then the Windows-trust reading is a red herring. Microsoft's page lists 2 non-Windows causes: the instance only accepts Windows authentication, or the SQL login you typed does not exist on it. Run SELECT SERVERPROPERTY('IsIntegratedSecurityOnly'); 1 means mixed mode is off and no SQL login gets in until it is switched on and the instance restarted. If it returns 0, check the login exists in sys.sql_logins.",
+  "post_title": "Login Failed: The Login Is From an Untrusted Domain (Error 18452)",
+  "url": "https://sqldba.blog/sql-server-login-untrusted-domain-18452/"
+ },
+ {
   "question": "Why does connecting by IP matter?",
   "answer": "Kerberos identifies services by name, so an IP connection cannot use it and falls back to NTLM. Where policy restricts NTLM, that fallback surfaces as this error instead of working quietly.",
   "post_title": "Login Failed: The Login Is From an Untrusted Domain (Error 18452)",
@@ -3064,6 +3730,36 @@
   "answer": "Almost always the certificate chain trust error, current SSMS versions default to encrypting the connection and validating the server\u2019s certificate, which older instances running a self-signed cert weren\u2019t set up to satisfy. See Fix the Certificate Chain Trust Error above for the actual cause and fix.",
   "post_title": "SQL Server Management Studio (SSMS): The Complete Guide",
   "url": "https://sqldba.blog/sql-server-management-studio-complete-guide/"
+ },
+ {
+  "question": "Does MAXDOP affect anything other than queries?",
+  "answer": "Yes, and it catches people during maintenance windows. It also governs the parallelism of DBCC CHECKDB, CHECKTABLE and CHECKFILEGROUP, and index operations, though an index statement can override it with its own MAXDOP option.",
+  "post_title": "SQL Server MAXDOP and Cost Threshold: What To Set, and Why 5 Is Not a Recommendation",
+  "url": "https://sqldba.blog/sql-server-maxdop-cost-threshold/"
+ },
+ {
+  "question": "Does SQL Server 2019 set MAXDOP for me?",
+  "answer": "At install, yes. Setup detects the processor layout and writes a recommended value, and it does so even if you skip that page in the wizard. It is not ongoing self-configuration though, and the engine default for the setting is still 0. An in-place upgrade, a restored configuration or a manual reset all land you back on 0, so read the instance rather than assuming the version fixed it.",
+  "post_title": "SQL Server MAXDOP and Cost Threshold: What To Set, and Why 5 Is Not a Recommendation",
+  "url": "https://sqldba.blog/sql-server-maxdop-cost-threshold/"
+ },
+ {
+  "question": "High CXPACKET means lower MAXDOP, right?",
+  "answer": "Not any more, and this is the most out of date advice in circulation. CXPACKET has been narrowed twice. From SQL Server 2016 SP2 and 2017 CU3, consumer-side waiting split out into CXCONSUMER, which Microsoft calls \u201ca normal part of parallel query execution\u201d. From 2022, synchronisation split out again into CXSYNC_PORT and CXSYNC_CONSUMER. On a modern build CXPACKET means something much more specific than it did on 2014, so a big number is no longer evidence on its own.",
+  "post_title": "SQL Server MAXDOP and Cost Threshold: What To Set, and Why 5 Is Not a Recommendation",
+  "url": "https://sqldba.blog/sql-server-maxdop-cost-threshold/"
+ },
+ {
+  "question": "What should I set cost threshold to?",
+  "answer": "Microsoft does not say, and that is worth knowing before you accept a number from anyone. What they do say is that \u201cthe default value of 5 is a starting point, not a recommendation\u201d, that raising it helps keep small OLTP queries serial, and that you should \u201cuse small increments and observe a full business cycle before further changes\u201d. The widely repeated 50 is community consensus. It is a reasonable place to start, but cite it honestly.",
+  "post_title": "SQL Server MAXDOP and Cost Threshold: What To Set, and Why 5 Is Not a Recommendation",
+  "url": "https://sqldba.blog/sql-server-maxdop-cost-threshold/"
+ },
+ {
+  "question": "Which setting wins if I set it in several places?",
+  "answer": "Resource Governor is a ceiling nothing can exceed. Below that, a query hint beats the database scoped configuration, which beats sp_configure. Worth knowing that the query hints page opens by saying the hint \u201calso overrides the Resource Governor\u201d and only then explains that it is capped by it, which reads as the opposite of what it means.",
+  "post_title": "SQL Server MAXDOP and Cost Threshold: What To Set, and Why 5 Is Not a Recommendation",
+  "url": "https://sqldba.blog/sql-server-maxdop-cost-threshold/"
  },
  {
   "question": "How do I find the query that caused it after the fact?",
@@ -3150,8 +3846,44 @@
   "url": "https://sqldba.blog/sql-server-migration-runbook-standalone/"
  },
  {
+  "question": "How do I check a column exists before I reference it?",
+  "answer": "COL_LENGTH('schema.object', 'column') returns NULL when the column is not there, and it works for DMVs as well as tables. For a one-off look, query sys.all_columns for the object as in the first query on this page, or run the batch under SET NOEXEC ON, which binds every column name without executing anything.",
+  "post_title": "Fix \u201cMsg 207: Invalid Column Name\u201d in SQL Server",
+  "url": "https://sqldba.blog/sql-server-msg-207-invalid-column-name/"
+ },
+ {
+  "question": "I wrapped the column in an IF version check and it still fails. Why?",
+  "answer": "Because the whole batch is bound at compile time, before the IF is evaluated, so a missing column fails the batch even inside a branch that never runs. Test with COL_LENGTH() and keep the guarded query in sp_executesql so it is only bound when it can succeed. Pattern 5 above shows both halves.",
+  "post_title": "Fix \u201cMsg 207: Invalid Column Name\u201d in SQL Server",
+  "url": "https://sqldba.blog/sql-server-msg-207-invalid-column-name/"
+ },
+ {
+  "question": "The column is definitely there. I can see it.",
+  "answer": "Check the alias. If the query aliases a table and then references the column through a different alias, or through a derived table that does not project the column, SQL Server reports it as invalid even though the column exists.",
+  "post_title": "Fix \u201cMsg 207: Invalid Column Name\u201d in SQL Server",
+  "url": "https://sqldba.blog/sql-server-msg-207-invalid-column-name/"
+ },
+ {
+  "question": "The query works on one server and not another.",
+  "answer": "Compare the two schemas rather than the query. A column added in one environment and never deployed to the other is the usual answer, and Get Schema Change History will date the change.",
+  "post_title": "Fix \u201cMsg 207: Invalid Column Name\u201d in SQL Server",
+  "url": "https://sqldba.blog/sql-server-msg-207-invalid-column-name/"
+ },
+ {
   "question": "Is \"error 40\" a different error?",
   "answer": "Same failure, different label: error 40 is the Named Pipes provider reporting that it could not open a connection, and the bracketed OS error, 53 here, is the part that says why.",
+  "post_title": "Could Not Open a Connection to SQL Server: Error 53 and Named Pipes Error 40",
+  "url": "https://sqldba.blog/sql-server-network-path-not-found-error-53/"
+ },
+ {
+  "question": "It works on the server itself but fails from everywhere else.",
+  "answer": "That is the signature of TCP/IP disabled in Configuration Manager or a firewall blocking 1433. Local connections ride shared memory, which needs neither.",
+  "post_title": "Could Not Open a Connection to SQL Server: Error 53 and Named Pipes Error 40",
+  "url": "https://sqldba.blog/sql-server-network-path-not-found-error-53/"
+ },
+ {
+  "question": "The default instance connects but the named instance does not.",
+  "answer": "Named instances without a fixed port are discovered through the Browser service on UDP 1434. Block that and the named instance is invisible while the default instance works, which looks baffling until you know the mechanism.",
   "post_title": "Could Not Open a Connection to SQL Server: Error 53 and Named Pipes Error 40",
   "url": "https://sqldba.blog/sql-server-network-path-not-found-error-53/"
  },
@@ -3164,6 +3896,12 @@
  {
   "question": "Is this the same as login failed (18456)?",
   "answer": "No. 18456 means the server door did not open, authentication itself failed. 916 fires after a successful login: the server let the principal in and one specific database refused it. Password resets cannot fix it.",
+  "post_title": "The Server Principal Is Not Able to Access the Database (Error 916)",
+  "url": "https://sqldba.blog/sql-server-not-able-to-access-database-916/"
+ },
+ {
+  "question": "The error came from an application with ODBC state 08004, not from SSMS.",
+  "answer": "Then the code changed database after connecting: a USE, a three-part name such as OtherDb.dbo.Table, or a procedure that reaches into another database. That is the shape reproduced above. A database named in the connection string itself fails earlier and differently, with 4060, so 916 from an application points at a statement, not at the connection string.",
   "post_title": "The Server Principal Is Not Able to Access the Database (Error 916)",
   "url": "https://sqldba.blog/sql-server-not-able-to-access-database-916/"
  },
@@ -3190,6 +3928,12 @@
   "answer": "Their SID comes from Active Directory and is the same on every server. A SQL login SID is generated on the instance that created it, so it does not match anywhere else.",
   "post_title": "User, Group or Role Already Exists in the Current Database (Error 15023)",
   "url": "https://sqldba.blog/sql-server-orphaned-users-15023/"
+ },
+ {
+  "question": "I reassigned the schema and it still will not drop.",
+  "answer": "Something else is owned. A role owned by the principal raises 15421 instead, which sends people looking for a different problem, and individual objects can carry an owner too. Check schemas, roles and objects in one query before you start.",
+  "post_title": "The Database Principal Owns a Schema in the Database and Cannot Be Dropped (Error 15138)",
+  "url": "https://sqldba.blog/sql-server-principal-owns-schema-15138/"
  },
  {
   "question": "Should I drop the schema or reassign it?",
@@ -3331,7 +4075,7 @@
  },
  {
   "question": "Is a green backup report really worth so little?",
-  "answer": "It is worth exactly what it says: those backup operations completed. It is not a statement about recoverability, because nothing in the job asked whether the resulting chain restores. A FULL recovery model database with no log backups reports perfect coverage and gives you last night's full backup and nothing since. The only real test is a restore. Everything short of that, including this script, is a way of narrowing down which servers to test first.",
+  "answer": "It is worth exactly what it says: those backup operations completed. It is not a statement about recoverability, because nothing in the job asked whether the resulting chain restores. A FULL recovery model database with no log backups reports perfect coverage and gives you last night\u2019s full backup and nothing since. The only real test is a restore. Everything short of that, including this script, is a way of narrowing down which servers to test first.",
   "post_title": "Silent Failures: The SQL Server Problems That Never Raise an Error",
   "url": "https://sqldba.blog/sql-server-silent-failures/"
  },
@@ -3367,7 +4111,25 @@
  },
  {
   "question": "Can I get the better message on an older version?",
-  "answer": "Not on the older versions themselves. On 2017 there is a trace flag that enables the newer style message, but on anything earlier the practical answer is to narrow it down by comparing source and target column lengths.",
+  "answer": "Yes, on some. Trace flag 460 replaces Msg 8152 with Msg 2628 on SQL Server 2016 SP2 CU6, SQL Server 2017 CU12 and later, and it is still what turns the detailed message on for a database sitting at compatibility level 140 or lower on a newer instance. From compatibility level 150 the detailed message is the default and the flag has no effect. Confirmed on SQL Server 2025 CU8: with a database at compatibility level 130 the same insert returns Msg 8152, Level 16, State 30, and with trace flag 460 on it returns the full Msg 2628 instead. On anything older than those builds the practical answer is to narrow it down by comparing source and target column lengths.",
+  "post_title": "Diagnose SQL Server\u2019s \u2018String or Binary Data Would Be Truncated\u2019 Error",
+  "url": "https://sqldba.blog/sql-server-string-or-binary-data-truncated/"
+ },
+ {
+  "question": "I am on a current version and still get the short message. Why?",
+  "answer": "Check the database scoped configuration, not the compatibility level. VERBOSE_TRUNCATION_WARNINGS is ON by default, and with it turned OFF a database at compatibility level 170 goes straight back to Msg 8152, Level 16, State 30, with no table or column named. Measured both ways on SQL Server 2025 CU8. SELECT name, value FROM sys.database_scoped_configurations WHERE name = 'VERBOSE_TRUNCATION_WARNINGS' tells you which one you are on.",
+  "post_title": "Diagnose SQL Server\u2019s \u2018String or Binary Data Would Be Truncated\u2019 Error",
+  "url": "https://sqldba.blog/sql-server-string-or-binary-data-truncated/"
+ },
+ {
+  "question": "Was anything written when the statement failed?",
+  "answer": "No. Both messages end with The statement has been terminated, the statement is rolled back and the row is not inserted. The only time truncation writes anything is the silent case under SET ANSI_WARNINGS OFF, where the value is cut to fit and no error is raised at all.",
+  "post_title": "Diagnose SQL Server\u2019s \u2018String or Binary Data Would Be Truncated\u2019 Error",
+  "url": "https://sqldba.blog/sql-server-string-or-binary-data-truncated/"
+ },
+ {
+  "question": "Which versions show the detailed Msg 2628?",
+  "answer": "Any database at compatibility level 150 or higher, so SQL Server 2019 and later with a current compatibility level, where VERBOSE_TRUNCATION_WARNINGS is on by default. Below 150 you get Msg 8152 unless trace flag 460 is enabled, which needs SQL Server 2016 SP2 CU6 or SQL Server 2017 CU12 at minimum. Both facts are on the Microsoft pages linked above.",
   "post_title": "Diagnose SQL Server\u2019s \u2018String or Binary Data Would Be Truncated\u2019 Error",
   "url": "https://sqldba.blog/sql-server-string-or-binary-data-truncated/"
  },
@@ -3386,6 +4148,18 @@
  {
   "question": "Does this happen on restore as well as attach?",
   "answer": "Yes, and on startup. Anything that needs SQL Server to open a file on disk can raise it: attaching, restoring to a path it cannot write, or a database failing to come online after a volume changed. The operating system error still tells you which flavour you have.",
+  "post_title": "Unable to Open the Physical File (Error 5120)",
+  "url": "https://sqldba.blog/sql-server-unable-to-open-the-physical-file-5120/"
+ },
+ {
+  "question": "I granted Full Control and it still says access is denied.",
+  "answer": "Then it is almost certainly not a permissions problem. The most common cause is that the file is already open, very often by this same SQL Server instance. Check sys.master_files for the physical path before changing anything else.",
+  "post_title": "Unable to Open the Physical File (Error 5120)",
+  "url": "https://sqldba.blog/sql-server-unable-to-open-the-physical-file-5120/"
+ },
+ {
+  "question": "The file is on a network share.",
+  "answer": "That brings its own version of this. A virtual account has no identity off the machine, so a UNC path usually needs a domain service account and the share permissions to match. Local storage is the simpler answer where you have the choice.",
   "post_title": "Unable to Open the Physical File (Error 5120)",
   "url": "https://sqldba.blog/sql-server-unable-to-open-the-physical-file-5120/"
  },
@@ -3424,6 +4198,36 @@
   "answer": "It depends on both ends, and the runbook lists the matrix. The assessment flags whether your specific source-to-target path is direct or needs a hop, which is better than finding out from setup.exe.",
   "post_title": "SQL Server Version Upgrade Runbook: Side-by-Side and In-Place",
   "url": "https://sqldba.blog/sql-server-version-upgrade-runbook/"
+ },
+ {
+  "question": "Can I just run the DMV twice by hand instead of a collector job?",
+  "answer": "Yes, and for a one-off investigation that is the sensible thing to do: select the counters into a temp table, wait, select again, join on wait type and subtract. The collector job earns its place when you want the window that has already passed, which is most of the time, because incidents are usually reported after they end.",
+  "post_title": "Cumulative Wait Stats Lie: Measuring Waits Over an Interval",
+  "url": "https://sqldba.blog/sql-server-wait-stats-interval-vs-cumulative/"
+ },
+ {
+  "question": "Does the delta approach work across a failover?",
+  "answer": "No, and for the same reason as a restart. The replica you are now reading has its own counters that started when it came up, so the earlier snapshot belongs to a different instance. Treat a failover as a reset.",
+  "post_title": "Cumulative Wait Stats Lie: Measuring Waits Over an Interval",
+  "url": "https://sqldba.blog/sql-server-wait-stats-interval-vs-cumulative/"
+ },
+ {
+  "question": "How long should the interval be?",
+  "answer": "Long enough to contain the behaviour you are chasing and short enough to exclude everything else. Fifteen minutes to an hour suits most investigations. A five-minute window during a live incident is more useful than a daily average; a daily average is more useful for capacity questions than a five-minute window.",
+  "post_title": "Cumulative Wait Stats Lie: Measuring Waits Over an Interval",
+  "url": "https://sqldba.blog/sql-server-wait-stats-interval-vs-cumulative/"
+ },
+ {
+  "question": "Should I still look at the cumulative numbers at all?",
+  "answer": "They are useful for one thing: a long-run profile of what the server spends its life waiting on. Just do not use them to diagnose something that started on Tuesday.",
+  "post_title": "Cumulative Wait Stats Lie: Measuring Waits Over an Interval",
+  "url": "https://sqldba.blog/sql-server-wait-stats-interval-vs-cumulative/"
+ },
+ {
+  "question": "Why is my top wait something I have never heard of?",
+  "answer": "Many wait types are internal housekeeping that a healthy instance accumulates constantly and nobody should chase. That is what the wait library is for: look the type up before acting on it, because \"top of the list\" and \"worth investigating\" are not the same claim.",
+  "post_title": "Cumulative Wait Stats Lie: Measuring Waits Over an Interval",
+  "url": "https://sqldba.blog/sql-server-wait-stats-interval-vs-cumulative/"
  },
  {
   "question": "Are contained users a security risk?",
@@ -3514,6 +4318,12 @@
   "answer": "Up to a point, then it makes it worse. Every server adds tools, and every tool is another option the model has to choose between. Past a couple of dozen across all your servers, selection accuracy starts to slide and you get wrong-tool answers on questions that used to work. Add them one at a time, and remove the ones you stopped using.",
   "post_title": "The sqldba MCP Server: Give Your AI Assistant a Verified SQL Server Reference",
   "url": "https://sqldba.blog/sqldba-mcp-server/"
+ },
+ {
+  "question": "I installed a certificate and it is still using the self-signed one.",
+  "answer": "The service rejected it silently. Nearly always the private key permission for the SQL Server service account, or a subject name that does not match the name clients actually connect with. The error log says which.",
+  "post_title": "SSMS Certificate Chain Not Trusted Error (Trust Server Certificate Fix)",
+  "url": "https://sqldba.blog/ssms-certificate-chain-not-trusted-error-trust-server-certificate-fix/"
  },
  {
   "question": "Is TrustServerCertificate=True safe?",
@@ -3622,6 +4432,36 @@
   "answer": "SQL Server 2014 and later, plus Azure SQL Database, Azure SQL Managed Instance, Azure Synapse Analytics and Fabric SQL workloads. For older instances, keep an older SSMS alongside.",
   "post_title": "What\u2019s New in SSMS 22 for DBAs",
   "url": "https://sqldba.blog/whats-new-in-ssms-22-for-dbas/"
+ },
+ {
+  "question": "Can I stop recovery to bring the database up faster?",
+  "answer": "No. There is no supported way to skip recovery, and the attempts people reach for \u2014 restarting the service, taking the database offline \u2014 discard the work already done, so the next startup begins again from the beginning. Every interruption makes the wait longer.",
+  "post_title": "Why Is the Database in \u201cIn Recovery\u201d Mode?",
+  "url": "https://sqldba.blog/why-is-the-database-in-in-recovery-mode/"
+ },
+ {
+  "question": "How long should recovery take?",
+  "answer": "There is no fixed answer, because it depends on how much uncommitted work has to be rolled back rather than on the size of the database. A 2 TB database that shut down cleanly can recover in seconds; a 50 GB one that was killed mid-delete can take hours. That is why the useful question is whether percent_complete is moving, not whether it has been too long.",
+  "post_title": "Why Is the Database in \u201cIn Recovery\u201d Mode?",
+  "url": "https://sqldba.blog/why-is-the-database-in-in-recovery-mode/"
+ },
+ {
+  "question": "The database says RESTORING but nobody is restoring anything. Why?",
+  "answer": "Almost always because a restore was run with NORECOVERY, which deliberately leaves the database ready for more log backups to be applied. It will sit there indefinitely until someone finishes the sequence with RESTORE DATABASE \u2026 WITH RECOVERY.",
+  "post_title": "Why Is the Database in \u201cIn Recovery\u201d Mode?",
+  "url": "https://sqldba.blog/why-is-the-database-in-in-recovery-mode/"
+ },
+ {
+  "question": "What is the difference between RECOVERING and RECOVERY_PENDING?",
+  "answer": "RECOVERING means recovery is running. RECOVERY_PENDING means SQL Server could not start it, usually because a data or log file it needs is missing or unreadable. Waiting fixes the first and does nothing whatsoever for the second, which is why reading state_desc before acting matters so much.",
+  "post_title": "Why Is the Database in \u201cIn Recovery\u201d Mode?",
+  "url": "https://sqldba.blog/why-is-the-database-in-in-recovery-mode/"
+ },
+ {
+  "question": "Will Accelerated Database Recovery fix a database that is stuck right now?",
+  "answer": "No. ADR changes how the undo phase works, so it has to be enabled before the event to help. It is worth turning on where long rollbacks have hurt you before, but it is a preventative, not a rescue.",
+  "post_title": "Why Is the Database in \u201cIn Recovery\u201d Mode?",
+  "url": "https://sqldba.blog/why-is-the-database-in-in-recovery-mode/"
  },
  {
   "question": "Do I need to stop SQL Server first?",

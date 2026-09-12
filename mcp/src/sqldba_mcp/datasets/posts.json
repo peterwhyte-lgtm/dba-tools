@@ -15,6 +15,11 @@
   "url": "https://sqldba.blog/blog/"
  },
  {
+  "title": "Cannot Connect to SQL Server: The Checks in the Order That Finds It",
+  "lead": "A network-related or instance-specific error, error 53, error 40, error 26: which one you have decides where to look. The connection checks in the order that finds the fault, each one linking to the full fix.",
+  "url": "https://sqldba.blog/cannot-connect-to-sql-server/"
+ },
+ {
   "title": "Check SQL Server Connection Encryption and Protocol",
   "lead": "Modern SQL Server environments often use encrypted connections by default, but that does not always mean what people think it means.",
   "url": "https://sqldba.blog/check-sql-server-connection-encryption-and-protocol/"
@@ -161,7 +166,7 @@
  },
  {
   "title": "DBA Scripts: Generate Test Databases",
-  "lead": "Related Pillar Post: Backups and Recovery When you're validating migrations, failover, or automation at scale, you need realistic volume: hundreds or thousands of databases to stress-test backups, restores, log shipping, and copy operations.",
+  "lead": "\ud83d\udd27 Part of the DBA-Tools Project, copy/paste SQL Server scripts and health checks.",
   "url": "https://sqldba.blog/dba-scripts-generate-test-databases/"
  },
  {
@@ -240,7 +245,7 @@
   "url": "https://sqldba.blog/dba-scripts-get-blocking-chains/"
  },
  {
-  "title": "DBA Scripts: Get Blocking Sessions",
+  "title": "DBA Scripts: Get Blocking Summary",
   "lead": "\ud83d\udd27 Part of the DBA-Tools Project, copy/paste SQL Server scripts and health checks.",
   "url": "https://sqldba.blog/dba-scripts-get-blocking-sessions/"
  },
@@ -343,11 +348,6 @@
   "title": "DBA Scripts: Get Error Log Patterns",
   "lead": "\ud83d\udd27 Part of the DBA-Tools Project, copy/paste SQL Server scripts and health checks.",
   "url": "https://sqldba.blog/dba-scripts-get-error-log-patterns/"
- },
- {
-  "title": "DBA Scripts: Get Extended Events Sessions",
-  "lead": "\ud83d\udd27 Part of the DBA-Tools Project, copy/paste SQL Server scripts and health checks.",
-  "url": "https://sqldba.blog/dba-scripts-get-extended-events-sessions/"
  },
  {
   "title": "DBA Scripts: Get Filegroup Space",
@@ -970,6 +970,11 @@
   "url": "https://sqldba.blog/services/"
  },
  {
+  "title": "Set the Default Database for a SQL Server Login",
+  "lead": "One line sets a login default database, and SQL Server never checks that the login can actually use it. The failure arrives at the next connection, with the same message whether the database is gone or just inaccessible.",
+  "url": "https://sqldba.blog/set-the-default-database-for-a-sql-server-login/"
+ },
+ {
   "title": "How to Shrink SQL Server Database Files in Chunks",
   "lead": "\ud83d\udd27 Part of the DBA-Tools Project, copy/paste SQL Server scripts and health checks.",
   "url": "https://sqldba.blog/shrink-database-files-in-chunks/"
@@ -1090,6 +1095,11 @@
   "url": "https://sqldba.blog/sql-server-default-ports/"
  },
  {
+  "title": "SQL Server Differential vs Log Backup: Which One Restores What, and How the Chain Breaks",
+  "lead": "Mid restore is the wrong moment to work out how differential and log backups differ. What each one contains, which files you actually need, and the trap that any ordinary full backup taken by anyone silently becomes the new base for your differentials.",
+  "url": "https://sqldba.blog/sql-server-differential-vs-log-backup/"
+ },
+ {
   "title": "Violation of PRIMARY KEY Constraint and Cannot Insert Duplicate Key (Errors 2627 and 2601)",
   "lead": "\ud83d\udea8 Part of the SQL Server Errors series, the exact messages and what actually causes them.",
   "url": "https://sqldba.blog/sql-server-duplicate-key-errors-2627-2601/"
@@ -1101,7 +1111,7 @@
  },
  {
   "title": "SQL Server Error Severities Explained",
-  "lead": "\ud83d\udd0d Looking for a specific error?",
+  "lead": "\ud83d\udea8 Part of the SQL Server Errors series, the exact messages and what actually causes them.",
   "url": "https://sqldba.blog/sql-server-error-severities-explained/"
  },
  {
@@ -1128,6 +1138,11 @@
   "title": "The DELETE Statement Conflicted With a FOREIGN KEY Constraint (Error 547)",
   "lead": "\ud83d\udea8 Part of the SQL Server Errors series, the exact messages and what actually causes them.",
   "url": "https://sqldba.blog/sql-server-foreign-key-conflict-547/"
+ },
+ {
+  "title": "SQL Server High CPU: What to Check First, in Order",
+  "lead": "SQL Server at 100 percent CPU describes four different problems. The five checks that separate them, in the order that finds the fault fastest, each handing off to the script that does the work.",
+  "url": "https://sqldba.blog/sql-server-high-cpu/"
  },
  {
   "title": "Incorrect Syntax Near in SQL Server (Error 102)",
@@ -1160,6 +1175,11 @@
   "url": "https://sqldba.blog/sql-server-lock-request-timeout-1222/"
  },
  {
+  "title": "SQL Server Log Won\u2019t Truncate: What log_reuse_wait_desc Is Telling You",
+  "lead": "A transaction log is filling a disk and the backup job says it succeeded. SQL Server already knows why it cannot reuse the space, and it tells you in one column of sys.databases.",
+  "url": "https://sqldba.blog/sql-server-log-reuse-wait-desc/"
+ },
+ {
   "title": "Login Failed: The Account Is Disabled (Error 18470)",
   "lead": "\ud83d\udea8 Part of the SQL Server Errors series, the exact messages and what actually causes them.",
   "url": "https://sqldba.blog/sql-server-login-disabled-18470/"
@@ -1183,6 +1203,11 @@
   "title": "SQL Server Management Studio (SSMS): The Complete Guide",
   "lead": "SQL Server Management Studio is still the tool most production DBAs live in day to day, and it has changed more in the last couple of years than the previous decade.",
   "url": "https://sqldba.blog/sql-server-management-studio-complete-guide/"
+ },
+ {
+  "title": "SQL Server MAXDOP and Cost Threshold: What To Set, and Why 5 Is Not a Recommendation",
+  "lead": "Two settings decide when SQL Server splits a query across processors, and both ship with values you are probably meant to change. Microsoft\u2019s current MAXDOP table, what they actually say about cost threshold, and why CXPACKET is no longer the evidence it used to be.",
+  "url": "https://sqldba.blog/sql-server-maxdop-cost-threshold/"
  },
  {
   "title": "Insufficient System Memory and Memory Grant Timeouts (Errors 701 and 8645)",
@@ -2376,8 +2401,13 @@
  },
  {
   "title": "SQL Server Wait Types Library",
-  "lead": "Wait statistics are the single best first step in any SQL Server performance investigation.",
+  "lead": "\u23f3 The complete SQL Server Wait Types Library, every wait type explained, with a verdict on whether it is worth investigating or normally just noise.",
   "url": "https://sqldba.blog/sql-server-wait-statistics/"
+ },
+ {
+  "title": "Cumulative Wait Stats Lie: Measuring Waits Over an Interval",
+  "lead": "Wait statistics accumulate from startup, so on a long-running instance they describe history rather than the problem in front of you. Two snapshots and a subtraction fix that.",
+  "url": "https://sqldba.blog/sql-server-wait-stats-interval-vs-cumulative/"
  },
  {
   "title": "TERMINATE_LISTENER Wait Type in SQL Server",
@@ -2561,7 +2591,7 @@
  },
  {
   "title": "What WITH (NOLOCK) Actually Does in SQL Server",
-  "lead": "Almost every SQL Server developer has copied WITH (NOLOCK) onto the end of a query at some point, usually because someone said it \"makes queries faster\" or \"avoids blocking.\" Both of those things are technically true.",
+  "lead": "Almost every SQL Server developer has copied WITH (NOLOCK) onto the end of a query at some point, usually because someone said it \u201cmakes queries faster\u201d or \u201cavoids blocking.\u201d Both of those things are technically true.",
   "url": "https://sqldba.blog/what-with-nolock-actually-does-in-sql-server/"
  },
  {
