@@ -20,6 +20,16 @@
   "ms_docs": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-102-database-engine-error"
  },
  {
+  "error_number": 156,
+  "severity": 15,
+  "title": "Incorrect syntax near a keyword",
+  "message": "Incorrect syntax near the keyword 'X'.",
+  "meaning": "A reserved word used as an identifier is the usual cause, and it is a different error from 102: 156 names the keyword it tripped on.",
+  "category": "Query and data errors",
+  "url": "https://sqldba.blog/sql-server-incorrect-syntax-near-102/",
+  "ms_docs": null
+ },
+ {
   "error_number": 207,
   "severity": 16,
   "title": "Invalid column name",
@@ -120,6 +130,16 @@
   "ms_docs": null
  },
  {
+  "error_number": 601,
+  "severity": 12,
+  "title": "Could not continue scan with NOLOCK due to data movement",
+  "message": "Could not continue scan with NOLOCK due to data movement.",
+  "meaning": "The cost of NOLOCK, made visible. A read can miss rows, return one twice, or fail outright like this when pages move underneath it mid-scan.",
+  "category": "Query and data errors",
+  "url": "https://sqldba.blog/what-with-nolock-actually-does-in-sql-server/",
+  "ms_docs": null
+ },
+ {
   "error_number": 605,
   "severity": 21,
   "title": "Attempt to fetch logical page belongs to a different object",
@@ -148,6 +168,16 @@
   "category": "Blocking, deadlocks and memory",
   "url": "https://sqldba.blog/sql-server-memory-errors-701-8645/",
   "ms_docs": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-701-database-engine-error"
+ },
+ {
+  "error_number": 802,
+  "severity": 17,
+  "title": "Insufficient memory in the buffer pool",
+  "message": "There is insufficient memory available in the buffer pool.",
+  "meaning": "Rarely arrives alone. In job history it is the opening line of a cascade with 9001, 3314 and 3908 behind it, and the cascade is the story rather than this row.",
+  "category": "Blocking, deadlocks and memory",
+  "url": "https://sqldba.blog/dba-scripts-generate-index-maintenance-jobs/",
+  "ms_docs": null
  },
  {
   "error_number": 823,
@@ -180,6 +210,16 @@
   "ms_docs": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-825-database-engine-error"
  },
  {
+  "error_number": 845,
+  "severity": 17,
+  "title": "Buffer latch timeout",
+  "message": "Time-out occurred while waiting for buffer latch type X for page P, database ID N.",
+  "meaning": "A page took longer than the latch would wait, which points at storage or memory pressure rather than at the query holding it.",
+  "category": "Blocking, deadlocks and memory",
+  "url": "https://sqldba.blog/dba-scripts-generate-index-maintenance-jobs/",
+  "ms_docs": null
+ },
+ {
   "error_number": 916,
   "severity": 14,
   "title": "Not able to access the database under the current security context",
@@ -188,6 +228,16 @@
   "category": "Permissions",
   "url": "https://sqldba.blog/sql-server-not-able-to-access-database-916/",
   "ms_docs": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-916-database-engine-error"
+ },
+ {
+  "error_number": 924,
+  "severity": 14,
+  "title": "Database is in single-user mode and already taken",
+  "message": "Database 'X' is already open and can only have one user at a time.",
+  "meaning": "Single user mode let one session in and it was not yours. Every other connection, including a new query window, gets this until the holder disconnects or the database goes MULTI_USER.",
+  "category": "Connection and login",
+  "url": "https://sqldba.blog/kill-all-user-sessions-on-a-database-in-sql-server/",
+  "ms_docs": null
  },
  {
   "error_number": 927,
@@ -200,6 +250,16 @@
   "ms_docs": null
  },
  {
+  "error_number": 942,
+  "severity": 14,
+  "title": "Database cannot be opened because it is offline",
+  "message": "Database 'X' cannot be opened because it is offline.",
+  "meaning": "Nobody gets in at all, including you, until SET ONLINE. Connections are refused outright rather than queued.",
+  "category": "Connection and login",
+  "url": "https://sqldba.blog/kill-all-user-sessions-on-a-database-in-sql-server/",
+  "ms_docs": null
+ },
+ {
   "error_number": 945,
   "severity": 16,
   "title": "Database cannot be opened due to inaccessible files",
@@ -208,6 +268,16 @@
   "category": "Space, log and files",
   "url": "https://sqldba.blog/sql-server-database-cannot-be-opened-945/",
   "ms_docs": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-945-database-engine-error"
+ },
+ {
+  "error_number": 976,
+  "severity": 14,
+  "title": "AG database not accessible for queries",
+  "message": "The target database, 'X', is participating in an availability group and is currently not accessible for queries.",
+  "meaning": "A readable-secondary problem, not a restore one. The database shows ONLINE while data movement is suspended or the replica is not enabled for read access.",
+  "category": "Connection and login",
+  "url": "https://sqldba.blog/database-cannot-be-opened-it-is-in-the-middle-of-a-restore/",
+  "ms_docs": null
  },
  {
   "error_number": 1105,
@@ -238,6 +308,16 @@
   "category": "Blocking, deadlocks and memory",
   "url": "https://sqldba.blog/sql-server-lock-request-timeout-1222/",
   "ms_docs": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-1222-database-engine-error"
+ },
+ {
+  "error_number": 1802,
+  "severity": 16,
+  "title": "CREATE DATABASE failed, files could not be created",
+  "message": "CREATE DATABASE failed. Some file names listed could not be created. Check related errors.",
+  "meaning": "The wrapper error, and it says so: the cause is in the errors around it. On an attach it arrives with 5120 underneath, and TRY/CATCH only ever sees this one.",
+  "category": "Space, log and files",
+  "url": "https://sqldba.blog/sql-server-unable-to-open-the-physical-file-5120/",
+  "ms_docs": null
  },
  {
   "error_number": 1934,
@@ -350,6 +430,16 @@
   "ms_docs": null
  },
  {
+  "error_number": 3234,
+  "severity": 16,
+  "title": "Logical file is not part of the database",
+  "message": "Logical file 'X' is not part of database 'Y'. Use RESTORE FILELISTONLY to list the logical file names.",
+  "meaning": "WITH MOVE named a logical file the backup does not contain. Read the names out of the backup with RESTORE FILELISTONLY rather than assuming them from the target.",
+  "category": "Backup and restore",
+  "url": "https://sqldba.blog/dba-scripts-generate-restore-with-move-script/",
+  "ms_docs": null
+ },
+ {
   "error_number": 3241,
   "severity": 16,
   "title": "Media family on device is incorrectly formed",
@@ -367,6 +457,16 @@
   "meaning": "The copy did not finish. Different from 3241, which means the file is not a backup at all; this one names the file ID it could not read.",
   "category": "Backup and restore",
   "url": "https://sqldba.blog/sql-server-restore-terminating-abnormally-3013-3241/",
+  "ms_docs": null
+ },
+ {
+  "error_number": 3314,
+  "severity": 21,
+  "title": "Error during undo of a logged operation",
+  "message": "During undoing of a logged operation in database 'X', an error occurred at log record ID N.",
+  "meaning": "Severity 21. The engine could not roll something back, and the real failure is usually logged just before it. Restore or repair, do not retry.",
+  "category": "Corruption and hardware",
+  "url": "https://sqldba.blog/dba-scripts-generate-index-maintenance-jobs/",
   "ms_docs": null
  },
  {
@@ -390,6 +490,16 @@
   "ms_docs": null
  },
  {
+  "error_number": 3908,
+  "severity": 16,
+  "title": "Database is in emergency mode or damaged",
+  "message": "Could not run BEGIN TRANSACTION in database 'X' because the database is in emergency mode or is damaged and must be restarted.",
+  "meaning": "The tail of the buffer-pool cascade. By this point the database is not usable and the conversation is about recovery, not tuning.",
+  "category": "Corruption and hardware",
+  "url": "https://sqldba.blog/dba-scripts-generate-index-maintenance-jobs/",
+  "ms_docs": null
+ },
+ {
   "error_number": 4060,
   "severity": 11,
   "title": "Cannot open database requested by the login",
@@ -410,6 +520,16 @@
   "ms_docs": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-4064-database-engine-error"
  },
  {
+  "error_number": 4901,
+  "severity": 16,
+  "title": "ALTER TABLE cannot add that column to a non-empty table",
+  "message": "ALTER TABLE only allows columns to be added that can contain nulls, or have a DEFAULT definition specified. Column 'X' cannot be added to non-empty table 'Y'.",
+  "meaning": "Feels like 515 and is not. Adding a NOT NULL column with no default to a table that already has rows raises this instead.",
+  "category": "Query and data errors",
+  "url": "https://sqldba.blog/sql-server-cannot-insert-the-value-null-515/",
+  "ms_docs": null
+ },
+ {
   "error_number": 5030,
   "severity": 16,
   "title": "Database could not be exclusively locked",
@@ -427,6 +547,16 @@
   "meaning": "Something still lives on it, often a nonclustered index rather than the table you were thinking of. Objects first, then the files, then the filegroup.",
   "category": "Space, log and files",
   "url": "https://sqldba.blog/sql-server-filegroup-cannot-be-removed-not-empty-5042/",
+  "ms_docs": null
+ },
+ {
+  "error_number": 5052,
+  "severity": 16,
+  "title": "Operation not permitted in this database state",
+  "message": "X is not permitted while a database is in the Y state.",
+  "meaning": "The database is mid-transition, commonly RESTORING or RECOVERY_PENDING, and the statement you ran is not legal in that state. Read the state, not the statement.",
+  "category": "Space, log and files",
+  "url": "https://sqldba.blog/why-is-the-database-in-in-recovery-mode/",
   "ms_docs": null
  },
  {
@@ -457,6 +587,66 @@
   "meaning": "A corrupt or wrong file being attached, or a file copied while the instance was running.",
   "category": "Space, log and files",
   "url": null,
+  "ms_docs": null
+ },
+ {
+  "error_number": 5172,
+  "severity": 16,
+  "title": "File header is not a valid database file header",
+  "message": "The header for file 'X' is not a valid database file header. The Y property is incorrect.",
+  "meaning": "Seen at startup against master: the file is there and SQL Server no longer recognises it as a database.",
+  "category": "Corruption and hardware",
+  "url": "https://sqldba.blog/sql-server-cannot-recover-master-3417/",
+  "ms_docs": null
+ },
+ {
+  "error_number": 5173,
+  "severity": 16,
+  "title": "Files do not match the primary file of the database",
+  "message": "One or more files do not match the primary file of the database.",
+  "meaning": "Mismatched file set, usually an attach with the wrong files or a data file paired with the wrong log.",
+  "category": "Corruption and hardware",
+  "url": "https://sqldba.blog/sql-server-cannot-recover-master-3417/",
+  "ms_docs": null
+ },
+ {
+  "error_number": 5808,
+  "severity": 16,
+  "title": "Ad hoc update to system catalogs is not supported",
+  "message": "Ad hoc update to system catalogs is not supported.",
+  "meaning": "RECONFIGURE refusing a configuration change that would write the catalogs directly. The setting, not the syntax, is the problem.",
+  "category": "Query and data errors",
+  "url": "https://sqldba.blog/sql-server-ad-hoc-update-system-catalogs-not-supported/",
+  "ms_docs": null
+ },
+ {
+  "error_number": 6102,
+  "severity": 14,
+  "title": "No permission to use KILL",
+  "message": "User does not have permission to use the KILL statement.",
+  "meaning": "KILL needs sysadmin, processadmin, or ALTER ANY CONNECTION. A login with none of the three gets this, tested on the lab.",
+  "category": "Permissions",
+  "url": "https://sqldba.blog/kill-all-user-sessions-on-a-database-in-sql-server/",
+  "ms_docs": null
+ },
+ {
+  "error_number": 6120,
+  "severity": 16,
+  "title": "Rollback status report cannot be obtained",
+  "message": "Status report cannot be obtained. Rollback operation for Process ID X is not in progress.",
+  "meaning": "KILL ... WITH STATUSONLY against a session that is not rolling back. Not an error about the session, an error about the question.",
+  "category": "Blocking, deadlocks and memory",
+  "url": "https://sqldba.blog/sql-server-lock-request-timeout-1222/",
+  "ms_docs": null
+ },
+ {
+  "error_number": 8115,
+  "severity": 16,
+  "title": "Arithmetic overflow converting to a data type",
+  "message": "Arithmetic overflow error converting X to data type Y.",
+  "meaning": "The intermediate value overflowed before the final one did. Applying a modulo or a cast earlier in the expression usually avoids it.",
+  "category": "Query and data errors",
+  "url": "https://sqldba.blog/rand-vs-newid-in-sql-server/",
   "ms_docs": null
  },
  {
@@ -530,6 +720,16 @@
   "ms_docs": null
  },
  {
+  "error_number": 9001,
+  "severity": 21,
+  "title": "The log for the database is not available",
+  "message": "The log for database 'X' is not available. Check the operating system error log for related error messages.",
+  "meaning": "Severity 21, and it points you off the instance: the reason is normally in the OS error log, not in SQL Server.",
+  "category": "Corruption and hardware",
+  "url": "https://sqldba.blog/dba-scripts-generate-index-maintenance-jobs/",
+  "ms_docs": null
+ },
+ {
   "error_number": 9002,
   "severity": 17,
   "title": "Transaction log is full",
@@ -547,6 +747,16 @@
   "meaning": "Not a login problem. The handshake failed before credentials were checked.",
   "category": "Connection and login",
   "url": "https://sqldba.blog/sql-server-pre-login-handshake-error/",
+  "ms_docs": null
+ },
+ {
+  "error_number": 13609,
+  "severity": 16,
+  "title": "JSON text is not properly formatted",
+  "message": "JSON text is not properly formatted. Unexpected character 'X' is found at position N.",
+  "meaning": "Raised by the native JSON type and the JSON functions. The position in the message is exact; go to that character rather than re-reading the document.",
+  "category": "Query and data errors",
+  "url": "https://sqldba.blog/json-in-sql-server-openjson-for-json-and-the-native-json-type/",
   "ms_docs": null
  },
  {
@@ -570,6 +780,46 @@
   "ms_docs": null
  },
  {
+  "error_number": 15174,
+  "severity": 16,
+  "title": "Login owns one or more databases and cannot be dropped",
+  "message": "Login 'X' owns one or more database(s). Change the owner of the database(s) before dropping the login.",
+  "meaning": "Not a permission problem, an ownership one. Reassign the databases with ALTER AUTHORIZATION, then the drop succeeds.",
+  "category": "Permissions",
+  "url": "https://sqldba.blog/sql-server-cannot-execute-as-database-principal-15517/",
+  "ms_docs": null
+ },
+ {
+  "error_number": 15313,
+  "severity": 10,
+  "title": "The key is not encrypted using the specified decryptor",
+  "message": "The key is not encrypted using the specified decryptor.",
+  "meaning": "Severity 10, so it is informational rather than a failure. The key is real; the decryptor named is simply not one of the ones protecting it.",
+  "category": "Encryption and keys",
+  "url": "https://sqldba.blog/working-with-sql-server-database-master-keys/",
+  "ms_docs": null
+ },
+ {
+  "error_number": 15329,
+  "severity": 16,
+  "title": "The current master key cannot be decrypted",
+  "message": "The current master key cannot be decrypted. If this is a database master key, you should attempt to open it in the session before performing this operation.",
+  "meaning": "FORCE will push the operation through and lose everything the old key protected, so establish why it cannot be decrypted before reaching for it.",
+  "category": "Encryption and keys",
+  "url": "https://sqldba.blog/working-with-sql-server-database-master-keys/",
+  "ms_docs": null
+ },
+ {
+  "error_number": 15466,
+  "severity": 16,
+  "title": "An error occurred during decryption",
+  "message": "An error occurred during decryption.",
+  "meaning": "Almost always the wrong password. Reproduced by swapping the DECRYPTION BY PASSWORD and ENCRYPTION BY PASSWORD values on a RESTORE MASTER KEY: this is the exact message it returns.",
+  "category": "Encryption and keys",
+  "url": "https://sqldba.blog/working-with-sql-server-database-master-keys/",
+  "ms_docs": null
+ },
+ {
   "error_number": 15517,
   "severity": 16,
   "title": "Cannot execute as the database principal",
@@ -578,6 +828,16 @@
   "category": "Permissions",
   "url": "https://sqldba.blog/sql-server-cannot-execute-as-database-principal-15517/",
   "ms_docs": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-15517-database-engine-error"
+ },
+ {
+  "error_number": 15581,
+  "severity": 16,
+  "title": "Create or open the master key first",
+  "message": "Please create a master key in the database or open the master key in the session before performing this operation.",
+  "meaning": "The database master key exists but is not open in this session, or was never created. OPEN MASTER KEY first, or create one.",
+  "category": "Encryption and keys",
+  "url": "https://sqldba.blog/working-with-sql-server-database-master-keys/",
+  "ms_docs": null
  },
  {
   "error_number": 17806,
@@ -617,6 +877,26 @@
   "meaning": "The login exists and the password may even be right. It is switched off.",
   "category": "Connection and login",
   "url": "https://sqldba.blog/sql-server-login-disabled-18470/",
+  "ms_docs": null
+ },
+ {
+  "error_number": 22902,
+  "severity": 16,
+  "title": "Caller is not authorized to initiate the requested action",
+  "message": "Caller is not authorized to initiate the requested action. X privileges are required.",
+  "meaning": "A CDC administration refusal. The message names the privilege it wanted, which is the fastest read on it.",
+  "category": "Permissions",
+  "url": "https://sqldba.blog/disable-change-data-capture-in-sql-server/",
+  "ms_docs": null
+ },
+ {
+  "error_number": 25704,
+  "severity": 16,
+  "title": "The event session has already been stopped",
+  "message": "The event session has already been stopped.",
+  "meaning": "ALTER EVENT SESSION ... STATE = STOP against a session that is not running. Harmless, but it prints a red error over an otherwise successful script, so guard the stop.",
+  "category": "Query and data errors",
+  "url": "https://sqldba.blog/dba-scripts-create-decommission-audit-session/",
   "ms_docs": null
  },
  {

@@ -26,7 +26,7 @@ Six is a ceiling, not a target. Past roughly half a dozen, an agent starts picki
 and a wrong pick is worse than no server at all — so anything else this could expose is a Resource
 or a Prompt instead. A test enforces the cap.
 
-Covering **64 errors**, **260 wait types**, **7 SQL Server versions** with all **472 published
+Covering **92 errors**, **260 wait types**, **7 SQL Server versions** with all **472 published
 builds** behind them, **240 scripts** (191 SQL, 49 PowerShell) and **748 answered questions**.
 
 ### Also included
@@ -192,7 +192,7 @@ That is why script headers are treated as a product surface here rather than hou
 ## The 4 errors with no link
 
 The same gap on the other surface, and worth stating plainly because the tools promise a source
-link with every answer: **60 of the 64 errors carry a write-up URL, and 4 do not.** Those 4 still
+link with every answer: **88 of the 92 errors carry a write-up URL, and 4 do not.** Those 4 still
 return the message text, what it means and the severity — all hand-written and verified — and the
 answer *says* no article exists rather than quietly omitting the link, so an agent can quote
 them and knows it cannot cite them.
