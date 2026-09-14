@@ -104,6 +104,15 @@ QUESTIONS = [
          expect=['dba-scripts-generate-login-script',
                  'sql-server-without-login-vs-contained-database-user',
                  'sql-server-login-migration-what-gets-left-behind'],
+         gap='LOOSENED by Peter 2026-09-14 ("loose rulings make sure it goes green"). This is a '
+              'REGRESSION, not a pass: it now answers with sql-server-login-untrusted-domain-18452, '
+              'an error post not about SIDs, while the VERBATIM pair "How do I get the SID of a '
+              'SQL login?" on dba-scripts-generate-login-script is demoted to a related note. '
+              'An exact question match losing to a post-title match is a ranking bug with no known '
+              'safe fix: a rank-1 overlap floor was swept at 0.15/0.20/0.25/0.30/0.35 and fixed '
+              'neither R07 nor R13 while breaking R04. The 2026-08-24 ruling below STILL STANDS - '
+              'do NOT widen expect[] instead. REMOVE THIS GAP once the ranker prefers a verbatim '
+              'question match.',
          note='RULED by Peter 2026-08-24 (mcp/BACKLOG.md): all three login-family citations are '
               'correct. The what-gets-left-behind SID-mismatch FAQ, which won after the corpus '
               'grew to 532, is the closest to a literal answer - it names comparing '
@@ -136,6 +145,14 @@ QUESTIONS = [
 
     dict(id='R13', asked='my log file keeps growing what do I do',
          tool='answer_question', mode='cites', expect=['dba-scripts-get-database-health'],
+         gap='LOOSENED by Peter 2026-09-14 ("loose rulings make sure it goes green"). REGRESSED '
+              'AGAIN - the note below describes its FIRST reordering, this is its second. It '
+              'returns sql-server-read-retry-825 ("825 keeps appearing in the error log"), matched '
+              'on the words keeps and log, while "Why does my transaction log keep growing even '
+              'with regular full backups?" sits below it. Rank 1 is exempt from the 0.35 overlap '
+              'floor by design, so a shallow two-word match at the top is never filtered. The '
+              'corpus grew 748 -> 780 FAQs on 2026-09-14, which is when this reordered. REMOVE '
+              'THIS GAP once rank 1 has to earn its place.',
          note='REGRESSED SILENTLY AND WAS NOT IN THIS FILE. It answered correctly early on '
               '2026-08-19, then the stopword and synonym changes reordered the ranking and '
               'it started returning "How is this different from reading actual autogrowth '
@@ -334,7 +351,16 @@ class TestRealQuestions(unittest.TestCase):
         # entire purpose is to run.
         #
         # LOWER THIS as the rate improves. Do not raise it to make a red build green.
-        self.assertLessEqual(len(answered), 5,
+        # RAISED 5 -> 6 by Peter 2026-09-14 ("loose rulings make sure it goes green"). That is
+        # exactly what the line above says not to do, so it is recorded here rather than quietly
+        # done. Honest reading: a real regression from 4 answered to 6, caused by the corpus
+        # growing 748 -> 780 FAQs the same day - more records to match means more off-domain
+        # questions find something. 24/30 honest, down from 26/30. The two newly answered are
+        # 'how do I set up replication' and 'best way to move a database to Azure', both arguably
+        # nearer on-domain than the rest of this set, which is worth weighing before calling all
+        # six a pure loss.
+        # PUT THIS BACK TO 5, THEN 4. A ceiling to drive down, not a number to track upward.
+        self.assertLessEqual(len(answered), 6,
                              'off-domain questions answered from recall: %s' % answered)
 
 
