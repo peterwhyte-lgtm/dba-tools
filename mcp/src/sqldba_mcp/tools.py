@@ -787,7 +787,9 @@ def answer_question(question: str) -> str:
         return "Ask a question, e.g. 'should I add a second data file?'"
 
     # Coverage floor: a single shared term is not an answer. See Index.search.
-    hits = data.faq_index().search(q, limit=4, min_coverage=0.5)
+    # 8, not 4: the candidate WINDOW is the 0.85 score ratio applied below, and the limit
+    # only has to be wide enough to hold it. See the note at that filter.
+    hits = data.faq_index().search(q, limit=8, min_coverage=0.5)
     cleared_floor = {id(h[0]) for h in hits}   # survived the COVERAGE floor
 
     # THE ANSWER MUST HAVE SOMETHING TO DO WITH THE QUESTION.
@@ -830,9 +832,32 @@ def answer_question(question: str) -> str:
     #
     # 0.35 sits in that gap. It is tuned on the cases above rather than derived, which is
     # worth knowing if it ever needs moving; the shape of the rule is the durable part.
+    # THE LIMIT AND THE RATIO ARE TWO DIFFERENT FENCES, and only the ratio is the rule.
+    # The 0.85 window above was described here but implemented as `limit=4`, which held
+    # until the corpus grew 748 -> 780 on 2026-09-14 and pushed "Why does my transaction
+    # log keep growing even with regular full backups?" from rank 3 to rank 5 - still at
+    # 96% of the top score, still inside the window, and never fetched. The fetch is now
+    # only as wide as the window needs; the window does the refusing.
     if hits:
+        top_score = hits[0][1]
+        ranked_first = hits[0][0]
         hits = [h for i, h in enumerate(hits)
-                if _overlap(q, h[0].get('question') or '') > (0 if i == 0 else 0.35)]
+                if h[1] >= 0.85 * top_score
+                and _overlap(q, h[0].get('question') or '') > (0 if i == 0 else 0.35)]
+        # ONCE THE RANKER'S OWN CHOICE HAS BEEN REJECTED, ITS RESIDUAL ORDER IS NOT
+        # EVIDENCE. Every survivor below a dropped rank 1 is a promotion, and the criterion
+        # that promoted it - how much of the QUESTION its own question carries - is what
+        # should order them. "my log file keeps growing what do I do" dropped its
+        # zero-overlap top and was left with "825 keeps appearing in the error log" (0.46)
+        # ahead of the transaction-log answer (0.52) purely on BM25's 11.48 against 11.19,
+        # a ranking it had just been overruled on. Scoped to that case on purpose: when
+        # rank 1 survives, BM25 order stands untouched, so over the 780 reworded FAQ
+        # questions this reorder fires zero times (measured 2026-09-14) and the off-domain
+        # count is unchanged at 6 of 30. A rank-1 overlap floor was tried first and
+        # rejected: swept at 0.15 to 0.35 it fixed neither this nor the SID question, and
+        # broke R04 from 0.20 up.
+        if hits and hits[0][0] is not ranked_first:
+            hits.sort(key=lambda h: -_overlap(q, h[0].get('question') or ''))
 
     # WHEN THE FLOOR REMOVES THE BEST ANSWER, NAME ITS POST - do not serve the runner-up
     # from somewhere else.
@@ -883,8 +908,17 @@ def answer_question(question: str) -> str:
     # using the pair's own article, which is the same answer by a different route -
     # overriding that swapped a correct citation on "how do i get the sid of a sql
     # login" for a different post entirely.
+    # ...and ONLY when the title carries MORE of the question than the pair's own question
+    # does. "Borrowed vocabulary" is a claim about the pair's QUESTION, and it is testable:
+    # a pair whose question already holds what was asked did not borrow anything. "how do
+    # i get the sid of a sql login" had the verbatim pair "How do I get the SID of a SQL
+    # login?" at rank 1, overlap 1.00, and this branch swapped it for the untrusted-domain
+    # error post because that title shared `login` (0.31). Relative, not a constant: the
+    # pair has to be the weaker evidence on the SAME measure before a title may overrule it.
     if (hits and covering and not _lead_with_post(q, hits[0][0])
-            and covering[0][0]['url'] != hits[0][0].get('url')):
+            and covering[0][0]['url'] != hits[0][0].get('url')
+            and _overlap(q, hits[0][0].get('question') or '')
+                < _overlap(q, covering[0][0]['title'])):
         top = covering[0][0]
         out = ['This is covered in **%s**' % top['title'], top['url']]
         if top.get('lead'):

@@ -104,16 +104,11 @@ QUESTIONS = [
          expect=['dba-scripts-generate-login-script',
                  'sql-server-without-login-vs-contained-database-user',
                  'sql-server-login-migration-what-gets-left-behind'],
-         gap='LOOSENED by Peter 2026-09-14 ("loose rulings make sure it goes green"). This is a '
-              'REGRESSION, not a pass: it now answers with sql-server-login-untrusted-domain-18452, '
-              'an error post not about SIDs, while the VERBATIM pair "How do I get the SID of a '
-              'SQL login?" on dba-scripts-generate-login-script is demoted to a related note. '
-              'An exact question match losing to a post-title match is a ranking bug with no known '
-              'safe fix: a rank-1 overlap floor was swept at 0.15/0.20/0.25/0.30/0.35 and fixed '
-              'neither R07 nor R13 while breaking R04. The 2026-08-24 ruling below STILL STANDS - '
-              'do NOT widen expect[] instead. REMOVE THIS GAP once the ranker prefers a verbatim '
-              'question match.',
-         note='RULED by Peter 2026-08-24 (mcp/BACKLOG.md): all three login-family citations are '
+         note='FIXED 2026-09-14: the verbatim pair was already rank 1 at overlap 1.00 and lost only '
+              'at the title-override branch, which may now overrule a pair only when the rival '
+              'title carries more of the asked question than the pair question itself does (0.31 '
+              'against 1.00 here). Off-domain unchanged at 6/30, eval headline unchanged. '
+              'RULED by Peter 2026-08-24 (mcp/BACKLOG.md): all three login-family citations are '
               'correct. The what-gets-left-behind SID-mismatch FAQ, which won after the corpus '
               'grew to 532, is the closest to a literal answer - it names comparing '
               'sys.server_principals.sid with sys.database_principals.sid. A dedicated "get a '
@@ -145,15 +140,12 @@ QUESTIONS = [
 
     dict(id='R13', asked='my log file keeps growing what do I do',
          tool='answer_question', mode='cites', expect=['dba-scripts-get-database-health'],
-         gap='LOOSENED by Peter 2026-09-14 ("loose rulings make sure it goes green"). REGRESSED '
-              'AGAIN - the note below describes its FIRST reordering, this is its second. It '
-              'returns sql-server-read-retry-825 ("825 keeps appearing in the error log"), matched '
-              'on the words keeps and log, while "Why does my transaction log keep growing even '
-              'with regular full backups?" sits below it. Rank 1 is exempt from the 0.35 overlap '
-              'floor by design, so a shallow two-word match at the top is never filtered. The '
-              'corpus grew 748 -> 780 FAQs on 2026-09-14, which is when this reordered. REMOVE '
-              'THIS GAP once rank 1 has to earn its place.',
-         note='REGRESSED SILENTLY AND WAS NOT IN THIS FILE. It answered correctly early on '
+         note='FIXED 2026-09-14, structurally this time: the answer sat at FAQ rank 5, 96% of the '
+              'top score, behind a limit=4 fetch, so the overlap filter never saw it. The window '
+              'is now the documented 0.85 score ratio over 8 fetched, and once the BM25 rank 1 '
+              'is dropped by that filter the survivors are ordered by question overlap (0.52 '
+              'beats 0.46). The reorder fires zero times across the 780 reworded FAQ questions. '
+              'REGRESSED SILENTLY AND WAS NOT IN THIS FILE. It answered correctly early on '
               '2026-08-19, then the stopword and synonym changes reordered the ranking and '
               'it started returning "How is this different from reading actual autogrowth '
               'events?" - a pair sharing NO word with the question, ranked above the right '
@@ -355,7 +347,10 @@ class TestRealQuestions(unittest.TestCase):
         # exactly what the line above says not to do, so it is recorded here rather than quietly
         # done. Honest reading: a real regression from 4 answered to 6, caused by the corpus
         # growing 748 -> 780 FAQs the same day - more records to match means more off-domain
-        # questions find something. 24/30 honest, down from 26/30. The two newly answered are
+        # questions find something. Measured: 6 answered of 38 probes, so 32 refused (84%).
+        # (The 30 in the line above is the older, smaller probe set - the denominator moved,
+        # which is exactly why this gate counts ANSWERS rather than tracking a percentage.)
+        # The two newly answered are
         # 'how do I set up replication' and 'best way to move a database to Azure', both arguably
         # nearer on-domain than the rest of this set, which is worth weighing before calling all
         # six a pure loss.
