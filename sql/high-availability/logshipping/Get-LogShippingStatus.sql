@@ -4,7 +4,6 @@ Category    : high-availability
 Purpose     : Show every log shipping pair on this instance and how far behind each secondary is.
 Author      : Peter Whyte (https://sqldba.blog)
 Requires    : VIEW SERVER STATE, and membership of msdb (the monitor tables live there)
-HealthCheck : Yes
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low

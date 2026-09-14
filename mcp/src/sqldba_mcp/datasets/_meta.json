@@ -15,7 +15,7 @@
   "scripts": 241,
   "scripts_sql": 192,
   "scripts_powershell": 49,
-  "scripts_healthcheck": 46,
+  "scripts_healthcheck": 45,
   "scripts_without_post": 23,
   "docs": 9,
   "prompts": 1
