@@ -27,7 +27,7 @@ and a wrong pick is worse than no server at all — so anything else this could 
 or a Prompt instead. A test enforces the cap.
 
 Covering **92 errors**, **260 wait types**, **7 SQL Server versions** with all **472 published
-builds** behind them, **240 scripts** (191 SQL, 49 PowerShell) and **748 answered questions**.
+builds** behind them, **241 scripts** (192 SQL, 49 PowerShell) and **780 answered questions**.
 
 ### Also included
 
@@ -116,7 +116,7 @@ All six tools declare themselves **read-only, non-destructive and closed-world**
 annotations, so a client can auto-approve them instead of asking you to confirm a reference lookup
 six times. That is the same promise as the paragraph above, in the form a client can actually read.
 
-The scripts it hands you are a different matter, and it says so. **21 of the 240 change something**
+The scripts it hands you are a different matter, and it says so. **21 of the 241 change something**
 — they write data, create objects, install, patch or restart — and every one of those leads its
 answer with a warning naming the class, the impact and the reason, before the body. The other 216
 are read-only and stay uncluttered, because a warning on everything is a warning on nothing. A test

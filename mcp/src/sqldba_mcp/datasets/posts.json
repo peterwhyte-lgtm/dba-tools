@@ -1,5 +1,10 @@
 [
  {
+  "title": "Add a Filegroup to a SQL Server Database",
+  "lead": "ADD FILEGROUP then ADD FILE, and the trap in between: a filegroup with no files will accept a CREATE TABLE and only fail at the first INSERT with Msg 622. Placing objects, changing the default, and removing one again.",
+  "url": "https://sqldba.blog/add-a-filegroup-to-a-sql-server-database/"
+ },
+ {
   "title": "Applying Data Retention Safely in SQL Server",
   "lead": "Data retention in SQL Server usually means deleting old data in a controlled and repeatable way.",
   "url": "https://sqldba.blog/applying-data-retention-safely-in-sql-server/"

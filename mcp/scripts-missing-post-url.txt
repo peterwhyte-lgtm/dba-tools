@@ -27,6 +27,7 @@ sql/collectors/Generate-CollectorJob-WaitStats.sql
 sql/collectors/Get-PerfmonDelta.sql
 sql/collectors/Get-StorageIODelta.sql
 sql/collectors/Get-WaitStatsDelta.sql
+sql/high-availability/logshipping/Get-LogShippingStatus.sql
 sql/lab/Create-BlockingScenario.sql
 sql/lab/Kill-BlockingSession.sql
 sql/maintenance/Generate-IndexMaintenanceScript.sql

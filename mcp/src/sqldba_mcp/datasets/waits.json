@@ -130,7 +130,7 @@
   "verdict_question": "Is It a Problem?",
   "matters": false,
   "when_to_ignore": "",
-  "what_to_do": "Find the big parallel queries running when the wait appears: sys.dm_exec_query_stats for high-elapsed-time parallel plans, or catch them live with sys.dm_exec_requests. Check those plans for huge hash joins that should have been something smaller: missing indexes and stale statistics are the usual reasons a join goes massive. Review parallelism settings ( cost threshold for parallelism, MAXDOP) if trivial queries are going parallel. Do not chase this wait in isolation; it will shrink as a side effect of fixing the queries.",
+  "what_to_do": "Find the big parallel queries running when the wait appears: sys.dm_exec_query_stats for high-elapsed-time parallel plans, or catch them live with sys.dm_exec_requests. Check those plans for huge hash joins that should have been something smaller: missing indexes and stale statistics are the usual reasons a join goes massive. Review parallelism settings ( cost threshold for parallelism, MAXDOP ) if trivial queries are going parallel. Do not chase this wait in isolation; it will shrink as a side effect of fixing the queries.",
   "url": "https://sqldba.blog/sql-server-wait-bmpallocation/"
  },
  {
@@ -1023,7 +1023,7 @@
   "verdict_question": "Is It a Problem?",
   "matters": true,
   "when_to_ignore": "",
-  "what_to_do": "Look at sys.dm_os_latch_stats and find the latch class with the most wait time. The DMV groups all latch modes together per class, which is the right altitude for analysis anyway. Target that subsystem. For ACCESS_METHODS_DATASET_PARENT, review parallelism (MAXDOP, cost threshold) and index the large scans driving it. Treat the latch class as the real signal, not the generic LATCH_EX name. For before/after comparisons, latch stats can be reset with DBCC SQLPERF ('sys.dm_os_latch_stats', CLEAR); so you measure just your test window.",
+  "what_to_do": "Look at sys.dm_os_latch_stats and find the latch class with the most wait time. The DMV groups all latch modes together per class, which is the right altitude for analysis anyway. Target that subsystem. For ACCESS_METHODS_DATASET_PARENT, review parallelism ( MAXDOP, cost threshold) and index the large scans driving it. Treat the latch class as the real signal, not the generic LATCH_EX name. For before/after comparisons, latch stats can be reset with DBCC SQLPERF ('sys.dm_os_latch_stats', CLEAR); so you measure just your test window.",
   "url": "https://sqldba.blog/sql-server-wait-latch-ex/"
  },
  {
@@ -1059,7 +1059,7 @@
   "verdict_question": "Is It a Problem?",
   "matters": false,
   "when_to_ignore": "",
-  "what_to_do": "Check sys.dm_os_latch_stats for the top latch class by wait time. Address the subsystem that class belongs to, rather than the generic wait. If a parallel dataset class dominates, review parallelism settings ( cost threshold for parallelism, MAXDOP) and index the queries generating the large scans so they stop scanning.",
+  "what_to_do": "Check sys.dm_os_latch_stats for the top latch class by wait time. Address the subsystem that class belongs to, rather than the generic wait. If a parallel dataset class dominates, review parallelism settings ( cost threshold for parallelism, MAXDOP ) and index the queries generating the large scans so they stop scanning.",
   "url": "https://sqldba.blog/sql-server-wait-latch-sh/"
  },
  {
@@ -2731,7 +2731,7 @@
   ],
   "title": "WRITELOG Wait Type in SQL Server",
   "verdict": "Yes, some WRITELOG is inherent in any transactional workload.",
-  "verdict_question": "Is this wait expected?",
+  "verdict_question": "Is This Wait Expected?",
   "matters": true,
   "when_to_ignore": "High transaction volume workloads, if you are doing tens of thousands of commits per second, some WRITELOG is unavoidable.",
   "what_to_do": "Slow log disk: Move the log file to a dedicated fast disk (SSD or NVMe ideally) Separate log files from data files if they share a volume Check storage queue depth in Performance Monitor ( PhysicalDisk\\Current Disk Queue Length on the log volume) Chatty commit patterns: Identify the application or job doing frequent small commits Refactor row-by-row inserts into set-based operations Or batch commits, instead of committing after every row, commit every 500 or 1000 rows Review SSIS or ETL packages for Row by Row commit modes AG secondary lag: Check network latency between primary and secondary Check secondary disk write performance For geographically distant secondaries, evaluate whether asynchronous commit is more appropriate As a temporary measure only: For write-heavy applications under strict SLA, delayed durability ( DELAYED_DURABILITY = FORCED ) can reduce WRITELOG by batching log flushes. This trades write performance for a small data loss window, appropriate only for specific use cases (audit logs, telemetry) not for transactional data.",

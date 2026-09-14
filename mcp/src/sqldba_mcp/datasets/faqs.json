@@ -1,5 +1,41 @@
 [
  {
+  "question": "Can I make the new filegroup the default?",
+  "answer": "Yes: ALTER DATABASE... MODIFY FILEGROUP [FG_Name] DEFAULT. Tested, the default moved off PRIMARY and a table created with no ON clause landed on the new filegroup. That is a real technique for keeping user data out of PRIMARY, and it is also easy to forget you did it.",
+  "post_title": "Add a Filegroup to a SQL Server Database",
+  "url": "https://sqldba.blog/add-a-filegroup-to-a-sql-server-database/"
+ },
+ {
+  "question": "Can I move an existing table to the new filegroup?",
+  "answer": "Yes, by rebuilding its clustered index with ON [FG_Name]. That physically moves the table, so plan the space and the window: you need room for both copies during the rebuild. A heap has to get a clustered index first, or be moved by other means.",
+  "post_title": "Add a Filegroup to a SQL Server Database",
+  "url": "https://sqldba.blog/add-a-filegroup-to-a-sql-server-database/"
+ },
+ {
+  "question": "Do I have to add a file, or is the filegroup enough on its own?",
+  "answer": "You have to add a file, but SQL Server will not tell you that when you expect it to. ADD FILEGROUP creates metadata only. You can then create a table on that empty filegroup and it will succeed. The first INSERT is what fails, with Msg 622. Verified on SQL Server 2025.",
+  "post_title": "Add a Filegroup to a SQL Server Database",
+  "url": "https://sqldba.blog/add-a-filegroup-to-a-sql-server-database/"
+ },
+ {
+  "question": "Should I use multiple files in one filegroup?",
+  "answer": "If you want to spread a filegroup across more than one volume, or you are relieving a single hot file, then yes. Make them the same size with the same growth setting, or proportional fill will send most of the writes at whichever file has the most free space.",
+  "post_title": "Add a Filegroup to a SQL Server Database",
+  "url": "https://sqldba.blog/add-a-filegroup-to-a-sql-server-database/"
+ },
+ {
+  "question": "What is the difference between a filegroup and a data file?",
+  "answer": "A filegroup is a named container; the files are what actually hold pages on disk. Objects are placed on a filegroup, never on a specific file, and SQL Server spreads writes across the files inside it using proportional fill. That indirection is the point: you can add capacity by adding a file without touching a single table definition.",
+  "post_title": "Add a Filegroup to a SQL Server Database",
+  "url": "https://sqldba.blog/add-a-filegroup-to-a-sql-server-database/"
+ },
+ {
+  "question": "Why will my filegroup not drop?",
+  "answer": "Because something is still on it. REMOVE FILEGROUP against a non-empty filegroup fails with Msg 5042, The filegroup cannot be removed because it is not empty. Move or drop the objects, remove the files with REMOVE FILE, then remove the filegroup.",
+  "post_title": "Add a Filegroup to a SQL Server Database",
+  "url": "https://sqldba.blog/add-a-filegroup-to-a-sql-server-database/"
+ },
+ {
   "question": "I enabled TCP/IP and it still does not work.",
   "answer": "The protocol change only takes effect when the SQL Server service restarts. Restart it, then confirm with the listening-ports check in Step 2 that something is bound to the port before testing from outside again.",
   "post_title": "Cannot Connect to SQL Server: The Checks in the Order That Finds It",
@@ -2802,6 +2838,12 @@
   "url": "https://sqldba.blog/sql-server-alter-database-set-enable-broker-hanging/"
  },
  {
+  "question": "Can I get at the data without touching the database that is already there?",
+  "answer": "Yes, and it is the option to prefer. Restore the file under a new name with WITH MOVE for each logical file, as in the example above. It costs disk space for a second copy and destroys nothing, so you find out whether the backup is good before deciding what to do with the existing database.",
+  "post_title": "The Backup Set Holds a Backup of a Database Other Than the Existing Database (Error 3154)",
+  "url": "https://sqldba.blog/sql-server-backup-set-different-database-3154/"
+ },
+ {
   "question": "How do I see what is really in the backup file?",
   "answer": "RESTORE HEADERONLY reads it without touching anything, and RESTORE FILELISTONLY gives you the logical file names for WITH MOVE. Both answer \u201cis this the file I think it is\u201d before you commit to anything.",
   "post_title": "The Backup Set Holds a Backup of a Database Other Than the Existing Database (Error 3154)",
@@ -2809,7 +2851,7 @@
  },
  {
   "question": "Is WITH REPLACE safe?",
-  "answer": "It waives two checks, not one: the database-identity check that raised 3154, and the check that the tail of the existing log has been backed up. The second is the dangerous half, because committed work since the last log backup is destroyed without a further warning.",
+  "answer": "It waives three checks, not one: the database-identity check that raised 3154, the check that the tail of the existing log has been backed up, and the check that the files being overwritten belong to this database. The tail-log one is the dangerous half, because committed work since the last log backup is destroyed without a further warning.",
   "post_title": "The Backup Set Holds a Backup of a Database Other Than the Existing Database (Error 3154)",
   "url": "https://sqldba.blog/sql-server-backup-set-different-database-3154/"
  },
@@ -2910,6 +2952,12 @@
   "url": "https://sqldba.blog/sql-server-cannot-insert-the-value-null-515/"
  },
  {
+  "question": "Does a RESTORE throw this too, or is it only backups?",
+  "answer": "Both, and the state number tells you which side you are on. Reproduced against a path that does not exist: a BACKUP returns Msg 3201, Level 16, State 1 and a RESTORE HEADERONLY returns Msg 3201, Level 16, State 2, each followed by Msg 3013 saying the operation is terminating abnormally. The 3013 is noise, the 3201 is the error. The difference that matters operationally is the permission being tested: on backup the service account needs to write to that folder, on restore it needs to read the file. A share that a backup job can write to is not automatically one a restore can read from, which is why restores fail on paths that have been backing up happily for months.",
+  "post_title": "Cannot Open Backup Device: Operating System Error 5 (Access Is Denied)",
+  "url": "https://sqldba.blog/sql-server-cannot-open-backup-device/"
+ },
+ {
   "question": "It worked yesterday and fails today.",
   "answer": "Three usual culprits: the service account password changed or the account locked, antivirus started scanning the backup folder (operating system error 32), or the share was recreated, which resets share permissions even when NTFS permissions survive.",
   "post_title": "Cannot Open Backup Device: Operating System Error 5 (Access Is Denied)",
@@ -2942,6 +2990,12 @@
  {
   "question": "Is this a password problem?",
   "answer": "No. Authentication already succeeded. Both errors report as \"login failed\" and neither involves the password. The database is the problem, not the login.",
+  "post_title": "Cannot Open Database Requested by the Login (Errors 4060 and 4064)",
+  "url": "https://sqldba.blog/sql-server-cannot-open-database-4060/"
+ },
+ {
+  "question": "It works in SSMS but the application gets 4060.",
+  "answer": "The application is asking for a different database, or asking as a different login. Read the database name inside the message and check it against sys.databases on that server: renamed, dropped, offline and restoring all produce this. If the name is right, the application's login has no user in it, and the error log reason line names both the login and the database.",
   "post_title": "Cannot Open Database Requested by the Login (Errors 4060 and 4064)",
   "url": "https://sqldba.blog/sql-server-cannot-open-database-4060/"
  },
@@ -3060,6 +3114,12 @@
   "url": "https://sqldba.blog/sql-server-conversion-failed-245/"
  },
  {
+  "question": "The message names a value like 'not entered' that is nowhere in my query.",
+  "answer": "That is the proof of what went wrong. The value comes from the column, not from your literal: SQL Server converted the column side to int and stopped at the first row it could not convert, which is why the failing value reads like data rather than code. The TRY_CONVERT... IS NULL query above lists every such row, and quoting the literal stops the column being converted at all.",
+  "post_title": "Conversion Failed When Converting the varchar Value to Data Type int (Error 245)",
+  "url": "https://sqldba.blog/sql-server-conversion-failed-245/"
+ },
+ {
   "question": "Why is SQL Server converting the column and not my value?",
   "answer": "Data type precedence. int outranks varchar, so the column side converts, not the literal. Quoting the literal stops the conversion, and usually makes the query faster by keeping the predicate sargable.",
   "post_title": "Conversion Failed When Converting the varchar Value to Data Type int (Error 245)",
@@ -3156,6 +3216,12 @@
   "url": "https://sqldba.blog/sql-server-database-could-not-be-exclusively-locked-5030/"
  },
  {
+  "question": "Which statements raise 5030, and what do the states mean?",
+  "answer": "Measured on SQL Server 2025 with one other session sitting in the database: ALTER DATABASE... MODIFY NAME raises 5030 with State 2 and ALTER DATABASE... COLLATE raises it with State 5, both immediately. SET SINGLE_USER does not raise it: without a termination clause it waits for the other session to leave, and WITH NO_WAIT fails with Msg 5070 instead. DROP DATABASE with a session inside fails with Msg 3702. Same cause every time, different message.",
+  "post_title": "The Database Could Not Be Exclusively Locked to Perform the Operation (Error 5030)",
+  "url": "https://sqldba.blog/sql-server-database-could-not-be-exclusively-locked-5030/"
+ },
+ {
   "question": "Can I catch 1205 in TRY/CATCH and retry?",
   "answer": "Yes. Unlike a compile-time error, 1205 is raised while the batch runs, so a CATCH block sees it and can re-run the whole transaction, which the victim has already had rolled back. Bound the retries and add a short delay, and treat the retry as a way of surviving the symptom, not as the fix: the access-order problem above is still there.",
   "post_title": "Reading and Fixing a SQL Server Deadlock",
@@ -3212,6 +3278,12 @@
  {
   "question": "Is IGNORE_DUP_KEY a fix?",
   "answer": "It converts the error into a warning by silently discarding the duplicate rows. In a controlled staging load that can be deliberate; on a production table it turns a loud, diagnosable failure into quiet data loss. Fix the source, not the signal.",
+  "post_title": "Violation of PRIMARY KEY Constraint and Cannot Insert Duplicate Key (Errors 2627 and 2601)",
+  "url": "https://sqldba.blog/sql-server-duplicate-key-errors-2627-2601/"
+ },
+ {
+  "question": "The duplicate key value in the message is a row that is not in the table. I have checked.",
+  "answer": "You are almost certainly looking at a value that compares equal but does not look equal. Two cases cover most of it. Trailing spaces are ignored in comparison, so inserting 'ABC' and then 'ABC ' into a unique index raises Msg 2601 and prints the duplicate key as (ABC ), which reads as a different row on screen. And on a case-insensitive collation, the default here, 'abc' and 'ABC' collide and the message prints (ABC). Search with WHERE LEN(col) <> DATALENGTH(col) for the padding case, and add COLLATE Latin1_General_BIN2 to your lookup to see case as SQL Server does not.",
   "post_title": "Violation of PRIMARY KEY Constraint and Cannot Insert Duplicate Key (Errors 2627 and 2601)",
   "url": "https://sqldba.blog/sql-server-duplicate-key-errors-2627-2601/"
  },
@@ -3360,6 +3432,18 @@
   "url": "https://sqldba.blog/sql-server-filegroup-has-no-files-622/"
  },
  {
+  "question": "ALTER INDEX REORGANIZE failed with 1105 but the database is nowhere near full.",
+  "answer": "When an index spans several files in the filegroup and one of them is full, REORGANIZE stops when it tries to move rows into the full file. Microsoft's note on 1105 gives 2 ways out: rebuild the index instead, or raise the growth limit on the full file. The uneven-files case above is usually why one file filled first.",
+  "post_title": "Could Not Allocate Space Because the Filegroup Is Full (Error 1105)",
+  "url": "https://sqldba.blog/sql-server-filegroup-is-full-1105/"
+ },
+ {
+  "question": "Autogrowth is on and the disk has room. Why did it still fail?",
+  "answer": "Look at max_size in the query above. A file can have growth switched on and still stop dead at a MAXSIZE somebody set years ago, and even UNLIMITED is a 16 TB ceiling, which the message now says out loud. Reproduced on SQL Server 2025 with an 8 MB file capped at 8 MB: the insert fails at the cap however much disk is free.",
+  "post_title": "Could Not Allocate Space Because the Filegroup Is Full (Error 1105)",
+  "url": "https://sqldba.blog/sql-server-filegroup-is-full-1105/"
+ },
+ {
   "question": "Is this the same as the transaction log being full?",
   "answer": "No, and it is the most common confusion. 1105 is the data file, 9002 is the log. Taking a log backup does nothing for 1105.",
   "post_title": "Could Not Allocate Space Because the Filegroup Is Full (Error 1105)",
@@ -3379,7 +3463,7 @@
  },
  {
   "question": "Can I just disable the constraint?",
-  "answer": "You can, and it costs more than it saves. A disabled constraint is marked is_not_trusted, so the optimiser stops using it for join elimination while you still pay to maintain it, and you now hold orphan rows nobody has counted. Re-enable it with WITH CHECK CHECK CONSTRAINT, which validates the existing data.",
+  "answer": "You can, and it costs more than it saves. NOCHECK CONSTRAINT switches the check off entirely, so orphan rows go in unchecked, and when you switch it back on the constraint stays is_not_trusted unless you validate it, which means the optimiser stops using it for join elimination while you still pay to maintain it. Re-enable it with WITH CHECK CHECK CONSTRAINT, which validates the existing data and clears the flag.",
   "post_title": "The DELETE Statement Conflicted With a FOREIGN KEY Constraint (Error 547)",
   "url": "https://sqldba.blog/sql-server-foreign-key-conflict-547/"
  },
@@ -3392,6 +3476,12 @@
  {
   "question": "Which table is actually blocking me?",
   "answer": "The message names it, including the database, table and column. On a wide schema it names the first blocker only, so query sys.foreign_keys for every table referencing the parent before you start.",
+  "post_title": "The DELETE Statement Conflicted With a FOREIGN KEY Constraint (Error 547)",
+  "url": "https://sqldba.blog/sql-server-foreign-key-conflict-547/"
+ },
+ {
+  "question": "Why is ALTER TABLE raising 547?",
+  "answer": "Because it is validating. Adding a foreign key, or re-enabling one WITH CHECK, checks every existing child row against the parent, and the first orphan fails the statement with the same 547, worded as the ALTER TABLE statement conflicted with the FOREIGN KEY constraint. Find the orphans with the LEFT JOIN query above and fix or delete them; adding the constraint WITH NOCHECK makes the statement succeed but leaves it untrusted.",
   "post_title": "The DELETE Statement Conflicted With a FOREIGN KEY Constraint (Error 547)",
   "url": "https://sqldba.blog/sql-server-foreign-key-conflict-547/"
  },
@@ -3582,6 +3672,12 @@
   "url": "https://sqldba.blog/sql-server-log-reuse-wait-desc/"
  },
  {
+  "question": "Does disabling the login disconnect it?",
+  "answer": "No. Per Microsoft's ALTER LOGIN reference, disabling does not affect connections that already exist; it stops the next login. The account also keeps its permissions and can still be impersonated with EXECUTE AS. If the point is to stop someone now, find their sessions in sys.dm_exec_sessions and KILL them after the DISABLE.",
+  "post_title": "Login Failed: The Account Is Disabled (Error 18470)",
+  "url": "https://sqldba.blog/sql-server-login-disabled-18470/"
+ },
+ {
   "question": "How do I find out who disabled it?",
   "answer": "Start with modify_date in sys.server_principals for when. The default trace holds recent ALTER LOGIN events, and a server audit, if configured, has the full answer.",
   "post_title": "Login Failed: The Account Is Disabled (Error 18470)",
@@ -3598,6 +3694,12 @@
   "answer": "A wrong password is deliberately vague so the message cannot be used to probe accounts. A disabled account is treated as safe to announce on current drivers, which makes this the one login failure you can diagnose from the client message alone.",
   "post_title": "Login Failed: The Account Is Disabled (Error 18470)",
   "url": "https://sqldba.blog/sql-server-login-disabled-18470/"
+ },
+ {
+  "question": "Lots of 18456s and I do not know which machine they are coming from.",
+  "answer": "The error log records the caller on every one. Read it with EXEC xp_readerrorlog 0, 1, N'Login failed'; and each entry ends with the source, like [CLIENT: 10.0.0.25], alongside the login name and the reason. That turns \"something is hammering us\" into an address you can chase. Watch for a regular interval in the timestamps: a failure landing every fifteen minutes on the dot is a scheduled job or a monitoring agent, not a person mistyping a password, and the reason text usually names the database it could not open.",
+  "post_title": "Troubleshoot \u201cLogin Failed for User\u201d (Error 18456) in SQL Server",
+  "url": "https://sqldba.blog/sql-server-login-failed-error-18456/"
  },
  {
   "question": "The password is definitely right, so why State 8?",
@@ -3888,6 +3990,12 @@
   "url": "https://sqldba.blog/sql-server-network-path-not-found-error-53/"
  },
  {
+  "question": "The port is open. I tested it. So why am I still getting 53?",
+  "answer": "Because 53 happens before the port. It is a Windows network error meaning the path could not be found, so the client never got as far as a SQL Server conversation. If Test-NetConnection <server> -Port 1433 succeeds but the name fails, you have proved the route and the port are fine and the name is the problem: connect by IP address, and if that works it is DNS, a stale HOSTS entry, or an alias in SQL Server Configuration Manager pointing somewhere that no longer exists. If the port test fails too, you are looking at a firewall or the wrong port, and the error you eventually get will not be 53.",
+  "post_title": "Could Not Open a Connection to SQL Server: Error 53 and Named Pipes Error 40",
+  "url": "https://sqldba.blog/sql-server-network-path-not-found-error-53/"
+ },
+ {
   "question": "Can I just enable the guest user?",
   "answer": "It makes the error go away by giving every login access to the database, which is why it shows up in security audits. Map a real user for the login instead; guest is the workaround that becomes a finding.",
   "post_title": "The Server Principal Is Not Able to Access the Database (Error 916)",
@@ -3912,6 +4020,12 @@
   "url": "https://sqldba.blog/sql-server-not-able-to-access-database-916/"
  },
  {
+  "question": "I fixed the user and the application still cannot log in.",
+  "answer": "Check the other databases. A restore from another server usually brings several databases across, and each one carries its own copy of the orphan, so fixing one database fixes one database. Run the orphan query in each, or use the Get Orphaned Users script below to see every database in one pass.",
+  "post_title": "User, Group or Role Already Exists in the Current Database (Error 15023)",
+  "url": "https://sqldba.blog/sql-server-orphaned-users-15023/"
+ },
+ {
   "question": "Should I just drop the user and recreate it?",
   "answer": "No. Dropping destroys the role memberships and object permissions the user already had, and the recreated one is empty. ALTER USER... WITH LOGIN remaps it and keeps everything.",
   "post_title": "User, Group or Role Already Exists in the Current Database (Error 15023)",
@@ -3930,6 +4044,30 @@
   "url": "https://sqldba.blog/sql-server-orphaned-users-15023/"
  },
  {
+  "question": "Is TrustServerCertificate=True the same as turning encryption off?",
+  "answer": "No, and the difference matters. TrustServerCertificate=True keeps the channel encrypted and skips validating the certificate, so it connects you while an expired or untrusted certificate is still sitting there. Encrypt=False asks for no encryption at all and will not help you if the server has Force Encryption on, because the server still requires it. Use the first to confirm the certificate is the cause, then go and fix the certificate.",
+  "post_title": "A Connection Was Successfully Established, But Then an Error Occurred During Login",
+  "url": "https://sqldba.blog/sql-server-pre-login-handshake-error/"
+ },
+ {
+  "question": "SSMS connects fine from the same machine but the application fails.",
+  "answer": "Different client stacks. SSMS carries its own driver and the application uses whatever it was built against, and Microsoft.Data.SqlClient changed its default to Encrypt=true at version 4.0, listed by MS Docs under breaking changes. An application that picked up a newer driver starts demanding encryption against a server whose certificate it will not accept, while SSMS on the same box carries on. Check the driver version and the connection string\u2019s Encrypt setting before you touch the server.",
+  "post_title": "A Connection Was Successfully Established, But Then an Error Occurred During Login",
+  "url": "https://sqldba.blog/sql-server-pre-login-handshake-error/"
+ },
+ {
+  "question": "Should I check the firewall or the port?",
+  "answer": "No, this error rules both out. The message says the connection was established, so the port was reachable and something was listening. A blocked or wrong port gives you a connect failure or a timeout with a different message entirely. What is left is everything that happens after the socket opens: protocol, encryption, certificate, or a device on the path sending a reset.",
+  "post_title": "A Connection Was Successfully Established, But Then an Error Occurred During Login",
+  "url": "https://sqldba.blog/sql-server-pre-login-handshake-error/"
+ },
+ {
+  "question": "The connections query returns rows and they all look fine.",
+  "answer": "sys.dm_exec_connections can only show connections that got through, so it tells you nothing about the client that cannot. Use it to establish what a working client negotiates, then compare that against the failing client\u2019s driver and connection string. The failed attempt leaves no row anywhere, which is the same reason there is no 18456 in the error log.",
+  "post_title": "A Connection Was Successfully Established, But Then an Error Occurred During Login",
+  "url": "https://sqldba.blog/sql-server-pre-login-handshake-error/"
+ },
+ {
   "question": "I reassigned the schema and it still will not drop.",
   "answer": "Something else is owned. A role owned by the principal raises 15421 instead, which sends people looking for a different problem, and individual objects can carry an owner too. Check schemas, roles and objects in one query before you start.",
   "post_title": "The Database Principal Owns a Schema in the Database and Cannot Be Dropped (Error 15138)",
@@ -3942,10 +4080,22 @@
   "url": "https://sqldba.blog/sql-server-principal-owns-schema-15138/"
  },
  {
+  "question": "Where does SSMS show which schema the user owns?",
+  "answer": "Open the user under Security, Users, Properties, and the Owned Schemas page has it ticked. The tick is read-only there, because a schema must always have an owner: ownership moves from the schema side, in the schema's own Properties dialog or with ALTER AUTHORIZATION. The first query on this page shows the same thing for schemas, roles and objects in one result.",
+  "post_title": "The Database Principal Owns a Schema in the Database and Cannot Be Dropped (Error 15138)",
+  "url": "https://sqldba.blog/sql-server-principal-owns-schema-15138/"
+ },
+ {
   "question": "Why does the user own a schema I never created?",
   "answer": "When a user is created without an explicit DEFAULT_SCHEMA, some tooling creates a schema of the same name and makes the user its owner. After a migration you often find a row of empty, user-named schemas that exist for no other reason.",
   "post_title": "The Database Principal Owns a Schema in the Database and Cannot Be Dropped (Error 15138)",
   "url": "https://sqldba.blog/sql-server-principal-owns-schema-15138/"
+ },
+ {
+  "question": "825 keeps appearing in the error log. Is the disk failing?",
+  "answer": "Treat a repeat as yes. One 825 is worth investigating, a pattern is a failing device, and the interval between occurrences shortening is the thing to watch. Run the xp_readerrorlog loop above across the older logs to date the first one, then take the offsets and timestamps to whoever owns the storage.",
+  "post_title": "A Read of the File Succeeded After Failing (Error 825, the Read-Retry Warning)",
+  "url": "https://sqldba.blog/sql-server-read-retry-825/"
  },
  {
   "question": "It says it succeeded, so is there a problem?",
@@ -4000,6 +4150,12 @@
   "answer": "Because a restore validates every file. In the reproduced bad-path case, each of the data file and the log file produced a 3634 and a 3156, then a line reading \"Problems were identified while planning for the RESTORE statement. Previous messages provide details\", then 3013. SQL Server is explicitly pointing you upwards.",
   "post_title": "RESTORE Is Terminating Abnormally (Errors 3013 and 3241)",
   "url": "https://sqldba.blog/sql-server-restore-terminating-abnormally-3013-3241/"
+ },
+ {
+  "question": "How do I see what the user really has, rather than what I think I granted?",
+  "answer": "Ask SQL Server as that user. EXECUTE AS USER = 'name'; then SELECT permission_name FROM sys.fn_my_permissions('dbo.YourTable', 'OBJECT'); and REVERT;. This is worth more than reading role membership, because it resolves the whole chain for you. Adding a user to db_datareader and then putting an object-level DENY SELECT on one table returns Msg 229, Level 14, State 5 on that table and nothing back from fn_my_permissions, while the role membership still looks correct in every list you can read. A DENY anywhere beats a GRANT everywhere.",
+  "post_title": "The SELECT Permission Was Denied on the Object (Error 229)",
+  "url": "https://sqldba.blog/sql-server-select-permission-denied-229/"
  },
  {
   "question": "Should I just add db_datareader?",
@@ -4092,6 +4248,12 @@
   "url": "https://sqldba.blog/sql-server-silent-failures/"
  },
  {
+  "question": "Does a SQL login get the same error, or is it only Windows accounts?",
+  "answer": "Only Windows accounts, and that is the fastest test you have. SSPI is the Windows-authentication handshake, so it runs before SQL Server ever looks at a login. If a SQL authentication login connects to the same instance from the same machine at the same moment, the engine, the network path and the port are all fine, and the problem is Kerberos or the trust: an SPN, the service account, DNS, or the domain relationship. If the SQL login fails too, stop investigating SSPI and treat it as an ordinary connectivity or login failure.",
+  "post_title": "SSPI Handshake Failed in SQL Server (Error 17806)",
+  "url": "https://sqldba.blog/sql-server-sspi-handshake-failed/"
+ },
+ {
   "question": "Does restarting SQL Server fix it?",
   "answer": "Occasionally, and misleadingly: a restart re-registers SPNs if the service account has permission to do so. If that is the fix, the real problem is SPN registration, and it will be back.",
   "post_title": "SSPI Handshake Failed in SQL Server (Error 17806)",
@@ -4138,6 +4300,30 @@
   "answer": "It was never designed to. Msg 8152 predates the improvement, and the reason it took so long is that naming the value risks putting data into an error message. Msg 2628 on 2019 and later does name it.",
   "post_title": "Diagnose SQL Server\u2019s \u2018String or Binary Data Would Be Truncated\u2019 Error",
   "url": "https://sqldba.blog/sql-server-string-or-binary-data-truncated/"
+ },
+ {
+  "question": "Can users still read while the log is full?",
+  "answer": "Yes. 9002 fails anything that has to write a log record, so inserts, updates, deletes and most DDL stop while SELECTs against committed data keep working. That is why the first sign is usually an application half working rather than an outage, and why nobody reports it until writes back up.",
+  "post_title": "SQL Server Transaction Log Full",
+  "url": "https://sqldba.blog/sql-server-transaction-log-full/"
+ },
+ {
+  "question": "I took a log backup and log_reuse_wait_desc still says LOG_BACKUP.",
+  "answer": "Two possibilities. The column reports what blocked reuse at the last attempt, so it can lag by a moment: query it again and see if it clears. If it does not, check whether the backup was copy only, because a copy only log backup writes a perfectly valid file and truncates nothing. Reproduced on a test database: the value read LOG_BACKUP before, stayed LOG_BACKUP after BACKUP LOG... WITH COPY_ONLY, and only went to NOTHING after an ordinary log backup.",
+  "post_title": "SQL Server Transaction Log Full",
+  "url": "https://sqldba.blog/sql-server-transaction-log-full/"
+ },
+ {
+  "question": "The log is full but log_reuse_wait_desc says NOTHING.",
+  "answer": "Then nothing is holding the log open and the file simply cannot get any bigger. That is one of three things: autogrowth is off, the file has reached its configured max size, or the volume is out of space. Check the growth and max size settings on the log file before you go hunting for a blocking transaction that is not there.",
+  "post_title": "SQL Server Transaction Log Full",
+  "url": "https://sqldba.blog/sql-server-transaction-log-full/"
+ },
+ {
+  "question": "The wait says ACTIVE_TRANSACTION but DBCC OPENTRAN returns nothing.",
+  "answer": "The two are read at different moments. log_reuse_wait_desc reports the reason from the last time SQL Server tried to reuse the log, so a transaction that has since ended leaves a stale value behind while OPENTRAN, looking at the current state, correctly finds nothing. Re-check both. If the value persists with OPENTRAN still empty, look in sys.dm_tran_active_transactions for a prepared distributed transaction that never resolved.",
+  "post_title": "SQL Server Transaction Log Full",
+  "url": "https://sqldba.blog/sql-server-transaction-log-full/"
  },
  {
   "question": "Could antivirus be holding the file?",
@@ -4318,6 +4504,12 @@
   "answer": "Up to a point, then it makes it worse. Every server adds tools, and every tool is another option the model has to choose between. Past a couple of dozen across all your servers, selection accuracy starts to slide and you get wrong-tool answers on questions that used to work. Add them one at a time, and remove the ones you stopped using.",
   "post_title": "The sqldba MCP Server: Give Your AI Assistant a Verified SQL Server Reference",
   "url": "https://sqldba.blog/sqldba-mcp-server/"
+ },
+ {
+  "question": "How do I confirm the connection ended up encrypted, rather than assume it?",
+  "answer": "Ask the engine, from the session you care about: SELECT encrypt_option, auth_scheme, net_transport FROM sys.dm_exec_connections WHERE session_id = @@SPID;. encrypt_option comes back TRUE when the connection is encrypted and FALSE when it is not. This matters because TrustServerCertificate=True does not turn encryption off, it turns the identity check off: the traffic is still encrypted, you have simply stopped verifying who you are encrypting to. Drop the WHERE clause to audit every current connection at once.",
+  "post_title": "SSMS Certificate Chain Not Trusted Error (Trust Server Certificate Fix)",
+  "url": "https://sqldba.blog/ssms-certificate-chain-not-trusted-error-trust-server-certificate-fix/"
  },
  {
   "question": "I installed a certificate and it is still using the self-signed one.",
