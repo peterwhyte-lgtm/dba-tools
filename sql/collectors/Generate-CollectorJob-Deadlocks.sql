@@ -8,7 +8,7 @@ Purpose     : Generates DDL to create the DBA - Collect Deadlocks SQL Agent job.
               required) and inserts only events newer than the latest deadlock_time
               already stored for this server, preventing duplicate rows.
               Edit parameters, review output, then run on the target instance.
-Author      : Peter Whyte (https://sqldba.blog)
+Author      : Peter Whyte (https://sqldba.blog/dba-scripts-collect-blocking-and-deadlock-events/)
 Requires    : sysadmin (to run generated DDL); VIEW SERVER STATE at job runtime
 Notes       : Default interval: every 5 minutes.
               Full deadlock XML preserved in deadlock_xml for post-incident investigation.

@@ -7,7 +7,7 @@ Purpose     : Generates DDL to create the DBA - Collect Storage IO SQL Agent job
               sys.dm_io_virtual_file_stats is cumulative — diff adjacent snapshots
               to measure I/O activity and latency within each collection interval.
               Edit parameters, review output, then run on the target instance.
-Author      : Peter Whyte (https://sqldba.blog)
+Author      : Peter Whyte (https://sqldba.blog/dba-scripts-collect-performance-baselines/)
 Requires    : sysadmin (to run generated DDL); VIEW SERVER STATE, VIEW DATABASE STATE at job runtime
 Notes       : Default interval: every 30 minutes. sqlserver_start_time enables restart detection.
 */

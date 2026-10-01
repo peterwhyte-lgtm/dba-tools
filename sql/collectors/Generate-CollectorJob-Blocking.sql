@@ -6,7 +6,7 @@ Purpose     : Generates DDL to create the DBA - Collect Blocking SQL Agent job.
               then outputs T-SQL to install a recurring blocking-chain collection job.
               The job step inserts rows only when active blocking exists.
               Edit parameters, review output, then run on the target instance.
-Author      : Peter Whyte (https://sqldba.blog)
+Author      : Peter Whyte (https://sqldba.blog/dba-scripts-collect-blocking-and-deadlock-events/)
 Requires    : sysadmin (to run generated DDL); VIEW SERVER STATE at job runtime
 Notes       : Default interval: every 2 minutes. On quiet servers the job runs but
               inserts nothing — blocking_session_id > 0 filter suppresses empty writes.

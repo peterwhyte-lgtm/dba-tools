@@ -9,7 +9,7 @@ Purpose     : Generates DDL to create the DBA - Collect Database Growth SQL Agen
               Query DatabaseGrowthCurrent FOR SYSTEM_TIME BETWEEN to retrieve historical
               file sizes for trend analysis and growth forecasting.
               Edit parameters, review output, then run on the target instance.
-Author      : Peter Whyte (https://sqldba.blog)
+Author      : Peter Whyte (https://sqldba.blog/dba-scripts-collect-capacity-and-temp-db-baselines/)
 Requires    : sysadmin (to run generated DDL); VIEW ANY DATABASE, VIEW DATABASE STATE at job runtime
 Notes       : Default interval: every 60 minutes. growth_status flags AT_LIMIT / NEAR_LIMIT / UNLIMITED.
               Requires SQL Server 2016 or later (temporal table support).

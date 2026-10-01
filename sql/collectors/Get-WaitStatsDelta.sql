@@ -6,7 +6,7 @@ Purpose     : Computes interval wait deltas between the two most recent snapshot
               average wait per task, and percentage of total interval wait — sorted
               by heaviest waiter descending. Detects SQL Server restarts between
               snapshots and suppresses invalid deltas.
-Author      : Peter Whyte (https://sqldba.blog)
+Author      : Peter Whyte (https://sqldba.blog/dba-scripts-collect-performance-baselines/)
 Requires    : SELECT on [DBAMonitor].[collector].[WaitStats]
 */
 -- SAFE:ReadOnly

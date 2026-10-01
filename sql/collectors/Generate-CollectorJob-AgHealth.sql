@@ -10,7 +10,7 @@ Purpose     : Generates DDL to create the DBA - Collect AG Health SQL Agent job.
               On instances with no AG configured, a NO_AG sentinel row is inserted once
               so the job always succeeds and the table remains queryable.
               Edit parameters, review output, then run on the target instance.
-Author      : Peter Whyte (https://sqldba.blog)
+Author      : Peter Whyte (https://sqldba.blog/dba-scripts-collect-health-and-configuration-baselines/)
 Requires    : sysadmin (to run generated DDL); VIEW SERVER STATE at job runtime
 Notes       : Default interval: every 5 minutes. Requires SQL Server 2016+ (temporal support).
               History is written only when state/health/connected columns change — lag metrics

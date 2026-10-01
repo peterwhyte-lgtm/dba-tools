@@ -8,7 +8,7 @@ Purpose     : Generates DDL to create the DBA - Collect Query Store SQL Agent jo
               the top 50 queries by average CPU from the most recently completed
               runtime stats interval. Databases without QS are silently skipped.
               Edit parameters, review output, then run on the target instance.
-Author      : Peter Whyte (https://sqldba.blog)
+Author      : Peter Whyte (https://sqldba.blog/dba-scripts-collect-health-and-configuration-baselines/)
 Requires    : sysadmin (to run generated DDL); VIEW DATABASE STATE per database at job runtime
 Notes       : Default interval: every 30 minutes.
               Query Store must be enabled on each target database to collect data.

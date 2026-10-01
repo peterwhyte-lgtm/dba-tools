@@ -6,7 +6,7 @@ Purpose     : Generates DDL to create the DBA - Collector Alert SQL Agent job.
               checks, outputs findings, and RAISERRORs on any CRITICAL result
               (causing the step to fail and triggering Agent notification routing).
               Edit parameters, review output, then run on the target instance.
-Author      : Peter Whyte (https://sqldba.blog)
+Author      : Peter Whyte (https://sqldba.blog/dba-scripts-generate-collector-alerts/)
 Requires    : sysadmin (to run generated DDL); SELECT on [DBAMonitor].[collector].* at job runtime
 Notes       : Depends on the individual collector jobs already being installed and running.
               Thresholds match Invoke-CollectorAlert.ps1:

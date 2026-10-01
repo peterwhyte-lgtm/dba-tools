@@ -1075,7 +1075,7 @@
   "url": "https://sqldba.blog/sql-server-create-file-operating-system-error-5123/"
  },
  {
-  "title": "Database Cannot Be Opened Due to Inaccessible Files (Error 945)",
+  "title": "Database in Recovery Pending: Cannot Be Opened (SQL Server Error 945)",
   "lead": "SQL Server error 945, database cannot be opened due to inaccessible files. How to find which file stopped it and bring the database back online.",
   "url": "https://sqldba.blog/sql-server-database-cannot-be-opened-945/"
  },

@@ -7,7 +7,7 @@ Purpose     : Generates DDL to create the DBA - Collect Error Log SQL Agent job.
               Each run inserts only entries newer than the latest log_date already
               stored for this server, preventing duplicate rows.
               Edit parameters, review output, then run on the target instance.
-Author      : Peter Whyte (https://sqldba.blog)
+Author      : Peter Whyte (https://sqldba.blog/dba-scripts-collect-health-and-configuration-baselines/)
 Requires    : sysadmin (to run generated DDL); VIEW SERVER STATE, EXECUTE xp_readerrorlog at job runtime
 Notes       : Default interval: every 10 minutes.
               Login succeeded and backup messages are suppressed (noisy, low signal).

@@ -8,7 +8,7 @@ Purpose     : Generates DDL to create the DBA - Collect Index Fragmentation SQL 
               (reads ~1% of pages — accurate for detection, avoids DETAILED overhead).
               Indexes smaller than 100 pages and heaps are excluded.
               Edit parameters, review output, then run on the target instance.
-Author      : Peter Whyte (https://sqldba.blog)
+Author      : Peter Whyte (https://sqldba.blog/dba-scripts-collect-health-and-configuration-baselines/)
 Requires    : sysadmin (to run generated DDL); VIEW DATABASE STATE per database at job runtime
 Notes       : Default schedule: weekly, Saturday at 01:00.
               Thresholds: >=30% REBUILD, 10-29% REORGANIZE, <10% NONE.

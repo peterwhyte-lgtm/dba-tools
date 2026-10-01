@@ -3019,7 +3019,13 @@
  },
  {
   "question": "I searched 3417 and found nothing useful. Why?",
-  "answer": "Because 3417 tells you the outcome, not the cause. Across four different kinds of deliberate master damage it did not appear at all, and a more specific error did every time: 5172 for a destroyed header, 824 for page or log corruption, 5120 for a permissions problem. Search the error above it in the log.",
+  "answer": "Because 3417 tells you the outcome, not the cause. Across 4 different kinds of deliberate master damage it did not appear at all, and a more specific error did every time: 5172 for a destroyed header, 824 for page or log corruption, 5120 for a permissions problem. Search the error above it in the log.",
+  "post_title": "Cannot Recover the Master Database (Error 3417) and What the Log Actually Says",
+  "url": "https://sqldba.blog/sql-server-cannot-recover-master-3417/"
+ },
+ {
+  "question": "It happened straight after installing a Cumulative Update. Is master corrupt?",
+  "answer": "Probably not. Every CU ships T-SQL upgrade scripts that run on the first start after the binaries are replaced. If they fail, Setup reports \"Wait on Database Engine recovery handle failed\" and the error log carries 912 and then 3417. The messages immediately before the 912 name the real cause. Microsoft's CU troubleshooting page walks that log, and the 3417 reference says the same thing this whole page does: the error is preceded by other errors, and those are the ones to read.",
   "post_title": "Cannot Recover the Master Database (Error 3417) and What the Log Actually Says",
   "url": "https://sqldba.blog/sql-server-cannot-recover-master-3417/"
  },
@@ -3176,25 +3182,25 @@
  {
   "question": "Can this happen to tempdb or master?",
   "answer": "The system databases play by harsher rules: if master cannot open, the instance does not start at all, and tempdb is recreated at startup so a bad tempdb path also stops the service. 945 as a running-instance message is a user database story.",
-  "post_title": "Database Cannot Be Opened Due to Inaccessible Files (Error 945)",
+  "post_title": "Database in Recovery Pending: Cannot Be Opened (SQL Server Error 945)",
   "url": "https://sqldba.blog/sql-server-database-cannot-be-opened-945/"
  },
  {
   "question": "Is RECOVERY_PENDING the same as SUSPECT?",
   "answer": "No, and the difference decides how worried to be. RECOVERY_PENDING means recovery has not started because a file cannot be opened; fix the file and the database usually comes back untouched. SUSPECT means recovery ran and failed, which is a genuinely harder situation. 945 belongs to the first world.",
-  "post_title": "Database Cannot Be Opened Due to Inaccessible Files (Error 945)",
+  "post_title": "Database in Recovery Pending: Cannot Be Opened (SQL Server Error 945)",
   "url": "https://sqldba.blog/sql-server-database-cannot-be-opened-945/"
  },
  {
   "question": "The message mentions memory and disk space, but my disk is fine. Why say it?",
   "answer": "The message text covers every reason the open can fail and cannot know which one applied. The error log can: it records the specific operating system error, and in the reproduction for this post that was error 2, file not found. Read the log before acting on any of the three causes.",
-  "post_title": "Database Cannot Be Opened Due to Inaccessible Files (Error 945)",
+  "post_title": "Database in Recovery Pending: Cannot Be Opened (SQL Server Error 945)",
   "url": "https://sqldba.blog/sql-server-database-cannot-be-opened-945/"
  },
  {
   "question": "Why does my error say Level 14 when the catalog says severity 16?",
   "answer": "Both are real. The template sits in sys.messages at severity 16, and the engine raises it at Level 14 when a session hits it. Measured on SQL Server 2025 while writing this post.",
-  "post_title": "Database Cannot Be Opened Due to Inaccessible Files (Error 945)",
+  "post_title": "Database in Recovery Pending: Cannot Be Opened (SQL Server Error 945)",
   "url": "https://sqldba.blog/sql-server-database-cannot-be-opened-945/"
  },
  {
@@ -3403,7 +3409,7 @@
  },
  {
   "question": "Can this happen to an index rather than a table?",
-  "answer": "Yes. The message lists indexes and LOB columns for that reason. An index built ON an empty filegroup hits the same wall as soon as it needs to store anything, which on an index is at build time.",
+  "answer": "Yes. The message lists indexes and LOB columns for that reason. An index built ON an empty filegroup hits the same wall as soon as it has rows to write, which for a populated table is at build time. On an empty table the CREATE INDEX succeeds too, measured on SQL Server 2025, so it is the same trap: nothing complains until data arrives.",
   "post_title": "The Filegroup Has No Files Assigned to It (Error 622)",
   "url": "https://sqldba.blog/sql-server-filegroup-has-no-files-622/"
  },

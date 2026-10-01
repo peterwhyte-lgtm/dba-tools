@@ -5,7 +5,7 @@ Purpose     : Computes interval deltas for cumulative performance counters
               (cntr_type 272696576) between the two most recent snapshots in
               [DBAMonitor].[collector].[Perfmon]. Point-in-time gauges
               (cntr_type 65792) are shown as their current value.
-Author      : Peter Whyte (https://sqldba.blog)
+Author      : Peter Whyte (https://sqldba.blog/dba-scripts-collect-performance-baselines/)
 Requires    : SELECT on [DBAMonitor].[collector].[Perfmon]
 */
 -- SAFE:ReadOnly

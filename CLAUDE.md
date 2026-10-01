@@ -175,7 +175,7 @@ sql/
     fci/          — last node blip
     mirroring/    — endpoint health, mirroring status
     replication/  — distribution agent, log reader agent, replication status, undistributed commands
-    logshipping/  — (placeholder)
+    logshipping/  — log shipping pair status, backup/copy/restore stage lag (Get-LogShippingStatus)
     azure/        — (placeholder)
   backups/        — coverage, history, encryption status, completion time, duration estimates,
                     size trend, restore history, last backup times, restore script generation

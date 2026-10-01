@@ -5,7 +5,7 @@ Purpose     : Computes interval I/O deltas between the two most recent snapshots
               in [DBAMonitor].[collector].[StorageIO]. Shows read/write counts,
               bytes transferred, and derived average latency for the interval.
               Detects SQL Server restarts and suppresses invalid deltas.
-Author      : Peter Whyte (https://sqldba.blog)
+Author      : Peter Whyte (https://sqldba.blog/dba-scripts-collect-performance-baselines/)
 Requires    : SELECT on [DBAMonitor].[collector].[StorageIO]
 */
 -- SAFE:ReadOnly
