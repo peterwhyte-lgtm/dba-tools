@@ -21,37 +21,70 @@ WITH filtered_waits AS (
     FROM sys.dm_os_wait_stats
     WHERE waiting_tasks_count > 0
       AND wait_type NOT IN (
-          -- Idle / background scheduler waits — not indicative of workload pressure
+          -- Idle / background scheduler waits, not indicative of workload pressure
           'SLEEP_TASK',                     'SLEEP_SYSTEMTASK',
           'SLEEP_TEMPDBSTARTUP',            'SLEEP_DBSTARTUP',
           'SLEEP_DCOMSTARTUP',              'SLEEP_MASTERDBREADY',
           'SLEEP_MASTERMDREADY',            'SLEEP_MASTERUPGRADED',
-          'SLEEP_MSDBSTARTUP',              'SNI_HTTP_ACCEPT',
-          'DISPATCHER_QUEUE_SEMAPHORE',     'BROKER_TO_FLUSH',
-          'BROKER_TASK_STOP',               'BROKER_EVENTHANDLER',
-          'BROKER_RECEIVE_WAITFOR',         'CHECKPOINT_QUEUE',
+          'SLEEP_MSDBSTARTUP',              'SLEEP_PHYSMASTERDBREADY',
+          'SLEEP_SAFEMODE',                 'SLEEP_SETUP',
+          'SLEEP_RBPEXSHRINKTASK',          'SLEEP_RETRY_VIRTUALALLOC',
+          'SLEEP_BPOOL_FLUSH',              'SLEEP_BPOOL_STEAL',
+          'SLEEP_BUFFERPOOL_HELPLW',        'SLEEP_MEMORYPOOL_ALLOCATEPAGES',
+          'SLEEP_WORKSPACE_ALLOCATEPAGE',
+          'DISPATCHER_QUEUE_SEMAPHORE',     'CHECKPOINT_QUEUE',
           'DBMIRROR_EVENTS_QUEUE',          'DBMIRROR_WORKER_QUEUE',
-          'SQLTRACE_INCREMENTAL_FLUSH_SLEEP','SQLTRACE_BUFFER_FLUSH',
-          'SQLTRACE_WAIT_ENTRIES',          'WAITFOR',
-          'LAZYWRITER_SLEEP',               'LOGMGR_QUEUE',
-          'ONDEMAND_TASK_QUEUE',            'REQUEST_FOR_DEADLOCK_SEARCH',
-          'RESOURCE_QUEUE',                 'SERVER_IDLE_CHECK',
-          'SP_SERVER_DIAGNOSTICS_SLEEP',    'WAIT_XTP_OFFLINE_CKPT_NEW_LOG',
-          'XE_DISPATCHER_WAIT',             'XE_TIMER_EVENT',
+          'SQLTRACE_INCREMENTAL_FLUSH_SLEEP','SQLTRACE_WAIT_ENTRIES',
+          'WAITFOR',                        'LAZYWRITER_SLEEP',
+          'LOGMGR_QUEUE',                   'ONDEMAND_TASK_QUEUE',
+          'REQUEST_FOR_DEADLOCK_SEARCH',    'RESOURCE_QUEUE',
+          'SERVER_IDLE_CHECK',              'SP_SERVER_DIAGNOSTICS_SLEEP',
+          'WAIT_XTP_OFFLINE_CKPT_NEW_LOG',  'XE_TIMER_EVENT',
           'HADR_WORK_QUEUE',                'HADR_FILESTREAM_IOMGR_IOCOMPLETION',
           'HADR_CLUSAPI_CALL',              'HADR_NOTIFICATION_DEQUEUE',
           'FT_IFTS_SCHEDULER_IDLE_WAIT',    'FT_IFTSHC_MUTEX',
-          'REPL_WORK_QUEUE',                'CLR_AUTO_EVENT',
-          'CLR_MANUAL_EVENT',               'WAIT_XTP_COMPILE_WAIT',
-          -- Idle / background waits introduced SQL Server 2016–2022
-          'SOS_WORK_DISPATCHER',            'PREEMPTIVE_XE_DISPATCHER',
-          'PREEMPTIVE_XE_GETTARGETSTATE',   'DIRTY_PAGE_POLL',
+          'CLR_AUTO_EVENT',                 'CLR_MANUAL_EVENT',
+          'WAIT_XTP_COMPILE_WAIT',
+          -- Service Broker threads parked waiting for a message. MS Docs on
+          -- BROKER_TRANSMITTER: high waiting_tasks_count "aren't indications of any
+          -- performance problem". The transmission queue/table waits are NOT listed
+          -- here: those move real messages and can stall for real.
+          'BROKER_TO_FLUSH',                'BROKER_TASK_STOP',
+          'BROKER_EVENTHANDLER',            'BROKER_RECEIVE_WAITFOR',
+          'BROKER_TRANSMITTER',             'BROKER_INIT',
+          'BROKER_START',                   'BROKER_SHUTDOWN',
+          'BROKER_MASTERSTART',             'BROKER_DISPATCHER',
+          'BROKER_SERVICE',                 'BROKER_FORWARDER',
+          'BROKER_REGISTERALLENDPOINTS',    'BROKER_TASK_SUBMIT',
+          'BROKER_TASK_SHUTDOWN',           'BROKER_PRIORITIZED_TASK_STOP',
+          -- Extended Events plumbing: dispatcher, session and buffer bookkeeping.
+          -- These rank by call count, not by stall. Measured on an idle instance:
+          -- PREEMPTIVE_XE_CALLBACKEXECUTE 132,833,917 waits for 3,828,650 ms, an
+          -- average of 0.00003 ms each. XE_FILE_TARGET_TVF is deliberately NOT here,
+          -- because reading an event file target is a query and can stall on I/O.
+          'XE_DISPATCHER_WAIT',             'XE_DISPATCHER_JOIN',
+          'XE_LIVE_TARGET_TVF',             'XE_CALLBACK_LIST',
+          'XE_MODULEMGR_SYNC',              'XE_SESSION_CREATE_SYNC',
+          'XE_SESSION_FLUSH',               'XE_SESSION_SYNC',
+          'XE_BUFFERMGR_ALLPROCESSED_EVENT','XE_BUFFERMGR_FREEBUF_EVENT',
+          'XE_SQL_TEXT_HEAP_ALLOC',         'XE_SQL_TEXT_HEAP_FREE',
+          'PREEMPTIVE_XE_DISPATCHER',       'PREEMPTIVE_XE_GETTARGETSTATE',
+          'PREEMPTIVE_XE_CALLBACKEXECUTE',  'PREEMPTIVE_XE_ENGINEINIT',
+          'PREEMPTIVE_XE_SESSIONCOMMIT',    'PREEMPTIVE_XE_TARGETINIT',
+          'PREEMPTIVE_XE_TARGETFINALIZE',   'PREEMPTIVE_XE_TIMERRUN',
+          -- Idle / background waits introduced SQL Server 2016 to 2022
+          'SOS_WORK_DISPATCHER',            'DIRTY_PAGE_POLL',
           'QDS_PERSIST_TASK_MAIN_LOOP_SLEEP','QDS_ASYNC_QUEUE',
           'QDS_CLEANUP_STALE_QUERIES_TASK_MAIN_LOOP_SLEEP',
-          'QDS_SHUTDOWN_QUEUE',             'PWAIT_EXTENSIBILITY_CLEANUP_TASK',
+          'QDS_SHUTDOWN_QUEUE',             'QDS_TASK_START',
+          'QDS_ASYNC_PERSIST_TASK_START',   'PWAIT_EXTENSIBILITY_CLEANUP_TASK',
           'PARALLEL_REDO_WORKER_WAIT_WORK', 'HADR_TIMER_TASK',
-          'PVS_PREALLOCATE',                'XE_LIVE_TARGET_TVF',
-          'WAIT_XTP_HOST_WAIT'
+          'PVS_PREALLOCATE',                'WAIT_XTP_HOST_WAIT',
+          -- Older builds only. Absent from sys.dm_os_wait_stats on 2025 (17.0.4075.5),
+          -- so they exclude nothing there; kept because they are still returned on the
+          -- builds that have them. Excluding a name that does not exist costs nothing.
+          'REPL_WORK_QUEUE',                'SNI_HTTP_ACCEPT',
+          'SQLTRACE_BUFFER_FLUSH'
       )
 )
 SELECT TOP 20
