@@ -21,7 +21,10 @@ Requires    : VIEW SERVER STATE
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 ```
+
+`SET QUOTED_IDENTIFIER ON;` is required because XML data type methods and filtered indexes fail under `sqlcmd`/`Invoke-Sqlcmd` defaults with Msg 1934 (proved on `Get-DeadlockSummary` 2026-10-01). **Scope:** required on new scripts from 2026-10-02; existing scripts gain it when next touched, not via a repo-wide sweep.
 
 **Block comment fields:**
 

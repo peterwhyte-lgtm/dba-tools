@@ -14,6 +14,7 @@ Notes       : Windows path handling (backslash split); adjust the separator for 
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 /* ── Configuration ───────────────────────────────────────────────────────── */
 DECLARE @SessionName NVARCHAR(128) = N'DecommissionAudit';

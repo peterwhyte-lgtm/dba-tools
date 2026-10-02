@@ -10,6 +10,7 @@ Notes       : Ring buffer holds recent events only (typically last 30–60 min).
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 WITH ring_buffer AS (
     SELECT
