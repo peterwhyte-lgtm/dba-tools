@@ -9,6 +9,7 @@ HealthCheck : Yes
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 WITH filtered_waits AS (
     SELECT
@@ -98,3 +99,4 @@ SELECT TOP 20
     resource_wait_time_ms
 FROM filtered_waits
 ORDER BY wait_time_ms DESC;
+
