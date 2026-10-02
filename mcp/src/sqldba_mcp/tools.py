@@ -599,10 +599,13 @@ def find_script(task: str) -> str:
     hits = data.script_index().search(cleaned or term, limit=8, min_coverage=0.34)
     hits = _prefer_reading(cleaned or term, hits)
     if not hits:
+        # Counted, not typed, for the same reason as the find_script description in
+        # server.py: this read 183 against a library of 192.
         return ("Nothing in the dba-tools library matches that.\n\n"
-                "The library is 183 SQL scripts plus PowerShell orchestrators, covering "
+                "The library is %d SQL scripts plus PowerShell orchestrators, covering "
                 "inventory, monitoring, performance, backups, security, HA and migration. "
-                "Browse: https://sqldba.blog/scripts/")
+                "Browse: https://sqldba.blog/scripts/"
+                % sum(1 for s in data.scripts() if s.get('language') != 'powershell'))
 
     lines = ['Found %d script(s) for "%s":' % (len(hits), term), '']
     for s, _score in hits:

@@ -7,7 +7,7 @@ This document describes the current folder layout and the purpose of each area.
 ## Top-level layout
 
 ```text
-sql/            SQL scripts (183; read-only unless annotated otherwise, SSMS-ready, single-result-set)
+sql/            SQL scripts (192; read-only unless annotated otherwise, SSMS-ready, single-result-set)
 powershell/     PowerShell orchestrators, automation, migration tools, and the thin wrappers
 web-ui/         Browser UI (Start-WebUi.ps1, Restart-WebUi.ps1, Generate-ScriptIndex.ps1)
 mcp/            The sqldba MCP server — this repo's reference as tools any AI agent can call

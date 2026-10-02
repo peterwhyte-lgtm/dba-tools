@@ -129,12 +129,13 @@ The 45 scripts in the healthcheck suite are tagged `HealthCheck : Yes` in their 
 
 ## What is safe to run immediately
 
-**177 of the 183 scripts in `sql/` are read-only** — `SET NOCOUNT ON`, no `USE database`, safe to run in production at any time. That is all of `inventory/`, `monitoring/`, `performance/`, `backups/`, `security/`, `high-availability/`, `maintenance/`, `migration/`, and `collectors/`.
+**179 of the 192 scripts in `sql/` are read-only** — `SET NOCOUNT ON`, no `USE database`, safe to run in production at any time. That is all of `inventory/`, `monitoring/`, `performance/`, `backups/`, `security/`, `high-availability/`, `migration/`, and `collectors/`, plus everything in `maintenance/` except `Set-AgentJobState`.
 
-Only six are not, and each says so in its own `-- SAFE:` annotation:
+Only 13 are not, and each says so in its own `-- SAFE:` annotation:
 
 - `sql/traces/Create-*` (3 scripts, `CreatesObjects`) — running one creates a live Extended Events session
-- `sql/lab/*` (3 scripts, `WritesData` / creates databases) — dev and test only
+- `sql/maintenance/Set-AgentJobState` (`CreatesObjects`) — saves, disables and restores SQL Agent job state; `Disable` turns off every job that is not excluded
+- `sql/lab/*` (9 of the 10 scripts, `CreatesObjects` / `WritesData`) — dev and test only
 
 **The `Generate-*` scripts are read-only despite the name**, in `collectors/`, `maintenance/`, `backups/`, and `migration/` alike. They return a T-SQL script as their result set; nothing is created until a human reviews that output and runs it. Never assume a `Generate-` prefix means the script changes the server — check the annotation.
 

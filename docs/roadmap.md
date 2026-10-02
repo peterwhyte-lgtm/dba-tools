@@ -5,8 +5,8 @@
 Fully functional production DBA toolkit. The repo has a category-first layout: `sql/` for SQL scripts, `powershell/` for wrappers, orchestrators, and automation (categories mirror `sql/`), and `docs/ops/` for operational runbooks and change templates.
 
 **What is complete:**
-- SQL diagnostic layer — 183 scripts across monitoring, performance, high-availability, backups, security, maintenance, migration
-- Wrapper layer — 155 thin PS wrappers, one per SQL script, colocated with the web UI
+- SQL diagnostic layer — 192 scripts across monitoring, performance, high-availability, backups, security, maintenance, migration
+- Wrapper layer — 157 thin PS wrappers, one per SQL script, colocated with the web UI
 - PowerShell orchestration — healthcheck collection (45 scripts), review, assessment report, multi-server health check
 - Migration toolkit — full pre/post assessment, DDL generators (logins, jobs, linked servers, user mappings), baseline export
 - Collectors — 12 scheduled collectors as SQL Agent job generators in `sql/collectors/` (PS-based Collect-* retired); `Generate-CollectorAlertJob.sql` + `Get-*Delta.sql` for alerting and snapshot analysis
@@ -24,7 +24,7 @@ Fully functional production DBA toolkit. The repo has a category-first layout: `
 
 ### Phase 3 — Script blog coverage (in progress, Peter-driven)
 
-162 of the 183 SQL scripts now have a published companion post on sqldba.blog. Drafting happens outside this repo; the only thing that lands here is the URL.
+184 of the 192 SQL scripts now have a published companion post on sqldba.blog. Drafting happens outside this repo; the only thing that lands here is the URL.
 
 For each script that merits a post:
 

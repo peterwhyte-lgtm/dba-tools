@@ -54,6 +54,7 @@ Requires    : VIEW SERVER STATE
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 ```
 
 `-- SAFE:` values: `ReadOnly` / `WritesData` / `CreatesObjects`

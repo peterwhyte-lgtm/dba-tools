@@ -178,9 +178,9 @@ The boundary is deliberately asymmetric:
 
 Tests assert both directions, so a later refactor cannot quietly flip either one.
 
-## The 21 scripts with no link
+## The 8 scripts with no link
 
-`find_script` returns a write-up URL for 162 of the 183 SQL scripts. The other 21 come back
+`find_script` returns a write-up URL for 184 of the 192 SQL scripts. The other 8 come back
 with no link — and that is a **header** problem, not missing content. Checked against the live
 site: most of those left already have a published write-up. Their `Author :` line just reads
 `https://sqldba.blog` instead of naming the post, so nothing can map the script to it.

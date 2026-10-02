@@ -17,6 +17,7 @@ Requires    : VIEW SERVER STATE
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 SELECT
     -- query here

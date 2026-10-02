@@ -171,8 +171,16 @@ def check_prose() -> None:
     cannot be computed at render time the way a tool description can, so they are gated
     here instead: every count claim below is a regex over the actual file, compared to the
     actual dataset. Add a claim to a doc, add its pattern here.
+
+    Widened 2026-10-02 from mcp/ to the whole repo. The gate read two files while the same
+    script counts sat in seven more, and those still said 183 SQL scripts / 162 with a post /
+    177 read-only / 155 wrappers against a library of 192 / 184 / 179 / 157 - including an
+    AI playbook telling agents that all of sql/maintenance/ is read-only, which stopped being
+    true when Set-AgentJobState landed.
     """
     errors = load('errors')
+    sql = [s for s in load('scripts') if s.get('language') != 'powershell']
+    wrappers = sum(1 for _ in REPO.glob('powershell/wrappers/**/*.ps1'))
     expected = {
         'errors': len(errors),
         'errors_with_url': sum(1 for e in errors if e.get('url')),
@@ -183,58 +191,154 @@ def check_prose() -> None:
         'wait_types': sum(len(w.get('wait_types', [])) for w in load('waits')),
         'faqs': len(load('faqs')),
         'scripts': len(load('scripts')),
-        'scripts_sql': sum(1 for s in load('scripts') if s.get('language') != 'powershell'),
+        'scripts_sql': len(sql),
+        # A post that is staged but not live ships url: null, so "with a post" means a
+        # post a reader can actually open today.
+        'sql_with_post': sum(1 for s in sql if s.get('url')),
+        'sql_without_post': sum(1 for s in sql if not s.get('url')),
+        'sql_read_only': sum(1 for s in sql if s.get('safe') == 'ReadOnly'),
+        'sql_writes': sum(1 for s in sql if s.get('safe') != 'ReadOnly'),
+        'sql_healthcheck': sum(1 for s in sql if s.get('health_check')),
+        # Wrappers ship in no dataset, so these two are counted from the repo itself.
+        'wrappers': wrappers,
+        'ps_logic': sum(1 for _ in REPO.glob('powershell/**/*.ps1')) - wrappers,
         'builds': sum(len(v.get('updates', [])) for v in load('builds')['versions']),
         'versions': len(load('builds')['versions']),
     }
+    e = expected
 
-    # (file, human label, regex with ONE capture group, expected value)
+    # (file relative to the repo root, human label, regex, expected value per capture group)
     claims = [
-        ('README.md', 'error count',
-         r'Covering \*\*(\d+) errors\*\*', expected['errors']),
-        ('README.md', 'wait type count',
-         r'\*\*(\d+) wait types\*\*', expected['wait_types']),
-        ('README.md', 'version count',
-         r'\*\*(\d+) SQL Server versions\*\*', expected['versions']),
-        ('README.md', 'published build count',
-         r'\*\*(\d+) published\s+builds\*\*', expected['builds']),
-        ('README.md', 'script count',
-         r'\*\*(\d+) scripts\*\* \((\d+) SQL', expected['scripts']),
-        ('README.md', 'answered question count',
-         r'\*\*(\d+) answered questions\*\*', expected['faqs']),
-        ('README.md', 'errors-without-link heading',
-         r'## The (\d+) errors with no link', expected['errors_without_url']),
-        ('README.md', 'errors-with-link sentence',
-         r'\*\*(\d+) of the \d+ errors carry a write-up URL', expected['errors_with_url']),
-        ('README.md', 'errors-without-link sentence',
-         r'errors carry a write-up URL, and (\d+) do not', expected['errors_without_url']),
-        ('README.md', 'ms-docs sentence',
-         r'cites that too\D*(\d+) of the \d+\s*\nhave one', expected['errors_ms_docs']),
-        ('pyproject.toml', 'PyPI description script count',
-         r'description = ".*?(\d+) scripts', expected['scripts']),
-        ('pyproject.toml', 'PyPI description question count',
-         r'description = ".*?(\d+) answered questions', expected['faqs']),
+        ('mcp/README.md', 'error count',
+         r'Covering \*\*(\d+) errors\*\*', e['errors']),
+        ('mcp/README.md', 'wait type count',
+         r'\*\*(\d+) wait types\*\*', e['wait_types']),
+        ('mcp/README.md', 'version count',
+         r'\*\*(\d+) SQL Server versions\*\*', e['versions']),
+        ('mcp/README.md', 'published build count',
+         r'\*\*(\d+) published\s+builds\*\*', e['builds']),
+        ('mcp/README.md', 'script count',
+         r'\*\*(\d+) scripts\*\* \((\d+) SQL', (e['scripts'], e['scripts_sql'])),
+        ('mcp/README.md', 'answered question count',
+         r'\*\*(\d+) answered questions\*\*', e['faqs']),
+        ('mcp/README.md', 'errors-without-link heading',
+         r'## The (\d+) errors with no link', e['errors_without_url']),
+        ('mcp/README.md', 'errors-with-link sentence',
+         r'\*\*(\d+) of the \d+ errors carry a write-up URL', e['errors_with_url']),
+        ('mcp/README.md', 'errors-without-link sentence',
+         r'errors carry a write-up URL, and (\d+) do not', e['errors_without_url']),
+        ('mcp/README.md', 'ms-docs sentence',
+         r'cites that too\D*(\d+) of the \d+\s*\nhave one', e['errors_ms_docs']),
+        ('mcp/README.md', 'scripts-without-link heading',
+         r'## The (\d+) scripts with no link', e['sql_without_post']),
+        ('mcp/README.md', 'scripts-with-link sentence',
+         r'write-up URL for (\d+) of the (\d+) SQL scripts\. The other (\d+) come back',
+         (e['sql_with_post'], e['scripts_sql'], e['sql_without_post'])),
+        ('mcp/pyproject.toml', 'PyPI description script count',
+         r'description = ".*?(\d+) scripts', e['scripts']),
+        ('mcp/pyproject.toml', 'PyPI description question count',
+         r'description = ".*?(\d+) answered questions', e['faqs']),
+        ('README.md', 'SQL script count',
+         r'\*\*(\d+) SQL scripts\*\* you open', e['scripts_sql']),
+        ('sql/README.md', 'SQL script count',
+         r'(?m)^(\d+) scripts you can open', e['scripts_sql']),
+        ('sql/README.md', 'read-only sentence',
+         r'\*\*(\d+) of the (\d+) scripts are read-only', (e['sql_read_only'], e['scripts_sql'])),
+        ('docs/README.md', 'companion post sentence',
+         r'(\d+) of the (\d+) SQL scripts have one today', (e['sql_with_post'], e['scripts_sql'])),
+        ('docs/repo-structure.md', 'SQL script count',
+         r'SQL scripts \((\d+);', e['scripts_sql']),
+        ('docs/roadmap.md', 'SQL script count',
+         r'SQL diagnostic layer \S+ (\d+) scripts', e['scripts_sql']),
+        ('docs/roadmap.md', 'wrapper count',
+         r'Wrapper layer \S+ (\d+) thin PS wrappers', e['wrappers']),
+        ('docs/roadmap.md', 'companion post sentence',
+         r'(\d+) of the (\d+) SQL scripts now have a published',
+         (e['sql_with_post'], e['scripts_sql'])),
+        ('docs/ai-playbook.md', 'read-only sentence',
+         r'\*\*(\d+) of the (\d+) scripts in `sql/` are read-only',
+         (e['sql_read_only'], e['scripts_sql'])),
+        ('docs/ai-playbook.md', 'not-read-only count',
+         r'Only (\d+) are not, and each says so', e['sql_writes']),
+        ('docs/script-catalog.md', 'health check legend',
+         r'\*\*HC\*\* marks the (\d+) scripts', e['sql_healthcheck']),
+        ('docs/script-catalog.md', 'wrapper sentence',
+         r'The (\d+) thin wrappers', e['wrappers']),
+        ('docs/script-catalog.md', 'SQL script count',
+         r'\| SQL scripts \| (\d+) \|', e['scripts_sql']),
+        ('docs/script-catalog.md', 'companion post count',
+         r'have a companion post \| (\d+) \|', e['sql_with_post']),
+        ('docs/script-catalog.md', 'health check count',
+         r'in the health check suite \| (\d+) \|', e['sql_healthcheck']),
+        ('docs/script-catalog.md', 'create/write count',
+         r'create objects or write data \| (\d+) \|', e['sql_writes']),
+        ('docs/script-catalog.md', 'PowerShell script count',
+         r'PowerShell scripts with real logic \| (\d+) \|', e['ps_logic']),
+        ('docs/script-catalog.md', 'wrapper count',
+         r'Thin wrappers \(one per SQL script\) \| (\d+) \|', e['wrappers']),
     ]
 
     checked = 0
     for fname, label, pattern, want in claims:
-        text = (HERE.parent / fname).read_text(encoding='utf-8')
+        text = (REPO / fname).read_text(encoding='utf-8')
         m = re.search(pattern, text)
         if not m:
             problems.append('prose claim not found (%s: %s) - pattern needs updating '
                             'alongside the doc: %s' % (fname, label, pattern))
             continue
-        checked += 1
-        got = int(m.group(1))
-        if got != want:
-            problems.append('prose drift in %s: %s says %d, datasets hold %d'
-                            % (fname, label, got, want))
+        wants = want if isinstance(want, tuple) else (want,)
+        for got, wanted in zip(m.groups(), wants):
+            checked += 1
+            if int(got) != wanted:
+                problems.append('prose drift in %s: %s says %d, the repo holds %d'
+                                % (fname, label, int(got), wanted))
     notes.append('prose: %d count claim(s) checked against the datasets' % checked)
+
+
+def check_catalog() -> None:
+    """Every SQL row in docs/script-catalog.md must agree with the script it describes.
+
+    The summary counts can all be right while the rows are wrong. On 2026-10-02 the counts
+    matched the datasets exactly and 15 rows still carried a retired post slug, a missing
+    link or a misspelt safety class. So Post, Writes and HC are compared row by row.
+
+    The description column is NOT compared: 25 rows word it differently from the Purpose
+    line, some of them shortened, and which side is right is a call for a person.
+    """
+    sql = {s['name']: s for s in load('scripts') if s.get('language') != 'powershell'}
+    text = (REPO / 'docs' / 'script-catalog.md').read_text(encoding='utf-8')
+    body = text.split('## SQL scripts', 1)[-1].split('## PowerShell scripts', 1)[0]
+    rows = {}
+    for line in body.splitlines():
+        m = re.match(r'\| `([^`]+)` \|', line)
+        if m:
+            rows[m.group(1)] = [c.strip() for c in line.split('|')]
+
+    wrong = ['%s (no row)' % n for n in sorted(set(sql) - set(rows))]
+    wrong += ['%s (row for a script that is not in the repo)' % n
+              for n in sorted(set(rows) - set(sql))]
+    for name, cells in sorted(rows.items()):
+        s = sql.get(name)
+        if s is None:
+            continue
+        post, writes, hc = cells[-4:-1]
+        link = re.search(r'\((https://[^)\s]+)\)', post)
+        if (link.group(1) if link else None) != s.get('url'):
+            wrong.append('%s (Post should be %s)' % (name, s.get('url') or 'blank, not live yet'))
+        if (writes or 'ReadOnly') != s.get('safe'):
+            wrong.append('%s (Writes should be %s)' % (name, s.get('safe')))
+        if (hc == 'yes') != bool(s.get('health_check')):
+            wrong.append('%s (HC should be %s)' % (name, 'yes' if s.get('health_check') else 'blank'))
+    if wrong:
+        problems.append('%d row(s) in docs/script-catalog.md disagree with the scripts '
+                        '(edit the catalog, not the dataset): %s'
+                        % (len(wrong), ', '.join(wrong[:6])))
+    notes.append('catalog: %d SQL row(s) checked, %d wrong' % (len(rows), len(wrong)))
 
 
 def main() -> int:
     for check in (check_scripts, check_docs_and_prompts, check_counts,
-                  check_age, check_urls, check_prose):
+                  check_age, check_urls, check_prose, check_catalog):
         check()
 
     for n in notes:

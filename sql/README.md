@@ -1,6 +1,6 @@
 # SQL scripts
 
-183 scripts you can open, copy, and paste straight into SSMS. No parameters to fill in, no magic
+192 scripts you can open, copy, and paste straight into SSMS. No parameters to fill in, no magic
 variables, no install step. Every script is a single result set and starts with `SET NOCOUNT ON;`.
 
 Full list with descriptions and companion blog posts: [docs/script-catalog.md](../docs/script-catalog.md).
@@ -28,7 +28,7 @@ the catalog — script names describe the outcome, so `Get-BlockingChains` is in
 
 ## What is safe to run
 
-**177 of the 183 scripts are read-only.** They read DMVs, system catalog views, and msdb history.
+**179 of the 192 scripts are read-only.** They read DMVs, system catalog views, and msdb history.
 Nothing in `sql/` writes to your databases unless its header says so.
 
 Check the two annotations at the top of any script before you run it:
