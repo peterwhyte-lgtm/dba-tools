@@ -15,6 +15,11 @@
   "url": "https://sqldba.blog/backing-up-a-sql-server-database-with-encryption/"
  },
  {
+  "title": "SQL Server Backup Failed or the Restore Is Stuck",
+  "lead": "Three incidents that look alike and share nothing: a BACKUP that failed, a RESTORE that failed, and a restore that is still running. This page routes each one to the post that owns it.",
+  "url": "https://sqldba.blog/backup-failed-or-restore-stuck/"
+ },
+ {
   "title": "Blog",
   "lead": "",
   "url": "https://sqldba.blog/blog/"
@@ -33,6 +38,11 @@
   "title": "Check When SQL Server Was Last Restarted",
   "lead": "Knowing when SQL Server last restarted is one of the simplest checks a DBA can perform, and one of the most useful.",
   "url": "https://sqldba.blog/check-when-sql-server-was-last-restarted/"
+ },
+ {
+  "title": "Create a Linked Server to Another SQL Server",
+  "lead": "Two stored procedures create a linked server, and on a modern instance the first attempt usually fails with a certificate error because MSOLEDBSQL 19 encrypts by default. The fix, plus rpc out, OPENQUERY, Msg 7411 and Msg 7202.",
+  "url": "https://sqldba.blog/create-a-linked-server-to-sql-server/"
  },
  {
   "title": "Creating SQL Logins on an Availability Group (AG) Environment",
@@ -113,6 +123,11 @@
   "title": "DBA Scripts: Create SP Execution Session",
   "lead": "\ud83d\udd27 Part of the DBA-Tools Project, copy/paste SQL Server scripts and health checks.",
   "url": "https://sqldba.blog/dba-scripts-create-sp-execution-session/"
+ },
+ {
+  "title": "DBA Scripts: Enable or Disable All SQL Agent Jobs",
+  "lead": "Turning every SQL Agent job off is easy. Turning the right ones back on is where it goes wrong. Save the state first, disable with sp_update_job, restore from what you saved, and know why disabling does not stop a running job.",
+  "url": "https://sqldba.blog/dba-scripts-enable-or-disable-all-sql-agent-jobs/"
  },
  {
   "title": "DBA Scripts: Extended Events Tracing",
@@ -800,9 +815,24 @@
   "url": "https://sqldba.blog/disable-change-data-capture-in-sql-server/"
  },
  {
+  "title": "SQL Server Disk Is Full or the Log Will Not Truncate",
+  "lead": "A routing page for every out of space incident on SQL Server: which drive, which file, what log_reuse_wait_desc is telling you, and why shrinking comes last.",
+  "url": "https://sqldba.blog/disk-is-full-or-log-will-not-truncate/"
+ },
+ {
+  "title": "DROP TABLE IF EXISTS in SQL Server",
+  "lead": "DROP TABLE IF EXISTS arrived in SQL Server 2016 and replaced a three-line OBJECT_ID check that everybody had memorised. It is a small feature and it is genuinely useful, but there is more behaviour hiding in it than the syntax suggests.",
+  "url": "https://sqldba.blog/drop-table-if-exists-in-sql-server/"
+ },
+ {
   "title": "Enabling TCP Connections in SQL Server",
   "lead": "TCP/IP must be enabled in SQL Server for remote connections to work.",
   "url": "https://sqldba.blog/enabling-tcp-connections-in-sql-server/"
+ },
+ {
+  "title": "How to Export SQL Server Query Results to CSV",
+  "lead": "Exporting a query to CSV looks like a solved problem. Set a comma as the delimiter, save the file, done. Then somebody opens it in Excel, a column has shifted, and a customer called Smith, Jones and Co has quietly turned into two fields.",
+  "url": "https://sqldba.blog/export-sql-server-query-results-to-csv/"
  },
  {
   "title": "Forcing Encrypted Connections in SQL Server Using Certificates",
@@ -905,9 +935,19 @@
   "url": "https://sqldba.blog/how-to-kill-a-spid-in-sql-server/"
  },
  {
+  "title": "How to Move TempDB Files in SQL Server",
+  "lead": "TempDB on the C: drive is a problem waiting for a busy day. It can grow very large, very quickly, sometimes within minutes under the right workload, and when it fills the OS drive it takes the whole server down with it. Moving the tempdb files to their own drive is a standard best practice, [\u2026]",
+  "url": "https://sqldba.blog/how-to-move-tempdb-files-in-sql-server/"
+ },
+ {
   "title": "How to Open PowerShell as Administrator on Windows",
   "lead": "Running PowerShell as Administrator is required for many system-level tasks such as configuring Windows, installing software, or running administrative scripts.",
   "url": "https://sqldba.blog/how-to-open-powershell-as-administrator-on-windows/"
+ },
+ {
+  "title": "How to Rename a Computer That Hosts SQL Server",
+  "lead": "Renaming a Windows machine is a two minute job. Renaming a Windows machine that happens to be running SQL Server is not, because SQL Server records the server name in its own metadata at install time and does not notice when the operatin\u2026",
+  "url": "https://sqldba.blog/how-to-rename-a-computer-that-hosts-sql-server/"
  },
  {
   "title": "How to Restore a Database in SQL Server",
@@ -923,6 +963,11 @@
   "title": "How to Show Line Numbers in SSMS",
   "lead": "\ud83d\udee0\ufe0f Part of the SSMS Complete Guide, installing, configuring and fixing SQL Server Management Studio.",
   "url": "https://sqldba.blog/how-to-show-line-numbers-in-ssms/"
+ },
+ {
+  "title": "How to Import a CSV File into SQL Server",
+  "lead": "There are two ways to get a CSV into SQL Server, and picking the wrong one costs you either an afternoon or a silent data loss.",
+  "url": "https://sqldba.blog/import-a-csv-file-into-sql-server/"
  },
  {
   "title": "Install and Update SQL Server Management Studio (SSMS)",
@@ -950,14 +995,34 @@
   "url": "https://sqldba.blog/kill-all-user-sessions-on-a-database-in-sql-server/"
  },
  {
+  "title": "Locked Out of SQL Server: Regain Sysadmin When Nobody Has It",
+  "lead": "Nobody has sysadmin, sa is disabled or its password is gone, and the instance is still running. The supported recovery is single-user mode, and it needs local admin on the box, not a SQL permission.",
+  "url": "https://sqldba.blog/locked-out-of-sql-server-regain-sysadmin/"
+ },
+ {
   "title": "Log and Filter sp_who2 Results in SQL Server",
   "lead": "sp_who2 has no WHERE clause. Capture its output into a thirteen column table with INSERT... EXEC and it becomes queryable, including a logging table you can run on a schedule. Plus the two errors that stop most people, and the DMV to use instead.",
   "url": "https://sqldba.blog/log-and-filter-sp-who2-results/"
  },
  {
+  "title": "Login Failed or Permission Denied in SQL Server",
+  "lead": "A router for every SQL Server login and permission failure. Find your error number, read the real 18456 state from the ERRORLOG, and go straight to the page that owns the fix.",
+  "url": "https://sqldba.blog/login-failed-or-permission-denied/"
+ },
+ {
+  "title": "msdb Is Growing: Purge Backup, Job and Mail History Safely",
+  "lead": "Which msdb history table is actually holding the space, why one far back cutoff makes sp_delete_backuphistory hang, and the date stepped purge that finishes.",
+  "url": "https://sqldba.blog/msdb-is-growing-purge-history-safely/"
+ },
+ {
   "title": "Open SSMS as a Different Domain User",
   "lead": "\ud83d\udee0\ufe0f Part of the SSMS Complete Guide, installing, configuring and fixing SQL Server Management Studio.",
   "url": "https://sqldba.blog/open-ssms-as-a-different-domain-user/"
+ },
+ {
+  "title": "The Query Is Fast in SSMS but Slow From the Application",
+  "lead": "The same query returns instantly in SSMS and crawls from the application. SSMS connects with ARITHABORT ON and a.NET client connects with it OFF, so the plan cache holds two plans for one query. The query that proves it, and the fixes in order.",
+  "url": "https://sqldba.blog/query-fast-in-ssms-slow-from-application/"
  },
  {
   "title": "RAND() vs NEWID() in SQL Server",
@@ -968,6 +1033,11 @@
   "title": "MSSQL Scripts",
   "lead": "SQL Server DBA Scripts & Tools dba-tools is the toolkit I use as a working SQL Server DBA, free and open on GitHub.",
   "url": "https://sqldba.blog/scripts/"
+ },
+ {
+  "title": "How to Search for a String in All Tables in SQL Server",
+  "lead": "Somebody hands you a database you have never seen and a value: an email address, a reference code, a customer name. Where is it stored? There is no Ctrl+F for a schema, so the job is to build one.",
+  "url": "https://sqldba.blog/search-for-a-string-in-all-tables-in-sql-server/"
  },
  {
   "title": "Services",
@@ -990,9 +1060,19 @@
   "url": "https://sqldba.blog/sp-who-vs-sp-who2-vs-sp-whoisactive/"
  },
  {
+  "title": "SQL Agent Job Failed: Finding the Step That Actually Broke",
+  "lead": "The job outcome row never carries a cause. Read the step row in msdb.dbo.sysjobhistory first, then route the real message to the owner, proxy, permission, path or truncation behind it.",
+  "url": "https://sqldba.blog/sql-agent-job-failed/"
+ },
+ {
   "title": "SQL Server: Ad hoc Update to System Catalogs is Not Supported (Fix)",
   "lead": "While enabling show advanced options using sp_configure, I encountered an unexpected failure when executing RECONFIGURE: Msg 5808, Level 16, State 1 Ad hoc update to system catalogs is not supported.",
   "url": "https://sqldba.blog/sql-server-ad-hoc-update-system-catalogs-not-supported/"
+ },
+ {
+  "title": "SQL Server Agent Will Not Start, or \u201cAgent XPs Component Is Turned Off\u201d (Error 15281)",
+  "lead": "A greyed-out Agent node and a stopped Agent service are two different faults, and the sp_configure fix only cures one. One query tells them apart, then the Agent\u2019s own log gives the reason.",
+  "url": "https://sqldba.blog/sql-server-agent-will-not-start/"
  },
  {
   "title": "SQL Server: ALTER DATABASE SET ENABLE_BROKER Taking a Long Time (Fix)",
@@ -1015,6 +1095,11 @@
   "url": "https://sqldba.blog/sql-server-builds-complete-version-list-and-support-lifecycle/"
  },
  {
+  "title": "Cannot Bulk Load, Access Is Denied (Error 4861): It Is the Service Account, Not You",
+  "lead": "BULK INSERT fails with 4861 and Access is denied on a file you can open in Notepad. With a SQL Server login the file is opened by the service account, not by you. The reproduction, the operating system error codes that mean something else, and the double hop.",
+  "url": "https://sqldba.blog/sql-server-cannot-bulk-load-access-denied-4861/"
+ },
+ {
   "title": "Cannot Execute As the Database Principal (Error 15517)",
   "lead": "SQL Server error 15517, cannot execute as the database principal. Why dbo maps to an orphaned owner after a restore and the one-line fix.",
   "url": "https://sqldba.blog/sql-server-cannot-execute-as-database-principal-15517/"
@@ -1023,6 +1108,11 @@
   "title": "Cannot Insert the Value NULL Into Column (Error 515)",
   "lead": "SQL Server error 515 names a NULL you may never have written. Leaving a NOT NULL column out of the insert produces the same message, and a default fixes that case but not an explicit NULL.",
   "url": "https://sqldba.blog/sql-server-cannot-insert-the-value-null-515/"
+ },
+ {
+  "title": "SQL Server Cannot Obtain a LOCK Resource at This Time (Error 1204)",
+  "lead": "SQL Server cannot obtain a LOCK resource at this time. What error 1204 actually means, the 1 query and the 1 ERRORLOG line that find the cause, and the fix in the order worth trying.",
+  "url": "https://sqldba.blog/sql-server-cannot-obtain-a-lock-resource-1204/"
  },
  {
   "title": "Cannot Open Backup Device: Operating System Error 5 (Access Is Denied)",
@@ -1085,6 +1175,11 @@
   "url": "https://sqldba.blog/sql-server-database-could-not-be-exclusively-locked-5030/"
  },
  {
+  "title": "Database Marked SUSPECT (Error 926): EMERGENCY, CHECKDB, or the Backup",
+  "lead": "A database comes back from a restart marked SUSPECT and error 926 refuses every connection. The real sequence: confirm the state, read the error log, then choose between EMERGENCY repair and the restore.",
+  "url": "https://sqldba.blog/sql-server-database-marked-suspect-926/"
+ },
+ {
   "title": "DBCC CHECKDB Found Corruption: What to Actually Do Next",
   "lead": "DBCC CHECKDB reporting consistency errors is one of the few moments in this job that deserves to feel urgent.",
   "url": "https://sqldba.blog/sql-server-dbcc-checkdb-corruption-found/"
@@ -1096,7 +1191,7 @@
  },
  {
   "title": "SQL Server Default Ports",
-  "lead": "SQL Server listens on TCP 1433 by default, and on a box running a single default instance that is usually the end of it.",
+  "lead": "Something cannot connect, or the firewall team wants a port number before they will open anything.",
   "url": "https://sqldba.blog/sql-server-default-ports/"
  },
  {
@@ -1113,6 +1208,11 @@
   "title": "SQL Server Edition Change Runbook: Upgrade and Downgrade",
   "lead": "\ud83d\udd27 Part of the DBA-Tools Project, copy/paste SQL Server scripts and health checks.",
   "url": "https://sqldba.blog/sql-server-edition-change-runbook/"
+ },
+ {
+  "title": "The Server Network Address Cannot Be Reached or Does Not Exist (Error 1418)",
+  "lead": "Error 1418 says the server network address cannot be reached and never says why. The error log names the fault, and then there are five checks in the order that finds it.",
+  "url": "https://sqldba.blog/sql-server-endpoint-cannot-be-reached-1418/"
  },
  {
   "title": "SQL Server Error Severities Explained",
@@ -1140,6 +1240,11 @@
   "url": "https://sqldba.blog/sql-server-filegroup-is-full-1105/"
  },
  {
+  "title": "The First Hour on a SQL Server You Have Never Seen",
+  "lead": "Four questions in order: what is this, what is it supposed to do, what is it short of, and what is unprotected. The order matters more than the speed, and nothing gets changed.",
+  "url": "https://sqldba.blog/sql-server-first-hour-unfamiliar-instance/"
+ },
+ {
   "title": "The DELETE Statement Conflicted With a FOREIGN KEY Constraint (Error 547)",
   "lead": "\ud83d\udea8 Part of the SQL Server Errors series, the exact messages and what actually causes them.",
   "url": "https://sqldba.blog/sql-server-foreign-key-conflict-547/"
@@ -1165,19 +1270,34 @@
   "url": "https://sqldba.blog/sql-server-io-errors-823-824/"
  },
  {
+  "title": "SQL Server Is Slow: What to Check First, in Order",
+  "lead": "A symptom router for the slow SQL Server call. One check per step, in the order that finds the fault fastest, each handing off to the post that owns it.",
+  "url": "https://sqldba.blog/sql-server-is-slow/"
+ },
+ {
   "title": "SQL Server Isolation Levels (and When to Reach for RCSI)",
   "lead": "Reading and Fixing a SQL Server Deadlock and Troubleshoot SQL Server Blocking both point at isolation level as part of the fix without covering what the levels actually are.",
   "url": "https://sqldba.blog/sql-server-isolation-levels-and-read-committed-snapshot-isolation/"
  },
  {
   "title": "Kerberos vs NTLM in SQL Server: Best Practices",
-  "lead": "Every Windows-authenticated connection to SQL Server uses one of two schemes, and most teams could not say which without looking.",
+  "lead": "There are 2 ways in: a linked server failing as NT AUTHORITY\\ANONYMOUS LOGON, and the discovery that an estate everyone assumed was on Kerberos is running on NTLM.",
   "url": "https://sqldba.blog/sql-server-kerberos-vs-ntlm/"
+ },
+ {
+  "title": "Linked Server: Login Failed for User NT AUTHORITY\\ANONYMOUS LOGON, and Error 7391 Distributed Transactions",
+  "lead": "A linked server that works on the server and fails from your desktop is the double hop. The query that proves it, the four login mappings and what each one fails with, plus error 7391 and MS DTC.",
+  "url": "https://sqldba.blog/sql-server-linked-server-login-failed-anonymous-logon/"
  },
  {
   "title": "Lock Request Time Out Period Exceeded (Error 1222)",
   "lead": "\ud83d\udea8 Part of the SQL Server Errors series, the exact messages and what actually causes them.",
   "url": "https://sqldba.blog/sql-server-lock-request-timeout-1222/"
+ },
+ {
+  "title": "The Log in This Backup Set Is Too Recent or Too Early to Apply (Errors 4305, 4326 and 3159)",
+  "lead": "Restore chain errors 4305, 4326 and 3159: what the two LSNs in the message mean, which file to apply next, and how to back up the tail of the log before you overwrite anything.",
+  "url": "https://sqldba.blog/sql-server-log-backup-too-recent-too-early-4305-4326-3159/"
  },
  {
   "title": "SQL Server Log Won\u2019t Truncate: What log_reuse_wait_desc Is Telling You",
@@ -1193,6 +1313,11 @@
   "title": "Troubleshoot \u201cLogin Failed for User\u201d (Error 18456) in SQL Server",
   "lead": "\ud83d\udea8 Part of the SQL Server Errors series, the exact messages and what actually causes them.",
   "url": "https://sqldba.blog/sql-server-login-failed-error-18456/"
+ },
+ {
+  "title": "Login Failed: Server Is in Script Upgrade Mode (Error 18401), and How Long to Wait Before You Worry",
+  "lead": "This is the error every patch window can raise and almost nobody plans for. The Cumulative Update installed, the service came back, and now every application login is refused with 18401. Nothing is broken yet. SQL Server is running the second half of the patch, and it will not let anyone in until that half is done.",
+  "url": "https://sqldba.blog/sql-server-login-failed-script-upgrade-mode-18401/"
  },
  {
   "title": "SQL Server Login Migration: What Gets Silently Left Behind",
@@ -1271,7 +1396,7 @@
  },
  {
   "title": "SQL Server Recovery Models Explained",
-  "lead": "Understanding SQL Server Recovery Models is fundamental to backup strategy, restore capability, and transaction log management.",
+  "lead": "\u26a1 If the log will not truncate, the database is almost certainly in Full recovery with no log backup running.",
   "url": "https://sqldba.blog/sql-server-recovery-models-explained/"
  },
  {
@@ -1285,14 +1410,29 @@
   "url": "https://sqldba.blog/sql-server-resource-semaphore-wait-troubleshooting/"
  },
  {
+  "title": "Restore From a Newer SQL Server Version (Error 3169)",
+  "lead": "The backup is from a newer version of SQL Server than the server restoring it, and no option changes that. What the two version numbers mean, why attach fails with 948, and the routes that work.",
+  "url": "https://sqldba.blog/sql-server-restore-from-newer-version-3169/"
+ },
+ {
   "title": "RESTORE Is Terminating Abnormally (Errors 3013 and 3241)",
   "lead": "3013 is never the cause, it is the last line of a failed restore. Five restore failures reproduced in a container, five different real errors above it, and three of them had nothing wrong with the backup file.",
   "url": "https://sqldba.blog/sql-server-restore-terminating-abnormally-3013-3241/"
  },
  {
+  "title": "Restore Testing: Proving the Backups Actually Work",
+  "lead": "A backup you have never restored is a hypothesis. What coverage checks prove, what they do not, and how to run a restore drill that measures your real recovery time.",
+  "url": "https://sqldba.blog/sql-server-restore-testing/"
+ },
+ {
   "title": "The SELECT Permission Was Denied on the Object (Error 229)",
   "lead": "\ud83d\udea8 Part of the SQL Server Errors series, the exact messages and what actually causes them.",
   "url": "https://sqldba.blog/sql-server-select-permission-denied-229/"
+ },
+ {
+  "title": "SQL Server Service Will Not Start: Error 17113, 17058, 1067 and Where the Real Reason Is",
+  "lead": "The service will not come up and Windows only says 1067. Where the real reason lives, what errors 17113 and 17058 are actually telling you, and what to do when the log says nothing at all.",
+  "url": "https://sqldba.blog/sql-server-service-will-not-start/"
  },
  {
   "title": "SET Options Have Incorrect Settings (Error 1934)",
@@ -2545,6 +2685,11 @@
   "url": "https://sqldba.blog/ssms-certificate-chain-not-trusted-error-trust-server-certificate-fix/"
  },
  {
+  "title": "Execution Timeout Expired: Whose Timeout It Is, and What the Server Was Doing",
+  "lead": "Msg -2 comes from the client library, not from SQL Server. Here is how to tell the execution timeout from the connection timeout, find out whether the query was blocked when the client gave up, and why raising the timeout is not a fix.",
+  "url": "https://sqldba.blog/ssms-execution-timeout-expired/"
+ },
+ {
   "title": "SSMS Query Shortcuts: Run sp_whoisactive on a Hotkey",
   "lead": "\ud83d\udee0\ufe0f Part of the SSMS Complete Guide, installing, configuring and fixing SQL Server Management Studio.",
   "url": "https://sqldba.blog/ssms-query-shortcuts/"
@@ -2555,8 +2700,18 @@
   "url": "https://sqldba.blog/ssms-results-grid-export/"
  },
  {
+  "title": "SSMS \u201cSaving Changes Is Not Permitted\u201d: The Two Ways Out, and Why the Guard Exists",
+  "lead": "SSMS refuses to save your Table Designer change because it needs the table dropped and re-created. Write it as ALTER TABLE instead, and here is what the re-creation would have cost, measured on 300,000 rows.",
+  "url": "https://sqldba.blog/ssms-saving-changes-is-not-permitted/"
+ },
+ {
+  "title": "TempDB Is Full or Still Growing: Find What Is Using It, Right Now",
+  "lead": "TempDB belongs to the whole instance, so the question is never whether it is full, it is which session filled it. One query names the session, and user objects, internal objects and the version store each end a different way.",
+  "url": "https://sqldba.blog/tempdb-is-full/"
+ },
+ {
   "title": "Testing Remote Server Port Connectivity with PowerShell",
-  "lead": "Testing connectivity to remote server ports is a basic skill every DBA should have.",
+  "lead": "An application cannot connect to SQL Server, and before anyone goes near a configuration file there is 1 question to settle: is the port reachable from this server, or is something in the path blocking it?",
   "url": "https://sqldba.blog/testing-remote-server-port-connectivity-with-powershell/"
  },
  {
@@ -2590,13 +2745,18 @@
   "url": "https://sqldba.blog/using-powershell-to-get-last-sql-failover-time/"
  },
  {
+  "title": "View the Definition of a Stored Procedure in SQL Server",
+  "lead": "Three ways to read the source of a stored procedure, and the trap in all of them: without VIEW DEFINITION, OBJECT_DEFINITION returns NULL rather than an error, which looks exactly like the procedure does not exist.",
+  "url": "https://sqldba.blog/view-the-definition-of-a-stored-procedure/"
+ },
+ {
   "title": "What the USE Command Does in SQL Server",
   "lead": "The USE command changes the database context for the current session.",
   "url": "https://sqldba.blog/what-the-use-command-does-in-sql-server/"
  },
  {
   "title": "What WITH (NOLOCK) Actually Does in SQL Server",
-  "lead": "Almost every SQL Server developer has copied WITH (NOLOCK) onto the end of a query at some point, usually because someone said it \u201cmakes queries faster\u201d or \u201cavoids blocking.\u201d Both of those things are technically true.",
+  "lead": "Almost every SQL Server developer has copied WITH (NOLOCK) onto the end of a query at some point, usually because someone said it \"makes queries faster\" or \"avoids blocking.\" Both of those things are technically true.",
   "url": "https://sqldba.blog/what-with-nolock-actually-does-in-sql-server/"
  },
  {
