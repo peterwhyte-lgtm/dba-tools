@@ -18,8 +18,12 @@ Notes       : Default trace rolls over: 5 files, 20 MB each, oldest discarded.
               DatabaseName comes from the trace, not DB_NAME(DatabaseID): database ids
               are reused, so DB_NAME was NULL on 96 and plainly wrong on 37 of 176
               user-database events on the lab instance (2026-10-02).
-              DatabaseID > 4 excludes master, model, msdb and tempdb. Drop that
-              predicate when you are chasing tempdb growth.
+              DatabaseID NOT IN (1, 3, 4) keeps tempdb and every user database and
+              excludes master, model and msdb. tempdb is included on purpose: a tempdb
+              file growing mid-workload is the event people are usually chasing, and on
+              the lab instance it was 16 of the 209 events the trace still held
+              (2026-10-03). tempdb is recreated at every restart, so its growth history
+              only reaches back to the last one.
               Fix: pre-size files to expected peak size and set a fixed MB growth
               increment (not percent) via ALTER DATABASE ... MODIFY FILE.
 */
@@ -59,5 +63,5 @@ SELECT
     DATEPART(HOUR,    e.StartTime)                  AS hour_of_day
 FROM   sys.fn_trace_gettable(@tracepath, DEFAULT) AS e
 WHERE  e.EventClass IN (92, 93)
-  AND  e.DatabaseID  > 4
+  AND  e.DatabaseID NOT IN (1, 3, 4)   /* master, model, msdb out; tempdb stays in */
 ORDER BY e.StartTime DESC;

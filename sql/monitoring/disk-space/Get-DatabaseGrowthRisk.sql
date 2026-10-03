@@ -12,6 +12,9 @@ Notes       : max_size of -1 and of 268435456 both mean "no configured ceiling":
               capped at exactly 2 TB is indistinguishable from the default and reads as unlimited.
               growth_limit_mb sums only the files that have a real ceiling, so read
               unlimited_files first: any value above 0 means the limit is partial.
+              Driven from sys.databases, so a database that has been dropped cannot appear
+              here at all. Get-DatabaseGrowthForecast reads collector history, which
+              outlives the database, and filters dropped databases out to match.
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low

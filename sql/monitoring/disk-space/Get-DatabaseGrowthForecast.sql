@@ -29,9 +29,21 @@ Notes       : Projects file-limit exhaustion only, not physical disk exhaustion.
               days_observed = 0.0. Read snapshot_count and days_observed before the projection.
               days_observed can also exceed @WindowDays, because FOR SYSTEM_TIME BETWEEN
               returns the version already open at @WindowStart.
-              A dropped database keeps its last row: the collector MERGE has no WHEN NOT MATCHED
-              BY SOURCE branch, so it goes on appearing here as STABLE (55 of 99 rows on one lab
-              instance). Check database_name against sys.databases before chasing a row.
+              The collector keeps history for databases that no longer exist, which is the
+              point of history: its MERGE has no WHEN NOT MATCHED BY SOURCE branch, so a
+              dropped database keeps its last row for good. This script filters those rows
+              out against sys.databases, because a dropped database is not a capacity risk.
+              60 of the 101 file rows on the lab instance belonged to dropped databases
+              (2026-10-03), and one of them was reporting STABLE at 2176 MB. Query the
+              collector table
+              directly when you want the history of something that is gone.
+              The filter only applies to rows whose server_name is this instance. Rows
+              collected by another instance into the same DBAMonitor are kept, because
+              sys.databases here cannot say whether they still exist there.
+              Both comparisons are COLLATE DATABASE_DEFAULT, the same convention as
+              Generate-CollectorJob-DatabaseGrowth.sql: sys.databases carries the server
+              collation and the collector columns carry DBAMonitor's, so an instance where
+              those differ would otherwise fail with a collation conflict rather than a row.
               The collector records master, model, msdb and tempdb; Get-DatabaseGrowthRisk
               excludes them with database_id > 4, so the two do not cover the same set.
               Every time on the result set is UTC: the window, last_change and
@@ -82,7 +94,14 @@ END
         growth_limit_mb,
         SysStartTime AS snapshot_time
     FROM DBAMonitor.collector.DatabaseGrowthCurrent
-    FOR SYSTEM_TIME BETWEEN @WindowStart AND @WindowEnd
+    FOR SYSTEM_TIME BETWEEN @WindowStart AND @WindowEnd AS g
+    /* The collector never deletes, so a dropped database keeps its last row forever.
+       A database that no longer exists is not a capacity risk. Rows written by another
+       instance are left alone: local sys.databases cannot speak for them. */
+    WHERE  g.server_name COLLATE DATABASE_DEFAULT <> @@SERVERNAME COLLATE DATABASE_DEFAULT
+       OR  EXISTS (SELECT 1 FROM sys.databases AS d
+                   WHERE  d.name COLLATE DATABASE_DEFAULT
+                        = g.database_name COLLATE DATABASE_DEFAULT)
 ),
 ranked AS (
     SELECT *,
