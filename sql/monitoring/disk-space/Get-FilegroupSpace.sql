@@ -19,7 +19,7 @@ CREATE TABLE #FgSpace (
     is_read_only BIT NOT NULL,
     file_count INT NOT NULL,
     size_mb DECIMAL(20,2) NOT NULL,
-    used_mb DECIMAL(20,2) NOT NULL
+    used_mb DECIMAL(20,2) NULL      /* NULL for memory-optimized and FILESTREAM filegroups */
 );
 
 DECLARE @db NVARCHAR(128);
@@ -51,7 +51,10 @@ BEGIN
         fg.is_read_only,
         COUNT(f.file_id),
         CAST(SUM(CAST(f.size AS BIGINT) * 8.0 / 1024) AS DECIMAL(20,2)),
-        CAST(SUM(CAST(COALESCE(FILEPROPERTY(f.name, ''SpaceUsed''), 0) AS BIGINT) * 8.0 / 1024) AS DECIMAL(20,2))
+        /* FILEPROPERTY returns NULL for memory-optimized (and FILESTREAM) filegroups; carry the NULL
+           rather than print 0.00 and sort the row to the top as if it were full. */
+        CASE WHEN MIN(FILEPROPERTY(f.name, ''SpaceUsed'')) IS NULL THEN NULL
+             ELSE CAST(SUM(CAST(FILEPROPERTY(f.name, ''SpaceUsed'') AS BIGINT) * 8.0 / 1024) AS DECIMAL(20,2)) END
     FROM sys.filegroups fg
     JOIN sys.database_files f ON f.data_space_id = fg.data_space_id
     GROUP BY fg.name, fg.type, fg.is_default, fg.is_read_only;';
@@ -70,8 +73,8 @@ SELECT
     size_mb,
     used_mb,
     CAST(size_mb - used_mb AS DECIMAL(20,2)) AS free_mb,
-    CAST(CASE WHEN size_mb > 0 THEN (size_mb - used_mb) * 100.0 / size_mb ELSE 0 END AS DECIMAL(5,1)) AS free_pct
+    CAST(CASE WHEN size_mb > 0 AND used_mb IS NOT NULL THEN (size_mb - used_mb) * 100.0 / size_mb END AS DECIMAL(5,1)) AS free_pct
 FROM #FgSpace
-ORDER BY free_pct ASC, database_name, filegroup_name;
+ORDER BY CASE WHEN used_mb IS NULL THEN 1 ELSE 0 END, free_pct ASC, database_name, filegroup_name;
 
 DROP TABLE #FgSpace;
