@@ -3,7 +3,7 @@ Script Name : Get-LinkedServerInventory
 Category    : migration
 Purpose     : Inventory linked servers for migration and connectivity dependency mapping.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-linked-servers/)
-Requires    : VIEW ANY DATABASE
+Requires    : none beyond CONNECT SQL (the default login mapping to public makes every linked server visible); ALTER ANY LINKED SERVER once that mapping has been removed
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
