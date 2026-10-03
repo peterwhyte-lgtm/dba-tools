@@ -12,6 +12,7 @@ Requires    : VIEW ANY DATABASE
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 DECLARE @BackupPath    nvarchar(260) = N'D:\SQL-Backups';
 DECLARE @Compression   bit           = 1;
@@ -23,7 +24,7 @@ DECLARE @WithClause nvarchar(200) = N'WITH ';
 SET @WithClause += CASE WHEN @Compression = 1 THEN N'COMPRESSION, ' ELSE N'' END;
 SET @WithClause += N'STATS = ' + CAST(@StatsInterval AS nvarchar(3)) + N';';
 
-DECLARE @cmd nvarchar(max) =
+DECLARE @hdr nvarchar(max) =
     N'-- TRANSACTION LOG backup script - ' + @@SERVERNAME                  + CHAR(13) + CHAR(10) +
     N'-- Path  : ' + @BackupPath                                            + CHAR(13) + CHAR(10) +
     N'-- FULL and BULK_LOGGED databases only (SIMPLE excluded).'            + CHAR(13) + CHAR(10) +
@@ -31,6 +32,8 @@ DECLARE @cmd nvarchar(max) =
                                                                               CHAR(13) + CHAR(10) +
     N'DECLARE @ts   varchar(15)  = FORMAT(GETDATE(), ''yyyyMMdd_HHmmss'');' + CHAR(13) + CHAR(10) +
     N'DECLARE @path nvarchar(500);'                                          + CHAR(13) + CHAR(10);
+
+DECLARE @cmd nvarchar(max) = @hdr;
 
 SELECT @cmd +=
     CHAR(13) + CHAR(10) +
@@ -42,7 +45,8 @@ WHERE d.database_id > 4
   AND d.recovery_model_desc IN (N'FULL', N'BULK_LOGGED')
 ORDER BY d.name;
 
-IF @cmd IS NULL OR @cmd = N''
-    SET @cmd = N'-- No eligible databases found. All online user databases may be in SIMPLE recovery.' + CHAR(13) + CHAR(10);
+IF @cmd IS NULL OR @cmd = @hdr
+    SET @cmd = @hdr + CHAR(13) + CHAR(10) +
+               N'-- No eligible databases found. All online user databases may be in SIMPLE recovery.' + CHAR(13) + CHAR(10);
 
 SELECT @cmd AS script;

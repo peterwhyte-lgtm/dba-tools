@@ -10,6 +10,7 @@ Requires    : VIEW ANY DATABASE
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 DECLARE @BackupPath    nvarchar(260) = N'D:\SQL-Backups';
 DECLARE @Compression   bit           = 1;
@@ -21,7 +22,7 @@ DECLARE @WithClause nvarchar(200) = N'WITH DIFFERENTIAL, ';
 SET @WithClause += CASE WHEN @Compression = 1 THEN N'COMPRESSION, ' ELSE N'' END;
 SET @WithClause += N'STATS = ' + CAST(@StatsInterval AS nvarchar(3)) + N';';
 
-DECLARE @cmd nvarchar(max) =
+DECLARE @hdr nvarchar(max) =
     N'-- DIFFERENTIAL backup script - ' + @@SERVERNAME                     + CHAR(13) + CHAR(10) +
     N'-- Path  : ' + @BackupPath                                            + CHAR(13) + CHAR(10) +
     N'-- Requires a prior FULL backup for each database.'                   + CHAR(13) + CHAR(10) +
@@ -29,6 +30,8 @@ DECLARE @cmd nvarchar(max) =
                                                                               CHAR(13) + CHAR(10) +
     N'DECLARE @ts   varchar(15)  = FORMAT(GETDATE(), ''yyyyMMdd_HHmmss'');' + CHAR(13) + CHAR(10) +
     N'DECLARE @path nvarchar(500);'                                          + CHAR(13) + CHAR(10);
+
+DECLARE @cmd nvarchar(max) = @hdr;
 
 SELECT @cmd +=
     CHAR(13) + CHAR(10) +
@@ -39,7 +42,8 @@ WHERE d.database_id > 4
   AND d.state_desc  = N'ONLINE'
 ORDER BY d.name;
 
-IF @cmd IS NULL OR @cmd = N''
-    SET @cmd = N'-- No online user databases found.' + CHAR(13) + CHAR(10);
+IF @cmd IS NULL OR @cmd = @hdr
+    SET @cmd = @hdr + CHAR(13) + CHAR(10) +
+               N'-- No online user databases found.' + CHAR(13) + CHAR(10);
 
 SELECT @cmd AS script;
