@@ -9,6 +9,7 @@ Requires    : VIEW SERVER STATE
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 /*
   DESIGN: sys.dm_db_index_operational_stats with NULL parameters covers all databases
@@ -19,7 +20,7 @@ SET NOCOUNT ON;
     - Large batch operations scanning many rows (e.g. bulk updates, large deletes)
     - Queries that acquire more than 5,000 row/page locks in a single statement
   Remedies:
-    - ALTER TABLE t SET (LOCK_ESCALATION = DISABLE) — prevents escalation (use carefully)
+    - ALTER TABLE t SET (LOCK_ESCALATION = DISABLE), prevents escalation (use carefully)
     - Batch large DML into smaller chunks to stay below the lock threshold
     - Add covering indexes to reduce rows scanned per operation
     - Use READ_COMMITTED_SNAPSHOT isolation to eliminate shared locks on reads

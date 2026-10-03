@@ -1,16 +1,20 @@
 /*
 Script Name : Get-ContentionAnalysis
 Category    : performance
-Purpose     : Unified contention summary across lock waits, latch waits, TempDB allocation
-              pressure, and spinlock contention. All figures are cumulative since the last
-              SQL Server restart — high counts on a recently restarted instance are not
-              necessarily concerning.
+Purpose     : Unified contention summary across lock waits, latch waits, page latch
+              (allocation) waits, and spinlock contention. All figures are cumulative
+              since the last SQL Server restart, so high counts on a recently restarted
+              instance are not necessarily concerning.
+              sys.dm_os_wait_stats carries no database column, so the PAGE_LATCH rows
+              are not attributed to a database. Confirm which database and page with
+              sys.dm_os_waiting_tasks.resource_description while the wait is happening.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-lock-contention-and-blocking-plans/)
 Requires    : VIEW SERVER STATE
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 DECLARE @min_wait_count BIGINT = 100; -- suppress trivial entries with fewer wait occurrences
 DECLARE @min_spinlock_collisions BIGINT = 50000; -- only flag high-volume spinlocks
@@ -83,9 +87,15 @@ FROM (
     -- ── TempDB allocation page contention ────────────────────────────────────────
     -- PAGELATCH_UP/EX on TempDB is classic allocation bitmap contention (PFS, GAM, SGAM).
     -- Symptom: many concurrent object creates/drops in TempDB (temp tables, table variables).
-    -- Fix: add TempDB data files up to the number of logical CPUs (max 8).
+    -- Fix (TempDB only): add TempDB data files up to the number of logical CPUs (max 8).
+    -- IMPORTANT: sys.dm_os_wait_stats returns 5 columns and none of them is a database,
+    -- so these rows are instance-wide. PAGELATCH_* on a user database is ordinary page
+    -- contention, not allocation-bitmap contention, and adding TempDB files will not
+    -- help it. Confirm the database before acting: while the wait is live, read
+    -- sys.dm_os_waiting_tasks.resource_description, which reads <db_id>:<file_id>:<page_id>
+    -- (TempDB is database_id 2), and treat page ids 1, 2 and 3 as PFS, GAM and SGAM.
     SELECT
-        'TEMPDB_ALLOC',
+        'PAGE_LATCH',
         ws.wait_type,
         ws.waiting_tasks_count,
         ws.wait_time_ms,
@@ -93,9 +103,9 @@ FROM (
              / NULLIF(ws.waiting_tasks_count, 0) AS DECIMAL(12,2)),
         uptime.days_since_restart,
         CASE ws.wait_type
-            WHEN 'PAGELATCH_UP' THEN 'TempDB PFS/GAM/SGAM allocation contention - add TempDB files (up to # of logical CPUs, max 8)'
-            WHEN 'PAGELATCH_EX' THEN 'TempDB exclusive page latch - likely allocation bitmap contention'
-            ELSE 'TempDB shared page latch - allocation page reads'
+            WHEN 'PAGELATCH_UP' THEN 'Update page latch, the PFS/GAM/SGAM shape. Confirm the database in sys.dm_os_waiting_tasks before adding TempDB files'
+            WHEN 'PAGELATCH_EX' THEN 'Exclusive page latch. Allocation bitmap contention if the pages are TempDB 2:1:1/2:1:2/2:1:3, otherwise ordinary page contention'
+            ELSE 'Shared page latch, allocation page reads. Check the database in sys.dm_os_waiting_tasks'
         END
     FROM sys.dm_os_wait_stats ws
     CROSS JOIN (
@@ -110,7 +120,7 @@ FROM (
     -- ── Spinlock contention ──────────────────────────────────────────────────────
     -- Spinlocks are lightweight CPU-spinning locks protecting very short-lived structures.
     -- High spins-per-collision ratio (>1000) on a specific spinlock indicates a hot path.
-    -- Note: total_wait_ms = spins / 1000 (proxy — spinlocks do not track wall-clock time).
+    -- Note: total_wait_ms = spins / 1000 (proxy, spinlocks do not track wall-clock time).
     -- avg_wait_ms = spins per collision (spin ratio, not milliseconds).
     SELECT
         'SPINLOCK',
@@ -134,7 +144,7 @@ ORDER BY
     CASE contention_type
         WHEN 'LOCK' THEN 1
         WHEN 'LATCH' THEN 2
-        WHEN 'TEMPDB_ALLOC' THEN 3
+        WHEN 'PAGE_LATCH' THEN 3
         WHEN 'SPINLOCK' THEN 4
     END,
     total_wait_ms DESC;

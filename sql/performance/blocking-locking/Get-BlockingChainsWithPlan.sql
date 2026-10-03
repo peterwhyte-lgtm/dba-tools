@@ -12,15 +12,23 @@ Performance note: dm_exec_requests is materialised into #ar once to avoid
 repeated DMV scans. downstream_waiters is pre-aggregated rather than computed
 via a correlated subquery. dm_exec_connections is joined only for sessions
 that have no active request (idle head blockers).
+
+Reading the output: the head blocker row is the one to act on. query_plan is NULL
+on an idle head blocker because a sleeping session has no active request and so no
+plan_handle; its sql_text comes from most_recent_sql_handle and is the whole last
+batch, not one statement. wait_resource names the locked object for each waiter:
+KEY: <db_id>:<hobt_id> (<hash>), PAGE: <db_id>:<file_id>:<page_id>,
+OBJECT: <db_id>:<object_id>. Returns no rows when the server is not blocked.
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 DROP TABLE IF EXISTS #ar;
 
 SELECT
-    session_id, blocking_session_id, status, wait_type, wait_time,
+    session_id, blocking_session_id, status, wait_type, wait_resource, wait_time,
     cpu_time, logical_reads, writes, total_elapsed_time,
     sql_handle, plan_handle, database_id,
     statement_start_offset, statement_end_offset
@@ -37,7 +45,7 @@ DownstreamCounts AS (
     GROUP BY blocking_session_id
 ),
 Chain AS (
-    -- Anchor: head blockers — block others but are not themselves blocked
+    -- Anchor: head blockers, they block others but are not themselves blocked
     SELECT
         s.session_id AS chain_id,
         0 AS chain_level,
@@ -50,6 +58,7 @@ Chain AS (
         s.open_transaction_count,
         COALESCE(r.status, s.status) AS status,
         r.wait_type,
+        r.wait_resource,
         r.wait_time,
         r.cpu_time,
         r.logical_reads,
@@ -83,6 +92,7 @@ Chain AS (
         s.open_transaction_count,
         r.status,
         r.wait_type,
+        r.wait_resource,
         r.wait_time,
         r.cpu_time,
         r.logical_reads,
@@ -111,6 +121,7 @@ SELECT
     ch.open_transaction_count,
     ch.status,
     ch.wait_type,
+    ch.wait_resource,
     ISNULL(ch.wait_time, 0) AS wait_time_ms,
     ISNULL(ch.cpu_time, 0) AS cpu_time_ms,
     ISNULL(ch.logical_reads, 0) AS logical_reads,
