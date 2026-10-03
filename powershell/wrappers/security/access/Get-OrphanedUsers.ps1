@@ -1,16 +1,18 @@
 ﻿<#
 .SYNOPSIS
-Finds database users with no matching server login across all user databases.
+Finds database users whose SID matches no server login, across every online database.
 
 .NOTES
 ScriptType   : hybrid
-TargetScope  : single server (iterates all user databases)
+TargetScope  : single server (iterates every online database, tempdb excluded)
 RiskLevel    : SAFE
-Purpose      : Detect orphaned accounts that cause silent login failures — common after migrations.
+Purpose      : Detect orphaned accounts that cause silent login failures, common after migrations.
 
 .DESCRIPTION
-Wrapper for the Get-OrphanedUsers SQL query. Iterates all online user databases and
-returns accounts where the SID has no matching entry in sys.server_principals.
+Wrapper for the Get-OrphanedUsers SQL query. Iterates every online database the account can
+open (tempdb excluded) and returns accounts where the SID has no matching entry in
+sys.server_principals. Users created WITHOUT LOGIN and contained database users are excluded,
+they have no server login by design and are not orphans.
 
 Fix orphans with: ALTER USER [username] WITH LOGIN = [login_name];
 
