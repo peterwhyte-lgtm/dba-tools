@@ -10,6 +10,7 @@ Notes       : Returns three result sets (logins, linked servers, jobs). Run in S
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 SELECT
     'LOGIN' AS object_type,
@@ -26,7 +27,7 @@ ORDER BY sp.name;
 SELECT
     'LINKED SERVER' AS object_type,
     s.name AS name,
-    s.product + ' / ' + s.provider AS detail,
+    ISNULL(NULLIF(s.product, ''), '(not set)') + ' / ' + s.provider AS detail,
     s.data_source AS status
 FROM sys.servers AS s
 WHERE s.is_linked = 1

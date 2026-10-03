@@ -8,6 +8,7 @@ Requires    : VIEW ANY DATABASE
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 SELECT
     s.name AS linked_server_name,
     s.product,
@@ -15,6 +16,8 @@ SELECT
     s.data_source,
     s.location,
     s.catalog,
+    s.is_data_access_enabled,
+    s.is_rpc_out_enabled,
     CASE WHEN s.is_linked = 1 THEN 'Linked' ELSE 'Local' END AS status
 FROM sys.servers AS s
 WHERE s.is_linked = 1

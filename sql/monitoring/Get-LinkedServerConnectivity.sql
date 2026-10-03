@@ -8,6 +8,7 @@ Requires    : sysadmin or ALTER ANY LINKED SERVER
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 /* Note: sys.linked_servers was removed in SQL Server 2025 — use sys.servers WHERE is_linked = 1 */
 

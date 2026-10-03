@@ -11,10 +11,12 @@ HealthCheck : Yes
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 /*
-  DESIGN: sys.linked_logins contains one row per mapping. A NULL local_login_name
+  DESIGN: sys.linked_logins contains one row per mapping. local_principal_id = 0
   means the mapping applies to any login without a specific mapping (catch-all).
+  There is no local_login_name column; the local login is resolved with SUSER_SNAME.
   Risk assessment:
     HIGH — catch-all or specific mapping with stored remote credentials
     MEDIUM — self-credentials (impersonation) mapping
@@ -32,9 +34,9 @@ SELECT
         WHEN ll.uses_self_credential = 1
             THEN 'Impersonate - context of the calling login'
         WHEN ll.remote_name IS NOT NULL AND ll.local_principal_id = 0
-            THEN 'Catch-all mapping → ' + ll.remote_name
+            THEN 'Catch-all mapping -> ' + ll.remote_name
         WHEN ll.remote_name IS NOT NULL
-            THEN 'Explicit mapping → ' + ll.remote_name
+            THEN 'Explicit mapping -> ' + ll.remote_name
         ELSE '(no mapping - will fail for unmatched logins)'
     END AS security_context,
     ll.uses_self_credential,
