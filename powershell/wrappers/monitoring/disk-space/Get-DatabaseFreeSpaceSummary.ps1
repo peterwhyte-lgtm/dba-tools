@@ -1,12 +1,14 @@
 <#
 .SYNOPSIS
-Runs the database free space summary query against all online databases.
+Runs the database free space summary query against every online database the caller can enter.
 
 .NOTES
 ScriptType   : runner
-TargetScope  : single server
+TargetScope  : single server, every online database the caller can enter
 RiskLevel    : SAFE
-Purpose      : Show allocated, used, and free space for all online databases ordered by total free space.
+Purpose      : Show allocated, used, and free space per database, split into data and log, ordered
+               by lowest total free percentage first. Needs VIEW SERVER STATE for DBCC SQLPERF
+               and fails without it; databases it cannot enter are skipped with no row.
 #>
 
 param(

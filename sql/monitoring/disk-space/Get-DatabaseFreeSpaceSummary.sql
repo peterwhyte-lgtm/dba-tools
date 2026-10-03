@@ -1,13 +1,24 @@
 /*
 Script Name : Get-DatabaseFreeSpaceSummary
 Category    : monitoring
-Purpose     : Allocated, used, and free space for all online databases, ordered by total free space descending.
+Purpose     : Allocated, used, and free space for every online database, split into data and log,
+              ordered by lowest total free percentage first so the tightest database is the top row.
+              Capped Files counts the data and log files that cannot grow any further, which is
+              what decides whether a low free percentage is an outage waiting to happen.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-database-free-space-summary/)
-Requires    : VIEW SERVER STATE, VIEW DATABASE STATE
+Requires    : VIEW SERVER STATE, plus CONNECT in each database to be reported
+Notes       : VIEW SERVER STATE is for DBCC SQLPERF(LOGSPACE) and the script fails outright
+              without it (Msg 297) rather than reporting every log as empty.
+              Databases the caller cannot enter, and databases that are not ONLINE, are skipped
+              with no row and no warning, so a smaller row count is the only symptom.
+              FILESTREAM and memory-optimized data containers (type_desc FILESTREAM) are counted
+              in no column, so a database using them allocates more on disk than this reports.
+              Free space here is space inside the existing files, not space on the volume.
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 /* Set to 1 to hide master/model/msdb/tempdb */
 DECLARE @ExcludeSystemDBs BIT = 0;
@@ -19,7 +30,8 @@ CREATE TABLE #SpaceInfo (
     DataAllocMB DECIMAL(20,2) NOT NULL DEFAULT 0,
     DataUsedMB DECIMAL(20,2) NOT NULL DEFAULT 0,
     LogAllocMB DECIMAL(20,2) NOT NULL DEFAULT 0,
-    LogUsedMB DECIMAL(20,2) NOT NULL DEFAULT 0
+    LogUsedMB DECIMAL(20,2) NOT NULL DEFAULT 0,
+    CappedFiles INT NOT NULL DEFAULT 0
 );
 
 IF OBJECT_ID('tempdb..#LogSpace') IS NOT NULL DROP TABLE #LogSpace;
@@ -53,7 +65,7 @@ WHILE @@FETCH_STATUS = 0
 BEGIN
     SET @sql = N'
         USE ' + QUOTENAME(@db) + N';
-        INSERT INTO #SpaceInfo (DatabaseName, DataAllocMB, DataUsedMB, LogAllocMB, LogUsedMB)
+        INSERT INTO #SpaceInfo (DatabaseName, DataAllocMB, DataUsedMB, LogAllocMB, LogUsedMB, CappedFiles)
         SELECT
             DB_NAME(),
             SUM(CASE WHEN type_desc = ''ROWS''
@@ -65,7 +77,12 @@ BEGIN
             SUM(CASE WHEN type_desc = ''LOG''
                      THEN CAST(size AS BIGINT) * 8.0 / 1024
                      ELSE 0 END),
-            0
+            0,
+            /* a file is capped when autogrowth is off, or it has already reached max_size */
+            SUM(CASE WHEN type_desc IN (''ROWS'', ''LOG'')
+                          AND (growth = 0 OR max_size = 0
+                               OR (max_size > 0 AND size >= max_size))
+                     THEN 1 ELSE 0 END)
         FROM sys.database_files;
     ';
 
@@ -100,6 +117,7 @@ JOIN #LogSpace l ON l.DatabaseName = s.DatabaseName;
         LogUsedMB,
         CASE WHEN LogAllocMB - LogUsedMB > 0
              THEN LogAllocMB - LogUsedMB ELSE 0 END AS LogFreeMB,
+        CappedFiles,
         DataAllocMB + LogAllocMB AS TotalAllocMB,
         DataUsedMB + LogUsedMB AS TotalUsedMB,
           CASE WHEN DataAllocMB - DataUsedMB > 0 THEN DataAllocMB - DataUsedMB ELSE 0 END
@@ -130,6 +148,8 @@ SELECT
              THEN TotalFreeMB * 100.0 / TotalAllocMB
              ELSE 0
         END AS DECIMAL(5,2)) AS [Free %],
+
+    CappedFiles AS [Capped Files],
 
     /* ── Data files ──────────────────────────────────────────────────────── */
     CASE WHEN DataAllocMB >= 1048576 THEN CAST(CAST(DataAllocMB / 1048576.0 AS DECIMAL(10,2)) AS VARCHAR) + ' TB'
@@ -169,7 +189,7 @@ SELECT
     TotalFreeMB
 
 FROM calc
-ORDER BY TotalFreeMB DESC;
+ORDER BY [Free %] ASC, DatabaseName ASC;
 
 /* ── Cleanup ─────────────────────────────────────────────────────────────── */
 IF OBJECT_ID('tempdb..#SpaceInfo') IS NOT NULL DROP TABLE #SpaceInfo;
