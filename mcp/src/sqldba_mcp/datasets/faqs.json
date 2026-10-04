@@ -547,13 +547,13 @@
  },
  {
   "question": "Are Windows logins and Active Directory groups included?",
-  "answer": "Yes, and this is the part that was broken until 2026-08-18. Windows logins are type 'U' in sys.server_principals and Windows groups are type 'G'. The script previously filtered on 'W', which is not a type SQL Server uses, so the Windows section came out empty on every server. Service accounts under NT SERVICE\\, NT AUTHORITY\\ and BUILTIN\\ are still excluded on purpose, they belong to the target instance's own installation and shouldn't be carried over.",
+  "answer": "Yes. Windows logins are type 'U' in sys.server_principals and Windows groups are type 'G'. An older version filtered on 'W', which is not a type SQL Server uses, so the Windows section came out empty on every server. Service accounts under NT SERVICE\\, NT AUTHORITY\\ and BUILTIN\\ are still excluded on purpose, they belong to the target instance's own installation and shouldn't be carried over.",
   "post_title": "DBA Scripts: Generate Login Script",
   "url": "https://sqldba.blog/dba-scripts-generate-login-script/"
  },
  {
   "question": "Does this script move the actual login passwords in plain text?",
-  "answer": "No. It extracts the password hash directly from sys.sql_logins and recreates the login with CREATE LOGIN... WITH PASSWORD = <hash> HASHED, the plain-text password itself is never read or exposed.",
+  "answer": "No. It extracts the password hash directly from sys.sql_logins and recreates the login with CREATE LOGIN... WITH PASSWORD = <hash> HASHED, the plain-text password itself is never read or exposed. The hash is still a secret, so the generated file deserves the same care as a password list.",
   "post_title": "DBA Scripts: Generate Login Script",
   "url": "https://sqldba.blog/dba-scripts-generate-login-script/"
  },
@@ -564,8 +564,20 @@
   "url": "https://sqldba.blog/dba-scripts-generate-login-script/"
  },
  {
+  "question": "I ran the login script and the database users are still orphaned. Why?",
+  "answer": "The target already had a login with that name. Every block is wrapped in IF NOT EXISTS on the name, so the existing login is left alone with its own SID and its own password, the block does nothing and prints nothing, and the database user stays orphaned. Compare the SIDs with the query in the answer above. If the existing login is not needed, drop it and run that login's block again; otherwise re-map each user with ALTER USER [YourUser] WITH LOGIN = [YourLogin];, or use Fix-OrphanedUsers.sql across every database.",
+  "post_title": "DBA Scripts: Generate Login Script",
+  "url": "https://sqldba.blog/dba-scripts-generate-login-script/"
+ },
+ {
   "question": "What happens to a login that is disabled on the source server?",
-  "answer": "It is recreated and then disabled again, with ALTER LOGIN [name] DISABLE; emitted directly inside the creation block. This matters because CREATE LOGIN has no syntax for creating a login in a disabled state, it always produces an enabled one. Before the fix, a decommissioned or deliberately locked account arrived on the new server live, with its original password still valid, and nothing in the output said so.",
+  "answer": "It is recreated and then disabled again, with ALTER LOGIN [name] DISABLE; emitted directly inside the creation block. This matters because CREATE LOGIN has no syntax for creating a login in a disabled state, it always produces an enabled one. Without that line a decommissioned or deliberately locked account arrives on the new server live, with its original password still valid, and nothing in the output says so.",
+  "post_title": "DBA Scripts: Generate Login Script",
+  "url": "https://sqldba.blog/dba-scripts-generate-login-script/"
+ },
+ {
+  "question": "Why does it stop with Msg 50000, or return NULL?",
+  "answer": "The login running it cannot see what it needs. Other logins only appear in sys.server_principals with VIEW ANY DEFINITION, and password_hash in sys.sql_logins reads as NULL without CONTROL SERVER (or, on SQL Server 2022 and later, VIEW ANY CRYPTOGRAPHICALLY SECURED DEFINITION ). One NULL hash used to turn the whole output into NULL, with no error. Measured on SQL Server 2025, a login with only CONNECT SQL, VIEW SERVER STATE, VIEW ANY DEFINITION or ALTER ANY LOGIN got NULL, and a login with only VIEW ANY CRYPTOGRAPHICALLY SECURED DEFINITION got a script holding 1 login, its own. The script now checks first and stops with Msg 50000 instead. Run it as a sysadmin, or grant both VIEW ANY DEFINITION and VIEW ANY CRYPTOGRAPHICALLY SECURED DEFINITION.",
   "post_title": "DBA Scripts: Generate Login Script",
   "url": "https://sqldba.blog/dba-scripts-generate-login-script/"
  },
@@ -1008,8 +1020,32 @@
   "url": "https://sqldba.blog/dba-scripts-get-database-backup-history/"
  },
  {
+  "question": "Are FILESTREAM and In-Memory OLTP files counted?",
+  "answer": "No. Both arrive in sys.database_files as type_desc = 'FILESTREAM', and the script sums only ROWS and LOG, so their allocation lands in no column. Measured on the lab: a database carrying a 105 MB memory-optimized container reported 200 MB allocated against 305 MB actually on disk. There is no used-space figure to report for those containers either, because FILEPROPERTY(name, 'SpaceUsed') returns NULL for them. For a database using either feature, read the volume with Disk Space as well.",
+  "post_title": "DBA Scripts: Get Database Free Space Summary",
+  "url": "https://sqldba.blog/dba-scripts-get-database-free-space-summary/"
+ },
+ {
   "question": "Does a high Free % always mean a database is over-provisioned?",
   "answer": "Not necessarily, some free space headroom is intentional, avoiding frequent autogrowth events during peak load. The concern is a database trending toward 0% free rather than one sitting comfortably at 40-60%.",
+  "post_title": "DBA Scripts: Get Database Free Space Summary",
+  "url": "https://sqldba.blog/dba-scripts-get-database-free-space-summary/"
+ },
+ {
+  "question": "Free % looks healthy but inserts are failing with error 1105. What am I missing?",
+  "answer": "Read Capped Files and Data Free on that row rather than the total. Free % blends data and log, so a database with an empty log and a full data file still reads mid-range. On the lab run above, the database that returned 1105 was showing 41.83% free, with Data Free at 0.00 MB and 2 capped files. The fix is on the file, not the database: raise or remove MAXSIZE, turn autogrowth back on, or add a file to the filegroup, having checked that the volume has the room first.",
+  "post_title": "DBA Scripts: Get Database Free Space Summary",
+  "url": "https://sqldba.blog/dba-scripts-get-database-free-space-summary/"
+ },
+ {
+  "question": "Why does it need VIEW SERVER STATE, and what happens without it?",
+  "answer": "DBCC SQLPERF(LOGSPACE) is where the log used figure comes from, and it needs VIEW SERVER STATE. Without it the script stops with Msg 297, \u201cThe user does not have permission to perform this action\u201d, and returns nothing at all. That is the right outcome: with no log used figure every log would be reported as empty, which is worse than no answer. The data half needs no server-level permission beyond being a user in the database. A plain user with no VIEW DATABASE STATE reads sys.database_files and FILEPROPERTY correctly for its own database, which is why that permission is no longer named in the script header.",
+  "post_title": "DBA Scripts: Get Database Free Space Summary",
+  "url": "https://sqldba.blog/dba-scripts-get-database-free-space-summary/"
+ },
+ {
+  "question": "Why does it return fewer databases than the instance has?",
+  "answer": "Two filters, both silent. Databases that are not ONLINE are excluded by the cursor, and databases the login cannot enter fail HAS_DBACCESS and are skipped. Measured on the lab: as sysadmin the script returned 18 rows, and as a login holding VIEW SERVER STATE plus a user in one database it returned 4, with no error and no warning either time. Permission filtering gives you fewer rows, not a failure, so a short row count is the only symptom there is. Count the rows against sys.databases before trusting a clean-looking report.",
   "post_title": "DBA Scripts: Get Database Free Space Summary",
   "url": "https://sqldba.blog/dba-scripts-get-database-free-space-summary/"
  },
@@ -1153,13 +1189,25 @@
  },
  {
   "question": "Do database snapshots need Enterprise Edition?",
-  "answer": "Not any more. Snapshots were Enterprise-only up to SQL Server 2014, and Microsoft moved them into Standard, Web and Express with SQL Server 2016 SP1. On anything from 2016 SP1 onward a snapshot is not a licensing blocker, so if a downgrade check tells you it is, that check is running the pre-2016 rule. Older estates still on 2014 or earlier are the case where the Enterprise requirement genuinely applies.",
+  "answer": "Not from SQL Server 2016 SP1 onward. Snapshots were Enterprise-only up to SQL Server 2014, and Microsoft moved them into Standard, Web and Express with SQL Server 2016 SP1. On anything from 2016 SP1 onward a snapshot is not a licensing blocker, so if a downgrade check tells you it is, that check is running the pre-2016 rule. Estates on 2014 or earlier are the case where the Enterprise requirement genuinely applies.",
   "post_title": "DBA Scripts: Get Database Snapshot Inventory",
   "url": "https://sqldba.blog/dba-scripts-get-database-snapshot-inventory/"
  },
  {
   "question": "Does dropping a snapshot affect the source database?",
   "answer": "No, dropping a snapshot only removes the snapshot itself, the source database is completely unaffected. The one thing to confirm first is that nothing (a report, a rollback plan, a test process) still depends on reading from that specific snapshot.",
+  "post_title": "DBA Scripts: Get Database Snapshot Inventory",
+  "url": "https://sqldba.blog/dba-scripts-get-database-snapshot-inventory/"
+ },
+ {
+  "question": "Why does Explorer show the snapshot file at the full size of the database?",
+  "answer": "A snapshot is an NTFS sparse file, created at the size of the source data file but holding only the pages that have changed since. Explorer\u2019s Size column reports the full size, 256 MB for each of the snapshots above, while the file\u2019s Size on disk matches size_on_disk_mb, 40.44 MB for the older one. Adding up the Size column across a folder of.ss files overstates what they cost the drive.",
+  "post_title": "DBA Scripts: Get Database Snapshot Inventory",
+  "url": "https://sqldba.blog/dba-scripts-get-database-snapshot-inventory/"
+ },
+ {
+  "question": "Why does reverting to a snapshot fail with Msg 3137?",
+  "answer": "Because another snapshot of the same source still exists. With 2 snapshots of one database, RESTORE DATABASE... FROM DATABASE_SNAPSHOT returns \u201cMsg 3137, Level 16, State 4. Database cannot be reverted. Either the primary or the snapshot names are improperly specified, all other snapshots have not been dropped, or there are missing files.\u201d followed by Msg 3013. Run this script, drop every row for that source except the snapshot you are reverting to, then run the restore again. MS Docs on reverting lists the other conditions.",
   "post_title": "DBA Scripts: Get Database Snapshot Inventory",
   "url": "https://sqldba.blog/dba-scripts-get-database-snapshot-inventory/"
  },
@@ -1494,8 +1542,20 @@
   "url": "https://sqldba.blog/dba-scripts-get-linked-servers/"
  },
  {
-  "question": "What replaced sys.linked_servers in SQL Server 2025?",
-  "answer": "sys.servers WHERE is_linked = 1. All four scripts here already use it, if you have older scripts referencing sys.linked_servers directly, they\u2019ll break on SQL Server 2025 and need the same fix.",
+  "question": "Four-part-name queries work but EXEC AT fails. Is the linked server broken?",
+  "answer": "No, those are two different options. Reading through a linked server is governed by is_data_access_enabled, which Get-LinkedServerInventory reports, and running a statement on the remote side with EXEC (\u2026) AT is governed by is_rpc_out_enabled, which Get-LinkedServerSecurity and Get-LinkedServerConnectivity both report. RPC Out is off on a newly created linked server, so the second one fails with Msg 7411 while the first keeps working. Create a Linked Server to Another SQL Server has the fix.",
+  "post_title": "DBA Scripts: Get Linked Servers",
+  "url": "https://sqldba.blog/dba-scripts-get-linked-servers/"
+ },
+ {
+  "question": "My script just failed with Msg 208, invalid object name sys.linked_servers. What replaced it?",
+  "answer": "sys.servers WHERE is_linked = 1, and the swap is usually the only change needed. sys.linked_servers no longer resolves at all on SQL Server 2025, so the failure is a plain Msg 208 rather than anything to do with the linked server itself. All four scripts on this page already read sys.servers.",
+  "post_title": "DBA Scripts: Get Linked Servers",
+  "url": "https://sqldba.blog/dba-scripts-get-linked-servers/"
+ },
+ {
+  "question": "The security script says the mapping impersonates the caller, so why do my users get login failed for NT AUTHORITY\\ANONYMOUS LOGON?",
+  "answer": "Because the mapping is correct and the delegation behind it is not. uses_self_credential = 1 tells this server to pass the caller\u2019s own Windows identity on to the remote one, which is a second hop, and a Windows identity does not survive a second hop unless the service account is trusted to delegate. The giveaway is that the same query works when you run it on the server itself and fails from a client. Login Failed for User NT AUTHORITY\\ANONYMOUS LOGON walks through it, and nothing in these four scripts can see it, because the configuration they read is fine.",
   "post_title": "DBA Scripts: Get Linked Servers",
   "url": "https://sqldba.blog/dba-scripts-get-linked-servers/"
  },
@@ -1819,13 +1879,31 @@
  },
  {
   "question": "Does 0 rows from Get-MemoryGrantSpills mean memory grants are never a problem here?",
-  "answer": "It means no spills have been recorded since the last restart or plan eviction on this instance, at this workload level. A larger, more memory-constrained production workload with complex sorts and hash joins is far more likely to show real findings here; this lab box\u2019s light workload genuinely doesn\u2019t produce any.",
+  "answer": "No. It means no query still in the plan cache has spilled since it was compiled. The counters live with the cached plan, so a restart, a plan eviction or memory pressure on the cache clears them, and a query that spilled an hour ago and was evicted leaves no row. Run it while the problem is happening, or soon after.",
+  "post_title": "DBA Scripts: Get Query Performance Deep-Dive",
+  "url": "https://sqldba.blog/dba-scripts-get-query-performance-deep-dive/"
+ },
+ {
+  "question": "Get-PlanCacheHealth says OK with 100% single-use ad-hoc plans. Is that right?",
+  "answer": "Yes, when those plans add up to less than 100 MB. On the lab, 41 single-use ad-hoc plans holding 2.5 MB read 100% single-use, and there was nothing worth reclaiming. The ratio says how the application talks to the server; single_use_mb says whether it costs anything.",
   "post_title": "DBA Scripts: Get Query Performance Deep-Dive",
   "url": "https://sqldba.blog/dba-scripts-get-query-performance-deep-dive/"
  },
  {
   "question": "How is this different from Top CPU Queries?",
   "answer": "Top CPU Queries ranks everything by raw resource use in one list. These four scripts each answer a narrower, more specific question, procedure-only ranking, execution-time consistency, plan cache composition, and memory grant efficiency, useful once the general ranking has pointed you toward a category of problem and you need the specific diagnostic for it.",
+  "post_title": "DBA Scripts: Get Query Performance Deep-Dive",
+  "url": "https://sqldba.blog/dba-scripts-get-query-performance-deep-dive/"
+ },
+ {
+  "question": "Why did Get-MemoryGrantSpills miss queries sent from the application?",
+  "answer": "Earlier versions filtered on the database id in sys.dm_exec_sql_text, and that id is NULL for every ad-hoc and sp_executesql statement, so only stored procedures could ever appear. On the lab an ad-hoc query spilling 20,716 pages and an sp_executesql query spilling 20,700 pages both returned 0 rows. The script now takes the database from the plan\u2019s compile database when the text has none. Most ORM traffic arrives as sp_executesql, so this is the common case, not a corner.",
+  "post_title": "DBA Scripts: Get Query Performance Deep-Dive",
+  "url": "https://sqldba.blog/dba-scripts-get-query-performance-deep-dive/"
+ },
+ {
+  "question": "Why does Get-StoredProcedurePerformance return nothing, or show object_id instead of a name?",
+  "answer": "The procedure names come from OBJECT_NAME, which returns NULL to a login that cannot see the object\u2019s metadata. VIEW SERVER STATE is enough to read the statistics and not enough to name them; VIEW ANY DEFINITION, or VIEW DEFINITION in each database, resolves the names. The script used to drop unnamed rows, so a monitoring login got an empty result with no error. It now keeps them and shows the object_id.",
   "post_title": "DBA Scripts: Get Query Performance Deep-Dive",
   "url": "https://sqldba.blog/dba-scripts-get-query-performance-deep-dive/"
  },
@@ -1926,14 +2004,32 @@
   "url": "https://sqldba.blog/dba-scripts-get-replication-status/"
  },
  {
-  "question": "How far back does this go?",
-  "answer": "However far back the default trace\u2019s current rolling window extends, which depends on trace file size and rollover settings, not a fixed calendar period. For guaranteed longer-term retention, a proper SQL Server Audit specification is the right tool, not the default trace.",
+  "question": "Can I see the statement that made the change?",
+  "answer": "No. The default trace does not collect the statement text for create, alter and drop events, which is why the script has no sql_text column. It tells you who, where, when and what kind of object, and the statement itself has to come from the deployment script, source control, or an audit that captures it.",
   "post_title": "DBA Scripts: Get Schema Change History",
   "url": "https://sqldba.blog/dba-scripts-get-schema-change-history/"
  },
  {
-  "question": "Why do statistics objects show up as schema changes?",
-  "answer": "Auto-created statistics are technically objects in SQL Server, and the default trace captures object creation regardless of whether it was explicit or automatic. They\u2019re a normal, expected side effect of query execution against tables without an existing useful statistic, not a real schema change to investigate.",
+  "question": "How far back does this go?",
+  "answer": "As far back as the oldest of the 5 default trace files, 20 MB each, still on disk. That is a volume of events, not a calendar period, so the bottom row of the output is the real answer for your instance. A service restart starts a new file without deleting the old ones, and the script reads them all. For guaranteed longer retention, a SQL Server Audit specification is the right tool, not the default trace.",
+  "post_title": "DBA Scripts: Get Schema Change History",
+  "url": "https://sqldba.blog/dba-scripts-get-schema-change-history/"
+ },
+ {
+  "question": "I renamed a table and it is not in the output. Why?",
+  "answer": "sp_rename writes no Object:Altered event to the default trace, so a rename leaves nothing for this script to find. The table appears only under its original name, on the row from when it was created. If renames matter on this instance, a SQL Server Audit specification or a DDL trigger is what records them.",
+  "post_title": "DBA Scripts: Get Schema Change History",
+  "url": "https://sqldba.blog/dba-scripts-get-schema-change-history/"
+ },
+ {
+  "question": "Someone dropped a database. Will it show here?",
+  "answer": "Yes, as an Object:Deleted row with object_type Database and the database\u2019s name in database_name. object_name is empty on database rows, which is also where ALTER DATABASE changes appear, as Object:Altered.",
+  "post_title": "DBA Scripts: Get Schema Change History",
+  "url": "https://sqldba.blog/dba-scripts-get-schema-change-history/"
+ },
+ {
+  "question": "Why are auto-created statistics not in the output?",
+  "answer": "The script filters out names starting _WA_Sys_, the statistics the optimizer creates on its own. Left in, they were 1,299 of 2,199 DDL rows in 6 days on the lab instance. A statistic someone created with CREATE STATISTICS has its own name and stays in.",
   "post_title": "DBA Scripts: Get Schema Change History",
   "url": "https://sqldba.blog/dba-scripts-get-schema-change-history/"
  },
@@ -2124,14 +2220,32 @@
   "url": "https://sqldba.blog/dba-scripts-get-temp-db-usage-and-file-balance/"
  },
  {
+  "question": "What permission does it need?",
+  "answer": "VIEW SERVER STATE, or VIEW SERVER PERFORMANCE STATE on SQL Server 2022 and later. Either one returns the same rows. A login with neither gets an error rather than an empty list: Msg 300, Level 14, State 1: VIEW SERVER PERFORMANCE STATE permission was denied on object 'server', database 'master'.",
+  "post_title": "DBA Scripts: Get Top CPU Queries",
+  "url": "https://sqldba.blog/dba-scripts-get-top-cpu-queries/"
+ },
+ {
   "question": "Why did my query disappear from the results between two runs?",
-  "answer": "Its plan was evicted from cache, most commonly from memory pressure, a recompile (a stats update or schema change invalidates the plan), or a server restart. The DMV only reflects what\u2019s currently cached, not a permanent history.",
+  "answer": "Its plan was evicted from cache, most commonly from memory pressure, a recompile (a stats update or schema change invalidates the plan), or a server restart. The DMV only reflects what\u2019s currently cached, not a permanent history. A plan that comes back starts counting from zero. In the Example Output the parameterised statement ran 5 times and reports an execution_count of 3, because its plan was compiled again part way through and the count restarted with it. On an instance short of memory the list can come back with only a handful of rows; that is the cache being emptied, not the script failing. Recent Error Log Entries confirms it: a line reading \u201cA significant part of SQL Server process memory has been paged out\u201d means the operating system took the memory the plans were living in.",
   "post_title": "DBA Scripts: Get Top CPU Queries",
   "url": "https://sqldba.blog/dba-scripts-get-top-cpu-queries/"
  },
  {
   "question": "Why do all three scripts return the same columns from a different order?",
   "answer": "They read the same underlying DMV, sys.dm_exec_query_stats, which tracks every metric for every cached plan at once. Ranking by a different column answers a different question without needing three separate data sources.",
+  "post_title": "DBA Scripts: Get Top CPU Queries",
+  "url": "https://sqldba.blog/dba-scripts-get-top-cpu-queries/"
+ },
+ {
+  "question": "Why does the same query appear on several rows?",
+  "answer": "Ad hoc SQL is cached by its exact text, so the same query with a different literal value is a different plan and a different row. In the Example Output one query sent with 8 values took rows 4 to 11, and together they used more CPU than the row at the top. sys.dm_exec_query_stats carries a query_hash column for exactly this: rows that share it are the same query, and summing them gives its real cost.",
+  "post_title": "DBA Scripts: Get Top CPU Queries",
+  "url": "https://sqldba.blog/dba-scripts-get-top-cpu-queries/"
+ },
+ {
+  "question": "Why is database_name NULL on most rows?",
+  "answer": "The script takes the database from sys.dm_exec_sql_text, which only records one for stored procedures, functions and triggers. Ad hoc and prepared statements come back NULL, and on an application that sends its own SQL that is most of the list. The plan keeps the database it was compiled in as its dbid attribute, readable through sys.dm_exec_plan_attributes with the row\u2019s plan_handle.",
   "post_title": "DBA Scripts: Get Top CPU Queries",
   "url": "https://sqldba.blog/dba-scripts-get-top-cpu-queries/"
  },
@@ -3091,7 +3205,7 @@
  },
  {
   "question": "How do I update SSMS to the latest version?",
-  "answer": "Open the Visual Studio Installer, find the SSMS entry and click Update. Since SSMS 21 there is no separate download to chase, the installer handles updates, and SSMS 22 has been shipping them every 1 to 2 weeks (22.9.0, 22.9.1, 22.9.2 and 22.10.0 all landed between 11 August and 8 September 2026). For more than one machine, the scripted install and update does the same thing silently.",
+  "answer": "Open the Visual Studio Installer, find the SSMS entry and choose Update. Since SSMS 21 there is no separate download to chase, the installer handles updates, and SSMS 22 ships them roughly every 1 to 2 weeks. SSMS has to be closed before an update applies. For more than one machine, the scripted install and update does the same thing silently.",
   "post_title": "Install and Update SQL Server Management Studio (SSMS)",
   "url": "https://sqldba.blog/install-and-update-sql-server-management-studio-ssms/"
  },
