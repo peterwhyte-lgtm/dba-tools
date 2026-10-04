@@ -8,11 +8,17 @@ Purpose     : Top queries by memory grant spills to TempDB. Spills occur when SQ
               SQL Server 2016 SP2 and 2017 CU3, so the script detects the column rather than
               testing a version number.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-query-performance-deep-dive/)
-Requires    : VIEW SERVER STATE
+Requires    : VIEW SERVER STATE (VIEW SERVER PERFORMANCE STATE is enough on SQL Server 2022 and later)
+Notes       : total_spills counts 8 KB pages. Ad-hoc and sp_executesql statements carry no dbid in
+              sys.dm_exec_sql_text, so the database comes from the plan's compile database instead;
+              filtering on the text's dbid alone dropped every ad-hoc and prepared spill.
+              The diagnosis reads averages, so a query that spills on some executions only can
+              still average over the CRITICAL line; max_spills_single_exec shows the worst run.
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 -- total_spills/max_spills arrived in SQL Server 2016 (13.x) SP2 and 2017 (14.x) CU3, NOT in
 -- 2016 RTM. A major-version test cannot gate this anyway: the whole batch is bound before any
@@ -28,7 +34,7 @@ ELSE
 BEGIN
     DECLARE @sql nvarchar(max) = N'
     SELECT TOP 30
-        DB_NAME(qt.dbid) AS database_name,
+        DB_NAME(COALESCE(qt.dbid, pa.dbid)) AS database_name,
         OBJECT_NAME(qt.objectid, qt.dbid) AS object_name,
         qs.execution_count,
         qs.total_spills AS total_spills,
@@ -49,7 +55,7 @@ BEGIN
         qs.creation_time AS plan_cached_at,
         CASE
             WHEN qs.total_spills / NULLIF(qs.execution_count, 0) > 1000
-            THEN ''CRITICAL - heavy spill every execution; query needs index, stats update, or hint''
+            THEN ''CRITICAL - over 1000 pages spilled per execution on average; query needs index, stats update, or hint''
             WHEN qs.total_ideal_grant_kb > qs.total_grant_kb * 2
             THEN ''WARN - grant consistently less than half of ideal; RESOURCE_SEMAPHORE pressure likely''
             WHEN qs.total_ideal_grant_kb > qs.total_grant_kb * 1.2
@@ -59,8 +65,11 @@ BEGIN
         LEFT(qt.text, 500) AS query_text
     FROM sys.dm_exec_query_stats AS qs
     CROSS APPLY sys.dm_exec_sql_text(qs.sql_handle) AS qt
+    OUTER APPLY (SELECT CONVERT(int, a.value) AS dbid
+                 FROM sys.dm_exec_plan_attributes(qs.plan_handle) AS a
+                 WHERE a.attribute = N''dbid'') AS pa
     WHERE qs.total_spills > 0
-      AND qt.dbid > 4
+      AND COALESCE(qt.dbid, pa.dbid) > 4
     ORDER BY qs.total_spills DESC;';
 
     EXEC sys.sp_executesql @sql;
