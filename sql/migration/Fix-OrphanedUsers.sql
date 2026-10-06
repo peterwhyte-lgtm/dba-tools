@@ -5,18 +5,39 @@ Purpose     : Generate ALTER USER statements to re-map orphaned database users t
               matching server-level logins across all user databases. Run on TARGET after
               databases are restored and logins are created.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-fix-orphaned-users/)
-Requires    : VIEW ANY DATABASE, VIEW SERVER STATE, plus access to each online database it inspects
+Requires    : VIEW ANY DEFINITION and CONNECT ANY DATABASE (or sysadmin). Stops with an error
+              without VIEW ANY DEFINITION; a database it cannot connect to is listed as
+              NOT A COMPLETE SCAN
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
 
+-- PERMISSION GUARD. Without VIEW ANY DEFINITION, metadata visibility hides rows instead of
+-- raising an error, and both failures were measured on the lab 2026-10-05:
+--   CONNECT ANY DATABASE alone: every database's users are invisible, so the script printed
+--     "No orphaned users found. All database users map to a valid server login." over 112
+--     real orphans.
+--   a user with VIEW DEFINITION in one database: sys.server_principals shows only the caller,
+--     so every mapped user in that database came out as a false "Cannot auto-fix" orphan, and
+--     every other database stayed silent.
+-- A missing CONNECT is loud (the per-database catch below), so only this one needs a guard.
+IF HAS_PERMS_BY_NAME(NULL, NULL, N'VIEW ANY DEFINITION') <> 1
+BEGIN
+    RAISERROR(N'Fix-OrphanedUsers needs VIEW ANY DEFINITION (and CONNECT ANY DATABASE or access to each database). Without it, logins and users are hidden rather than refused, and the result would be a false all-clear or false orphans.', 16, 1);
+    RETURN;
+END
+
 /*
   DESIGN: After restoring databases from a source server, SQL logins are re-created with the
   same SID (via Generate-LoginScript.sql WITH SID = ...). This means SQL-authenticated users
-  are NOT orphaned — their SID in sys.database_principals matches the new login's SID.
+  are NOT orphaned: their SID in sys.database_principals matches the new login's SID.
 
-  Windows-authenticated users are also fine because the AD SID never changes.
+  Windows-authenticated users are also fine because the AD SID never changes. They are NOT
+  scanned here: their authentication_type_desc is WINDOWS, not INSTANCE (the same filter as the
+  MS Docs orphaned-user query), and a Windows user with no login of its own can still connect
+  through a Windows group login. Recreate a missing Windows login with CREATE LOGIN ... FROM
+  WINDOWS and the user remaps itself on the AD SID, no ALTER USER needed.
 
   The orphan case that CAN occur:
     - SQL logins created without SID preservation (e.g. the old login was dropped and re-created
@@ -25,7 +46,7 @@ SET NOCOUNT ON;
 
   This script generates ALTER USER ... WITH LOGIN statements for any user in any database whose
   SID does not match any login on this instance. It assumes login name = user name (common case).
-  Review the output before executing — not every orphan can be fixed with a simple name match.
+  Review the output before executing; not every orphan can be fixed with a simple name match.
 
   This script never applies a fix. It RETURNS the ALTER USER statements as text for you to
   review and run yourself, which is why it is classed ReadOnly. There are no commented-out
@@ -54,7 +75,8 @@ CREATE TABLE #orphans (
     user_name     nvarchar(128),
     user_type     char(1),
     user_sid      varbinary(85),
-    is_read_only  bit
+    is_read_only  bit,
+    login_has_user nvarchar(128) NULL  -- a user in this database already mapped to the same-named login
 );
 
 IF OBJECT_ID('tempdb..#failed') IS NOT NULL DROP TABLE #failed;
@@ -87,17 +109,24 @@ BEGIN
     -- containing a ] would otherwise terminate the identifier early and change what this
     -- dynamic SQL means.
     SET @sql = N'
-        INSERT INTO #orphans (database_name, user_name, user_type, user_sid, is_read_only)
+        INSERT INTO #orphans (database_name, user_name, user_type, user_sid, is_read_only, login_has_user)
         SELECT
             N''' + REPLACE(@dbname, N'''', N'''''') + N''',
             dp.name,
             dp.type,
             dp.sid,
             CASE WHEN DATABASEPROPERTYEX(N''' + REPLACE(@dbname, N'''', N'''''')
-              + N''', ''Updateability'') = ''READ_ONLY'' THEN 1 ELSE 0 END
+              + N''', ''Updateability'') = ''READ_ONLY'' THEN 1 ELSE 0 END,
+            (SELECT TOP (1) d2.name
+             FROM ' + QUOTENAME(@dbname) + N'.sys.database_principals d2
+             INNER JOIN sys.server_principals sp2 ON sp2.sid = d2.sid
+             WHERE sp2.name = dp.name)
         FROM ' + QUOTENAME(@dbname) + N'.sys.database_principals dp
-        WHERE dp.type IN (''S'', ''U'', ''G'')   -- SQL, Windows user, Windows group
-          AND dp.authentication_type_desc = N''INSTANCE'' -- mapped to a server login
+        WHERE dp.type IN (''S'', ''U'', ''G'')
+          -- INSTANCE = a user created FOR a server login. In practice that is SQL users only:
+          -- Windows users and groups report WINDOWS (see DESIGN above), contained users with a
+          -- password DATABASE, and WITHOUT LOGIN users NONE, so none of those are reported.
+          AND dp.authentication_type_desc = N''INSTANCE''
           AND dp.sid IS NOT NULL
           AND dp.name NOT IN (N''dbo'', N''guest'', N''sys'', N''INFORMATION_SCHEMA'')
           AND dp.name NOT LIKE N''##%''
@@ -153,6 +182,13 @@ SELECT @ddl = @ddl
              + N'ALTER USER below can run.' + @crlf
         ELSE N'' END
     + CASE
+        -- Msg 33018 otherwise: measured 2026-10-05, a fresh user created for the new login
+        -- after the restore made the generated ALTER USER fail with "Cannot remap user to
+        -- login ..., because the login is already mapped to a user in the database."
+        WHEN o.login_has_user IS NOT NULL
+        THEN N'-- Cannot auto-fix: login ' + QUOTENAME(o.user_name)
+             + N' is already mapped to user ' + QUOTENAME(o.login_has_user)
+             + N' in this database. Keep one user, then remap or drop the other by hand.' + @crlf
         WHEN EXISTS (
             SELECT 1 FROM sys.server_principals sp
             WHERE sp.name = o.user_name AND sp.type IN ('S','U','G')

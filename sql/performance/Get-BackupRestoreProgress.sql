@@ -3,7 +3,12 @@ Script Name : Get-BackupRestoreProgress
 Category    : performance-troubleshooting
 Purpose     : Show active backup/restore progress and estimated completion for long-running operations.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-backup-restore-progress/)
-Requires    : VIEW SERVER STATE
+Requires    : VIEW SERVER STATE (VIEW SERVER PERFORMANCE STATE is enough on SQL Server 2022 and later)
+Notes       : At 100 percent and 0 sec remaining a RESTORE can still be running recovery (redo
+              and undo) under the same command name; the ERRORLOG reports that phase.
+              Without the permission the DMV shows only your own session, so a restore started
+              by someone else returns no rows, not an error. DBCC CHECKDB reports as
+              DBCC ALLOC CHECK then DBCC TABLE CHECK and is not included.
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
@@ -29,12 +34,6 @@ SELECT
     DATEADD(SECOND, er.estimated_completion_time / 1000, GETDATE()) AS estimated_completion_time
 FROM sys.dm_exec_requests er
 CROSS APPLY sys.dm_exec_sql_text(er.sql_handle) est
-WHERE er.command IN
-(
-    'RESTORE DATABASE',
-    'BACKUP DATABASE',
-    'RESTORE LOG',
-    'BACKUP LOG',
-    'DbccSpaceReclaim',
-    'DbccFilesCompact'
-);
+WHERE er.command LIKE 'BACKUP%'     -- BACKUP DATABASE, BACKUP LOG
+   OR er.command LIKE 'RESTORE%'    -- RESTORE DATABASE, RESTORE LOG; RESTORE VERIFYONLY reports as RESTORE HEADERONLY
+   OR er.command IN ('DbccSpaceReclaim', 'DbccFilesCompact');  -- DBCC SHRINKFILE and SHRINKDATABASE both report DbccFilesCompact

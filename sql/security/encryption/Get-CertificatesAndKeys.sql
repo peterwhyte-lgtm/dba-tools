@@ -1,12 +1,14 @@
 /*
 Script Name : Get-CertificatesAndKeys
 Category    : security
-Purpose     : Server-level certificates and asymmetric keys with expiry, usage detection,
-              and lifecycle risk flags. Certificates created for TDE, AG encrypted endpoints,
-              or linked server auth are commonly created and never monitored. An expired cert
-              doesn't break TDE in memory but prevents restoring the database on another server.
+Purpose     : Certificates and asymmetric keys in the current database (run it in master for
+              TDE and backup certificates) with expiry, usage detection, and lifecycle risk flags.
+              Certificates created for TDE, AG encrypted endpoints, or linked server auth are
+              commonly created and never monitored. Expiry is not enforced for TDE: an expired
+              cert still encrypts and still restores. The restore risk is a certificate or
+              private key with no backup.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-certificates-keys-and-tde-status/)
-Requires    : VIEW ANY DATABASE, VIEW ANY DEFINITION, VIEW SERVER STATE (2022+: the granular VIEW SERVER SECURITY STATE also works)
+Requires    : VIEW ANY DEFINITION, VIEW SERVER STATE (2022+: VIEW SERVER SECURITY STATE is enough); without VIEW ANY DEFINITION certificates are hidden, not errored
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
@@ -44,7 +46,7 @@ FROM (
             NULL) AS tde_databases,
         CASE
             WHEN c.expiry_date < GETDATE()
-            THEN 'CRITICAL - EXPIRED; TDE databases cannot be restored elsewhere with this cert'
+            THEN 'CRITICAL - EXPIRED; Service Broker and new encrypted backups refuse it (TDE and restores still work)'
             WHEN DATEDIFF(DAY, GETDATE(), c.expiry_date) < 30
             THEN 'CRITICAL - expires in ' + CAST(DATEDIFF(DAY, GETDATE(), c.expiry_date) AS VARCHAR) + ' days'
             WHEN DATEDIFF(DAY, GETDATE(), c.expiry_date) < 90

@@ -5,7 +5,7 @@ Purpose     : Lists SQL Agent proxies and server-level credentials with their id
               and associated subsystems. Proxies that use stored credentials to run Agent
               steps under a different account are a common privilege escalation path.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-audit-triggers-and-proxy-credentials/)
-Requires    : VIEW SERVER STATE, db_datareader on msdb (or sysadmin); the Agent roles alone cannot SELECT sysproxylogin
+Requires    : VIEW ANY DEFINITION, plus db_datareader on msdb (or sysadmin); the Agent roles alone cannot SELECT sysproxylogin
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
@@ -13,8 +13,8 @@ SET NOCOUNT ON;
 
 /*
   DESIGN: Two row sources unified via UNION ALL:
-    1. SQL Agent proxies (msdb.dbo.sysproxies) — run steps under an alternate Windows account
-    2. Server-level credentials (sys.credentials) — used by proxies, linked servers, and BACKUP
+    1. SQL Agent proxies (msdb.dbo.sysproxies), run steps under an alternate Windows account
+    2. Server-level credentials (sys.credentials), used by proxies, logins mapped to a credential, and BACKUP TO URL
   The subsystem list for each proxy is aggregated from msdb.dbo.sysproxysubsystem.
   Credential identity is the Windows account or certificate the credential maps to.
 */
@@ -33,9 +33,10 @@ SELECT
         WHERE ps.proxy_id = p.proxy_id
     ) AS allowed_subsystems,
     (
-        SELECT STRING_AGG(l.name, ', ')
+        SELECT STRING_AGG(COALESCE(l.name, r.name + N' (msdb role)'), ', ')
         FROM msdb.dbo.sysproxylogin pl
-        JOIN sys.server_principals l ON l.sid = pl.sid
+        LEFT JOIN sys.server_principals l ON l.sid = pl.sid AND pl.flags <> 2
+        LEFT JOIN msdb.sys.database_principals r ON r.sid = pl.sid AND pl.flags = 2 -- flags 2 = msdb role
         WHERE pl.proxy_id = p.proxy_id
     ) AS allowed_logins,
     p.description

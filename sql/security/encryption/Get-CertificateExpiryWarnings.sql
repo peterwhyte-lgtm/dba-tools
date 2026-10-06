@@ -3,12 +3,13 @@ Script Name : Get-CertificateExpiryWarnings
 Category    : security
 Purpose     : All user-managed certificates across server and user databases with days until expiry.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-certificates-keys-and-tde-status/)
-Requires    : VIEW ANY DATABASE, VIEW DATABASE STATE
+Requires    : VIEW ANY DEFINITION, plus CONNECT ANY DATABASE (or a user in each database) for database-level certificates; without them rows are hidden, not errored
 HealthCheck : Yes
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 IF OBJECT_ID('tempdb..#CertInfo') IS NOT NULL DROP TABLE #CertInfo;
 CREATE TABLE #CertInfo (
@@ -21,7 +22,7 @@ CREATE TABLE #CertInfo (
     days_until_expiry INT,
     expiry_status VARCHAR(10) NOT NULL,
     pvt_key_type NVARCHAR(60),
-    is_service_broker BIT,
+    is_service_broker BIT,          -- is_active_for_begin_dialog: ON by default for every certificate, so 1 does not prove Service Broker uses it
     pvt_key_last_backup DATETIME
 );
 

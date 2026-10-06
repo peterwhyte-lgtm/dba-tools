@@ -7,7 +7,7 @@ Purpose     : SQL Server Audit objects and specifications with compliance gap an
               Surfaces missing critical action groups (FAILED_LOGIN_GROUP, privilege changes)
               and database-level audit specifications across all user databases.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-audit-triggers-and-proxy-credentials/)
-Requires    : VIEW ANY DATABASE, VIEW ANY DEFINITION, CONTROL SERVER
+Requires    : VIEW ANY DEFINITION, plus CONNECT ANY DATABASE (or a user in each database) for database-level rows
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
@@ -70,7 +70,9 @@ INSERT INTO @covered_groups
 SELECT DISTINCT d.audit_action_name
 FROM sys.server_audit_specification_details AS d
 JOIN sys.server_audit_specifications AS s ON s.server_specification_id = d.server_specification_id
-WHERE s.is_state_enabled = 1;
+JOIN sys.server_audits AS a ON a.audit_guid = s.audit_guid
+WHERE s.is_state_enabled = 1
+  AND a.is_state_enabled = 1; -- a stopped audit records nothing, so its specification covers nothing
 
 INSERT INTO #audit_info (result_type, action_group, status)
 SELECT

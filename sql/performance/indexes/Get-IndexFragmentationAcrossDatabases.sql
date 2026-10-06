@@ -3,7 +3,10 @@ Script Name : Get-IndexFragmentationAcrossDatabases
 Category    : performance-troubleshooting
 Purpose     : Check index fragmentation details across all user databases for maintenance planning.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-index-fragmentation-across-databases/)
-Requires    : VIEW DATABASE STATE on each target database
+Requires    : access to EVERY online user database, plus VIEW DATABASE STATE and VIEW DEFINITION
+              in each (server-wide: CONNECT ANY DATABASE + VIEW SERVER STATE + VIEW ANY DEFINITION).
+              One inaccessible database fails the whole run (Msg 916, no rows). Without VIEW
+              DEFINITION it returns empty result sets and no error.
 */
 -- SAFE:ReadOnly
 -- IMPACT:Medium

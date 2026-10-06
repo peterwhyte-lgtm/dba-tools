@@ -2,11 +2,11 @@
 Script Name : Get-QueryStoreRegressions
 Category    : performance
 Purpose     : Queries that regressed in the last 24 hours vs their 7-day average CPU/duration.
-              Uses Query Store time-bucketed runtime stats to detect "what changed today"
-              — queries running >2x slower or using >2x more CPU than their recent baseline.
+              Uses Query Store time-bucketed runtime stats to detect "what changed today":
+              queries running >2x slower or using >2x more CPU than their recent baseline.
               Run in the context of the target database (-Database <dbname>).
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-query-store-regressions-and-forced-plans/)
-Requires    : VIEW DATABASE STATE
+Requires    : VIEW DATABASE PERFORMANCE STATE (SQL Server 2022+) or VIEW DATABASE STATE
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
@@ -71,8 +71,8 @@ BEGIN
             CAST(bw.avg_duration_ms AS DECIMAL(10,2)) AS baseline_avg_duration_ms,
             CAST(bw.avg_logical_reads AS DECIMAL(10,0)) AS baseline_avg_logical_reads,
             bw.exec_count AS baseline_exec_count,
-            CAST(rw.avg_cpu_ms / NULLIF(bw.avg_cpu_ms, 0) AS DECIMAL(6,2)) AS cpu_regression_factor,
-            CAST(rw.avg_duration_ms / NULLIF(bw.avg_duration_ms, 0) AS DECIMAL(6,2)) AS duration_regression_factor,
+            CAST(rw.avg_cpu_ms / NULLIF(bw.avg_cpu_ms, 0) AS DECIMAL(12,2)) AS cpu_regression_factor,
+            CAST(rw.avg_duration_ms / NULLIF(bw.avg_duration_ms, 0) AS DECIMAL(12,2)) AS duration_regression_factor,
             (SELECT COUNT(DISTINCT plan_id) FROM sys.query_store_plan
              WHERE query_id = rw.query_id) AS total_plan_count,
             CASE

@@ -4,7 +4,7 @@ Category    : high-availability
 Purpose     : Lists all publications and subscriptions from the distribution database, including
               publication type, subscriber server and database, subscription type, and status.
               Finds the distribution database automatically and returns a status row when
-              replication is not configured, so it is safe to run from master on any instance.
+              this instance is not a Distributor, so it is safe to run from master on any instance.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-replication-status/)
 Requires    : db_owner or replmonitor role on the distribution database
 HealthCheck : Yes
@@ -15,7 +15,7 @@ SET NOCOUNT ON;
 
 IF NOT EXISTS (SELECT 1 FROM sys.databases WHERE is_distributor = 1)
 BEGIN
-    SELECT 'Replication is not configured on this instance (no distribution database).' AS status;
+    SELECT 'This instance is not a replication Distributor (no distribution database). A Publisher with a remote Distributor also returns this row: run the script on the Distributor.' AS status;
 END
 ELSE
 BEGIN
@@ -28,7 +28,7 @@ BEGIN
     -- LEFT JOIN on purpose -- if a subscriber_id does not match a server_id the row still
     -- reports the publication and subscriber database, with a NULL server name.
     -- The distribution database is usually named "distribution" but can be renamed;
-    -- resolve it by flag. Multiple distribution databases are possible but rare —
+    -- resolve it by flag. Multiple distribution databases are possible but rare,
     -- this reports the first by name.
     DECLARE @distdb sysname =
         (SELECT TOP (1) name FROM sys.databases WHERE is_distributor = 1 ORDER BY name);

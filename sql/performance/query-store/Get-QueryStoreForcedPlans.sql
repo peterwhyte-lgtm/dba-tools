@@ -3,11 +3,11 @@ Script Name : Get-QueryStoreForcedPlans
 Category    : performance
 Purpose     : Forced plans in Query Store with failure counts, plan age, forcing reason,
               and whether the forced plan is still the cheapest available option.
-              A force_failure_count > 0 means QS is silently reverting to natural plans —
+              A force_failure_count > 0 means QS is silently reverting to natural plans,
               queries you think are protected are not.
               Run in the context of the target database (-Database <dbname>).
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-query-store-regressions-and-forced-plans/)
-Requires    : VIEW DATABASE STATE
+Requires    : VIEW DATABASE PERFORMANCE STATE (SQL Server 2022+) or VIEW DATABASE STATE
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
@@ -36,7 +36,7 @@ BEGIN
             AVG(rs.avg_cpu_time) / 1000.0 AS forced_avg_cpu_ms,
             SUM(rs.count_executions) AS forced_exec_count
         FROM sys.query_store_plan AS p
-        JOIN sys.query_store_runtime_stats AS rs ON rs.plan_id = p.plan_id
+        LEFT JOIN sys.query_store_runtime_stats AS rs ON rs.plan_id = p.plan_id
         WHERE p.is_forced_plan = 1
         GROUP BY
             p.query_id, p.plan_id, p.force_failure_count,
@@ -69,6 +69,8 @@ BEGIN
             CAST(f.forced_avg_cpu_ms AS DECIMAL(10,2)) AS forced_avg_cpu_ms,
             CAST(bp.best_avg_cpu_ms AS DECIMAL(10,2)) AS best_available_avg_cpu_ms,
             CASE
+                WHEN f.forced_avg_cpu_ms IS NULL
+                THEN 'no runtime stats kept for the forced plan'
                 WHEN bp.best_avg_cpu_ms < f.forced_avg_cpu_ms * 0.8
                 THEN CAST(CAST(100.0 * (f.forced_avg_cpu_ms - bp.best_avg_cpu_ms)
                          / NULLIF(bp.best_avg_cpu_ms, 0) AS INT) AS VARCHAR) +
@@ -81,7 +83,7 @@ BEGIN
                      ' failures, reason: ' + f.last_force_failure_reason_desc +
                      '); query is running without the forced plan'
                 WHEN f.plan_age_days > 180
-                THEN 'WARN - plan forced > 6 months ago; re-evaluate whether force is still needed'
+                THEN 'WARN - plan first compiled > 6 months ago; re-evaluate whether force is still needed'
                 WHEN bp.best_avg_cpu_ms < f.forced_avg_cpu_ms * 0.8
                 THEN 'WARN - cheaper plan now exists in QS; forced plan may be holding back performance'
                 ELSE 'OK'
@@ -89,7 +91,7 @@ BEGIN
         FROM forced AS f
         JOIN sys.query_store_query AS q ON q.query_id = f.query_id
         JOIN sys.query_store_query_text AS qt ON qt.query_text_id = q.query_text_id
-        JOIN best_plan AS bp ON bp.query_id = f.query_id
+        LEFT JOIN best_plan AS bp ON bp.query_id = f.query_id
     )
     SELECT *
     FROM results

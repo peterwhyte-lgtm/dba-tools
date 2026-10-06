@@ -3,9 +3,10 @@ Script Name : Get-PostMigrationValidation
 Category    : migration
 Purpose     : Run on both SOURCE and TARGET and compare the CSV outputs to confirm the
               migration is complete and consistent. Surfaces database count mismatches,
-              databases not ONLINE, orphaned users, and login count deltas.
+              databases not ONLINE, and login count deltas.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-migration-login-audit-and-post-migration-validation/)
-Requires    : VIEW ANY DEFINITION, VIEW ANY DATABASE, VIEW SERVER STATE, db_datareader on msdb
+Requires    : VIEW ANY DEFINITION and db_datareader on msdb (without VIEW ANY DEFINITION the login, sysadmin
+              and tempdb counts come back low with no error)
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
@@ -18,20 +19,19 @@ SET QUOTED_IDENTIFIER ON;
   The 'value' column should match between source and target for each check_name.
 
   Checks performed:
-    - user_database_count — total number of user databases
-    - databases_not_online — any database not in ONLINE state
-    - databases_missing_backup — databases with no recorded backup (should be 0 on target if just restored)
-    - total_login_count — server principal count (SQL + Windows)
-    - sql_login_count — SQL-authenticated logins
-    - windows_login_count — Windows logins and groups
-    - sysadmin_count — members of sysadmin role
-    - linked_server_count — linked server definitions
-    - agent_job_count — SQL Agent jobs
-    - instance_version — SQL Server version string (major.minor.build)
-    - instance_edition — SQL Server edition
-    - max_server_memory_mb — sp_configure max server memory
-    - maxdop — sp_configure max degree of parallelism
-    - tempdb_data_file_count — TempDB data files (should match after setup)
+    - user_database_count - total number of user databases
+    - databases_not_online - any database not in ONLINE state
+    - total_login_count - server principal count (SQL + Windows)
+    - sql_login_count - SQL-authenticated logins
+    - windows_login_count - Windows logins and groups
+    - sysadmin_count - members of sysadmin role
+    - linked_server_count - linked server definitions
+    - agent_job_count - SQL Agent jobs
+    - instance_version - SQL Server version string (major.minor.build)
+    - instance_edition - SQL Server edition
+    - max_server_memory_mb - sp_configure max server memory
+    - maxdop - sp_configure max degree of parallelism
+    - tempdb_data_file_count - TempDB data files (should match after setup)
 */
 
 SELECT

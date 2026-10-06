@@ -5,11 +5,12 @@ Purpose     : Transparent Data Encryption (TDE) status across all databases. Inc
               encryption state, key algorithm, encryptor type, and tempdb encryption
               side-effect awareness.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-certificates-keys-and-tde-status/)
-Requires    : VIEW ANY DATABASE, VIEW SERVER STATE
+Requires    : VIEW SERVER STATE (2022+: VIEW SERVER SECURITY STATE is enough), plus VIEW ANY DEFINITION for certificate_name and certificate_expiry (NULL without it)
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 SELECT
     d.name AS database_name,
@@ -27,13 +28,21 @@ SELECT
     c.expiry_date AS certificate_expiry,
     CASE
         WHEN d.database_id = 2 AND d.is_encrypted = 1
+             AND EXISTS (SELECT 1 FROM sys.dm_database_encryption_keys AS u
+                         WHERE u.database_id <> 2 AND u.encryption_state <> 1)
             THEN 'INFO - TempDB is encrypted because at least one user database uses TDE'
+        WHEN d.database_id = 2 AND d.is_encrypted = 1
+            THEN 'INFO - TempDB is still encrypted although no user database uses TDE now; it was turned on earlier'
         WHEN ek.encryption_state = 3 AND d.is_encrypted = 1
             THEN 'OK - encrypted'
+        WHEN ek.encryption_scan_state = 2
+            THEN 'WARN - encryption scan suspended; nothing progresses until ALTER DATABASE ... SET ENCRYPTION RESUME'
         WHEN ek.encryption_state IN (2, 4)
             THEN 'INFO - encryption/key-change in progress (' + CAST(ek.percent_complete AS VARCHAR) + '% complete)'
         WHEN ek.encryption_state = 5
             THEN 'INFO - decryption in progress'
+        WHEN ek.encryption_state = 6
+            THEN 'INFO - protection change in progress (DEK being re-encrypted by a new certificate or key)'
         WHEN d.is_encrypted = 0 AND d.database_id NOT IN (1,2,3,4)
             THEN 'INFO - not encrypted'
         ELSE 'OK'

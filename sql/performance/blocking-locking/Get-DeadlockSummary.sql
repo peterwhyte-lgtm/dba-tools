@@ -3,9 +3,11 @@ Script Name : Get-DeadlockSummary
 Category    : performance-troubleshooting
 Purpose     : Show recent deadlock events from the system_health XEvent ring buffer.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-deadlock-summary/)
-Requires    : VIEW SERVER STATE
-Notes       : Ring buffer holds recent events only (typically last 30–60 min). For full
-              history, query the system_health .xel files directly in SSMS.
+Requires    : VIEW SERVER PERFORMANCE STATE (SQL Server 2022+) or VIEW SERVER STATE
+Notes       : Reads the ring_buffer target only (4 MB / 5,000 events by default), and the
+              DMV can return a truncated slice of it, so recent deadlocks may be missing.
+              Event times are UTC. For history, read the system_health .xel files with
+              sys.fn_xe_file_target_read_file.
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low

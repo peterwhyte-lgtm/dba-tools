@@ -24,7 +24,7 @@ BEGIN
         NULL AS read_only_routing_url,
         NULL AS connected_state_desc,
         NULL AS synchronization_health_desc,
-        NULL AS redo_queue_kb,
+        NULL AS total_redo_queue_kb,
         NULL AS routing_configured;
     RETURN;
 END
@@ -41,13 +41,15 @@ SELECT
     ars.synchronization_health_desc,
     drs_agg.total_redo_queue_kb,
     CASE
-        WHEN ar.secondary_role_allow_connections_desc IN ('READ_ONLY', 'ALL')
-             AND ar.read_only_routing_url IS NOT NULL
-            THEN 'Yes - connections and routing configured'
-        WHEN ar.secondary_role_allow_connections_desc IN ('READ_ONLY', 'ALL')
-             AND ar.read_only_routing_url IS NULL
+        WHEN ar.secondary_role_allow_connections_desc NOT IN ('READ_ONLY', 'ALL')
+            THEN 'No - secondary not configured for reads'
+        WHEN ar.read_only_routing_url IS NULL
             THEN 'Partial - readable but no routing URL set'
-        ELSE 'No - secondary not configured for reads'
+        -- Routing also needs this replica in the read-only routing list of the primary
+        WHEN NOT EXISTS (SELECT 1 FROM sys.availability_read_only_routing_lists AS rl
+                         WHERE rl.read_only_replica_id = ar.replica_id)
+            THEN 'Partial - routing URL set but no routing list sends reads here'
+        ELSE 'Yes - readable, routing URL set and in a routing list'
     END AS routing_configured
 FROM sys.availability_groups ag
 JOIN sys.availability_replicas ar ON ar.group_id = ag.group_id

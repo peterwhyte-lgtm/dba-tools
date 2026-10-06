@@ -3,7 +3,7 @@ Script Name : Get-DdlTriggers
 Category    : security
 Purpose     : Server-level DDL triggers. These fire on schema changes (CREATE/ALTER/DROP)
               and are often unknown to incoming DBAs. Can block DDL, audit changes, or
-              enforce naming conventions — a hidden dependency on inherited servers.
+              enforce naming conventions, a hidden dependency on inherited servers.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-audit-triggers-and-proxy-credentials/)
 Requires    : VIEW ANY DEFINITION
 */

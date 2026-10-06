@@ -1,14 +1,31 @@
 /*
 Script Name : Get-DatabaseMailAndXpCmdShell
 Category    : security
-Purpose     : Security surface area audit — xp_cmdshell, CLR, Database Mail, force encryption, and active NTLM connections.
+Purpose     : Security surface area audit: xp_cmdshell, CLR, Database Mail, force encryption, and active NTLM connections.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-database-mail-and-xp-cmd-shell/)
-Requires    : VIEW SERVER STATE, sysadmin (for xp_cmdshell value_in_use and registry access)
+Requires    : VIEW SERVER STATE (VIEW SERVER PERFORMANCE STATE on SQL Server 2022 and later);
+              without it the script fails with a permission error and returns
+              no rows. sysadmin is not needed.
 HealthCheck : Yes
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+
+-- ForceEncryption sits on the SuperSocketNetLib key itself, which sys.dm_server_registry
+-- does not return (only its Tcp, Np, Sm and Via subkeys), so read it directly.
+-- NULL when the registry cannot be read; reported as 'unknown', never as 0.
+DECLARE @force_encryption INT;
+BEGIN TRY
+    EXEC master.dbo.xp_instance_regread
+        N'HKEY_LOCAL_MACHINE',
+        N'Software\Microsoft\MSSQLServer\MSSQLServer\SuperSocketNetLib',
+        N'ForceEncryption',
+        @force_encryption OUTPUT;
+END TRY
+BEGIN CATCH
+    SET @force_encryption = NULL;
+END CATCH;
 
 SELECT
     name,
@@ -29,13 +46,7 @@ UNION ALL
 SELECT
     'force encryption'                                                              AS name,
     '0'                                                                             AS configured_value,
-    ISNULL(
-        (SELECT TOP 1 CAST(value_data AS VARCHAR(20))
-         FROM   sys.dm_server_registry
-         WHERE  registry_key LIKE N'%SuperSocketNetLib%'
-         AND    value_name   = N'ForceEncryption'),
-        '0'
-    )                                                                               AS running_value,
+    ISNULL(CAST(@force_encryption AS VARCHAR(20)), 'unknown')                      AS running_value,
     'ForceEncryption - 1 = all connections must encrypt; 0 = unencrypted allowed'  AS description
 
 UNION ALL

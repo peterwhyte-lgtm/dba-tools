@@ -9,10 +9,10 @@ Purpose     : Generates SQL Agent DDL for routine housekeeping jobs:
                                       and prevent it growing unbounded (weekly)
               Edit the parameters section, review the output, then run on the target instance.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-generate-database-integrity-and-housekeeping-jobs/)
-Requires    : VIEW ANY DATABASE
+Requires    : any login can generate (it reads no catalog view); run the output as sysadmin
 Notes       : DBCC CHECKDB is resource-intensive. Schedule on a quiet period.
               On a large estate, consider reducing to monthly or running per-filegroup.
-              History Cleanup deletes msdb rows permanently — retention periods are minimums.
+              History Cleanup deletes msdb rows permanently; retention periods are minimums.
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
@@ -47,7 +47,7 @@ OPEN c;
 FETCH NEXT FROM c INTO @db;
 WHILE @@FETCH_STATUS = 0
 BEGIN
-    SET @sql = N|DBCC CHECKDB ([| + @db + N|]) WITH NO_INFOMSGS, ALL_ERRORMSGS;|;
+    SET @sql = N|DBCC CHECKDB (| + QUOTENAME(@db) + N|) WITH NO_INFOMSGS, ALL_ERRORMSGS;|;
     EXEC sp_executesql @sql;
     FETCH NEXT FROM c INTO @db;
 END
@@ -57,7 +57,7 @@ DEALLOCATE c;'
 
 -- ── Step command: history cleanup ─────────────────────────────────────────────
 -- EXEC statement parameters must be constants or variables, not function-call
--- expressions — DATEADD(...) inline as a named parameter value fails with
+-- expressions; DATEADD(...) inline as a named parameter value fails with
 -- "Incorrect syntax near 'DAY'". Assign to a local variable first.
 DECLARE @cleanCmd nvarchar(max) = REPLACE(
 N'SET NOCOUNT ON;
@@ -210,7 +210,7 @@ SET @ddl +=
     N'-- Job: DBA - Cycle Error Log' + @crlf +
     N'-- Schedule: weekly, Monday at ' + CAST(@CycleLogHour AS nvarchar(2)) + N':00' + @crlf +
     N'-- Rotates the SQL Server error log; keeps last 6 archived logs by default.' + @crlf +
-    N'-- To increase archived log count: HKLM\SOFTWARE\Microsoft\MSSQLServer\MSSQLServer\NumErrorLogs' + @crlf +
+    N'-- To keep more archived logs: SSMS, Management, SQL Server Logs, Configure.' + @crlf +
     N'-- ==================================================================' + @crlf +
     N'IF EXISTS (SELECT 1 FROM msdb.dbo.sysjobs WHERE name = N' + @q + N'DBA - Cycle Error Log' + @q + N')' + @crlf +
     N'    EXEC msdb.dbo.sp_delete_job' + @crlf +

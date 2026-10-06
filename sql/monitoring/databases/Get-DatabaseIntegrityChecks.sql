@@ -3,7 +3,11 @@ Script Name : Get-DatabaseIntegrityChecks
 Category    : maintenance-and-reliability
 Purpose     : Pre-check database readiness and configuration for integrity validation runs.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-suspect-pages-and-integrity-checks/)
-Requires    : VIEW ANY DATABASE, db_datareader on msdb
+Requires    : VIEW ANY DATABASE (granted to public by default); msdb grants SELECT
+              on dbo.backupset to public
+Notes       : Backup history is matched by database name: a dropped and recreated
+              database shows the old database's backups, and a restored copy under
+              a new name shows none.
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
