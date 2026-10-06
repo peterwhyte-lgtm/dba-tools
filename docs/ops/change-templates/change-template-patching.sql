@@ -38,7 +38,7 @@ RISK ASSESSMENT
 Risk level        : [ ] Low  [ ] Medium  [ ] High
 Expected downtime : ___ minutes
 Affected services :
-Rollback plan     : SQL Server patch rollback requires uninstall — capture pre-patch version to confirm rollback path with Microsoft
+Rollback plan     : SQL Server patch rollback requires uninstall, capture pre-patch version to confirm rollback path with Microsoft
 
 PRE-PATCH CHECKLIST
 -------------------
@@ -47,7 +47,7 @@ PRE-PATCH CHECKLIST
 [ ] Patch file checksum verified
 [ ] Change approved by change board
 [ ] Maintenance notification sent to application teams
-[ ] SQL Server error log reviewed — no active errors
+[ ] SQL Server error log reviewed, no active errors
 
 APPROVALS
 ---------
@@ -55,10 +55,15 @@ Requested by      :                    Date:
 Approved by       :                    Date:
 ================================================================================
 */
+-- SAFE:ReadOnly
+-- IMPACT:Low
+
+SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 -- ============================================================
 -- PRE-PATCH CAPTURE
--- Run BEFORE applying the patch — save output for comparison
+-- Run BEFORE applying the patch, save output for comparison
 -- ============================================================
 
 -- 1. Current version and patch level
@@ -71,14 +76,14 @@ SELECT
     SERVERPROPERTY('Edition')               AS edition,
     GETDATE()                               AS captured_at;
 
--- 2. Active sessions — confirm it is safe to patch
+-- 2. Active sessions, confirm it is safe to patch
 SELECT
     COUNT(*)                        AS active_sessions,
     SUM(CASE WHEN status = 'running' THEN 1 ELSE 0 END) AS running_requests
 FROM sys.dm_exec_sessions
 WHERE is_user_process = 1;
 
--- 3. Any long-running queries (> 5 minutes) — should be none
+-- 3. Any long-running queries (> 5 minutes), should be none
 SELECT
     session_id,
     status,
@@ -87,11 +92,11 @@ SELECT
     wait_type,
     DB_NAME(database_id)                        AS database_name
 FROM sys.dm_exec_requests
-WHERE session_id > 50
+WHERE session_id IN (SELECT session_id FROM sys.dm_exec_sessions WHERE is_user_process = 1)
   AND DATEDIFF(MINUTE, start_time, GETDATE()) > 5
 ORDER BY elapsed_minutes DESC;
 
--- 4. SQL Agent jobs — confirm none running
+-- 4. SQL Agent jobs, confirm none running
 SELECT
     j.name                          AS job_name,
     ja.start_execution_date,
@@ -102,7 +107,7 @@ WHERE ja.start_execution_date IS NOT NULL
   AND ja.stop_execution_date IS NULL
   AND ja.session_id = (SELECT MAX(session_id) FROM msdb.dbo.sysjobactivity);
 
--- 5. Last backup times — confirm recent backups exist
+-- 5. Last backup times, confirm recent backups exist
 SELECT
     d.name                                                  AS database_name,
     MAX(CASE WHEN b.type = 'D' THEN b.backup_finish_date END) AS last_full,

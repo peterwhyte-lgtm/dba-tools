@@ -17,8 +17,11 @@ Validation:
 Rollback:
   - Remove the mirroring session only after confirming the business and operational approval path.
 */
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 DECLARE @DatabaseName sysname = N'YourDatabase';
 DECLARE @WitnessServer sysname = N'WitnessServer\Instance';

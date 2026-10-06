@@ -17,9 +17,11 @@ Validation:
 Rollback:
   - No rollback is required, but the change record should capture the result and next action.
 */
+-- SAFE:ReadOnly
+-- IMPACT:High
 
 SET NOCOUNT ON;
-GO
+SET QUOTED_IDENTIFIER ON;
 
 DECLARE @DatabaseName sysname = N'YourDatabase';
 
@@ -31,7 +33,6 @@ DBCC CHECKDB WITH NO_INFOMSGS, ALL_ERRORMSGS;
 
 PRINT @sql;
 EXEC sys.sp_executesql @sql;
-GO
 
 SELECT name, state_desc, recovery_model_desc
 FROM sys.databases

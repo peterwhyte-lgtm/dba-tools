@@ -17,9 +17,11 @@ Validation:
 Rollback:
   - Disable CDC with sys.sp_cdc_disable_db and sys.sp_cdc_disable_table if the change must be reversed.
 */
+-- SAFE:CreatesObjects
+-- IMPACT:Medium
 
 SET NOCOUNT ON;
-GO
+SET QUOTED_IDENTIFIER ON;
 
 DECLARE @TargetDatabase sysname = N'YourDatabase';
 DECLARE @TargetSchema   sysname = N'dbo';
@@ -57,9 +59,9 @@ END;
 ';
 PRINT @sql;
 EXEC sys.sp_executesql @sql;
-GO
 
--- Validation query to confirm CDC is enabled for the table.
+-- Validation query to confirm CDC is enabled for the table (runs in the target database).
+SET @sql = N'USE ' + QUOTENAME(@TargetDatabase) + N';
 SELECT
     DB_NAME() AS database_name,
     s.name AS schema_name,
@@ -68,4 +70,8 @@ SELECT
 FROM sys.tables AS t
 INNER JOIN sys.schemas AS s ON t.schema_id = s.schema_id
 WHERE s.name = @TargetSchema
-  AND t.name = @TargetTable;
+  AND t.name = @TargetTable;';
+EXEC sys.sp_executesql @sql,
+    N'@TargetSchema sysname, @TargetTable sysname',
+    @TargetSchema = @TargetSchema,
+    @TargetTable  = @TargetTable;

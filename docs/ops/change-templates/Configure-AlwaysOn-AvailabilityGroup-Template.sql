@@ -17,8 +17,11 @@ Validation:
 Rollback:
   - Revert only after confirming a documented failback and operational approval path.
 */
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 DECLARE @AGName sysname = N'YourAGName';
 DECLARE @PrimaryReplica sysname = N'PrimaryServer\Instance';
@@ -34,14 +37,14 @@ SELECT
     ag.name AS ag_name,
     ag.failure_condition_level,
     ag.health_check_timeout,
-    ag.dbs_to_include,
-    ag.dbs_to_exclude
+    ag.automated_backup_preference_desc,
+    ag.db_failover
 FROM sys.availability_groups AS ag
 WHERE ag.name = @AGName;
 
 SELECT
     ar.replica_id,
-    ar.name,
+    ar.replica_server_name,
     ar.endpoint_url,
     ar.availability_mode_desc,
     ar.failover_mode_desc,

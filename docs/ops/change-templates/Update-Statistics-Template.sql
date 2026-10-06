@@ -17,21 +17,25 @@ Validation:
 Rollback:
   - No rollback is required for statistics updates; the engine will regenerate statistics as needed.
 */
+-- SAFE:WritesData
+-- IMPACT:Medium
 
 SET NOCOUNT ON;
-GO
+SET QUOTED_IDENTIFIER ON;
 
 DECLARE @TargetDatabase sysname = N'YourDatabase';
 DECLARE @TargetSchema   sysname = N'dbo';
 DECLARE @TargetTable    sysname = N'YourTable';
 DECLARE @SamplePercent  int     = 25;      -- 0 = full scan, 100 = full scan, 1-99 = sample percent
-DECLARE @ResampleAll    bit     = 1;       -- 1 = update all statistics on the table, 0 = only target stats
 
 DECLARE @sql nvarchar(max);
 
 SET @sql = N'USE ' + QUOTENAME(@TargetDatabase) + N';
 '
-         + N'UPDATE STATISTICS ' + QUOTENAME(@TargetSchema) + N'.' + QUOTENAME(@TargetTable) + N' WITH SAMPLE ' + CAST(@SamplePercent AS nvarchar(10)) + N' PERCENT, RESAMPLE = ' + CASE WHEN @ResampleAll = 1 THEN N'ON' ELSE N'OFF' END + N';';
+         + N'UPDATE STATISTICS ' + QUOTENAME(@TargetSchema) + N'.' + QUOTENAME(@TargetTable) + N' WITH '
+         + CASE WHEN @SamplePercent IN (0, 100) THEN N'FULLSCAN'
+                ELSE N'SAMPLE ' + CAST(@SamplePercent AS nvarchar(10)) + N' PERCENT' END
+         + N';';
 
 PRINT @sql;
 EXEC sys.sp_executesql @sql;

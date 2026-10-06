@@ -17,23 +17,23 @@ Validation:
 Rollback:
   - Stop after the NORECOVERY step if the restore needs to be rechecked or re-run.
 */
+-- SAFE:WritesData
+-- IMPACT:High
 
 SET NOCOUNT ON;
-GO
+SET QUOTED_IDENTIFIER ON;
 
 DECLARE @DatabaseName sysname = N'YourDatabase';
 DECLARE @BackupPath nvarchar(4000) = N'D:\SQLBackups\YourDatabase_FULL.bak';
 DECLARE @LogBackupPath nvarchar(4000) = N'D:\SQLBackups\YourDatabase_LOG.trn';
 
-RESTORE DATABASE [YourDatabase]
+RESTORE DATABASE @DatabaseName
 FROM DISK = @BackupPath
 WITH NORECOVERY, REPLACE;
-GO
 
-RESTORE LOG [YourDatabase]
+RESTORE LOG @DatabaseName
 FROM DISK = @LogBackupPath
 WITH NORECOVERY;
-GO
 
 SELECT name, recovery_model_desc, state_desc
 FROM sys.databases

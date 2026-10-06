@@ -71,6 +71,11 @@ Requested by      :                    Date:
 Approved by       :                    Date:
 ================================================================================
 */
+-- SAFE:WritesData
+-- IMPACT:Low
+
+SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 -- ============================================================
 -- PRE-INSTALLATION CHECKS
@@ -154,16 +159,18 @@ FROM sys.dm_server_services
 WHERE servicename LIKE '%Agent%';
 
 -- 6. Security posture
+-- is_policy_checked and is_expiration_checked live on sys.sql_logins (NULL for Windows logins and groups).
 SELECT
-    name,
-    type_desc,
-    is_disabled,
-    is_policy_checked,
-    is_expiration_checked
-FROM sys.server_principals
-WHERE type IN ('S','U','G')
-  AND name NOT LIKE '##%'
-ORDER BY name;
+    sp.name,
+    sp.type_desc,
+    sp.is_disabled,
+    sl.is_policy_checked,
+    sl.is_expiration_checked
+FROM sys.server_principals AS sp
+LEFT JOIN sys.sql_logins AS sl ON sl.principal_id = sp.principal_id
+WHERE sp.type IN ('S','U','G')
+  AND sp.name NOT LIKE '##%'
+ORDER BY sp.name;
 
 -- ============================================================
 -- SIGN-OFF

@@ -17,8 +17,11 @@ Validation:
 Rollback:
   - If the upgrade cannot proceed, stop and document the readiness findings for the change owner.
 */
+-- SAFE:ReadOnly
+-- IMPACT:Low
 
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 SELECT
     @@SERVERNAME AS server_name,
@@ -60,7 +63,7 @@ WHERE DB_NAME(database_id) NOT IN ('master', 'model', 'msdb', 'tempdb')
 ORDER BY database_name, type_desc;
 
 SELECT
-    database_name = DB_NAME(database_id),
+    database_name,
     backup_start_date,
     backup_finish_date,
     recovery_model,
