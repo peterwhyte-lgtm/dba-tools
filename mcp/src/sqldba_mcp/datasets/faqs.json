@@ -871,19 +871,31 @@
  },
  {
   "question": "Can I use this to check restore progress from a different session or job?",
-  "answer": "Yes. It queries server-wide active requests, not just your own session, so it shows any qualifying backup or restore operation running on the instance, regardless of who or what started it.",
+  "answer": "Yes, if you have VIEW SERVER STATE, or VIEW SERVER PERFORMANCE STATE on SQL Server 2022 and later. Without it the DMV shows only your own session, so a restore someone else started returns no rows and no error, which looks exactly like nothing running.",
   "post_title": "DBA Scripts: Get Backup Restore Progress",
   "url": "https://sqldba.blog/dba-scripts-get-backup-restore-progress/"
  },
  {
   "question": "Is SQL Server's percent_complete accurate?",
-  "answer": "It's SQL Server's own internal estimate, generally reliable for a steady-state operation. It can shift if the operation's speed changes partway through, so treat the estimated completion time as a working projection, not a guarantee.",
+  "answer": "It's SQL Server's own figure for the copy phase, generally reliable for a steady-state operation. It can shift if the operation's speed changes partway through, and the time remaining is built from a column MS Docs documents as internal only, so treat the estimated completion time as a working projection, not a guarantee.",
+  "post_title": "DBA Scripts: Get Backup Restore Progress",
+  "url": "https://sqldba.blog/dba-scripts-get-backup-restore-progress/"
+ },
+ {
+  "question": "The restore shows 100 percent and 0 sec remaining but is still running. Is it stuck?",
+  "answer": "Usually not. A restore copies the data first, then runs recovery under the same row, and this script shows 100 and 0 sec for the whole of recovery. A backup taken with a long transaction open makes that phase long, because the restore has to roll it back. The ERRORLOG has the real progress, in lines like Recovery of database 'Lab1004_brp_M1' (23) is 55% complete (approximately 49 seconds remain). Phase 2 of 3. Read them with EXEC sp_readerrorlog 0, 1, N'Recovery of database'; and the restore is done at Restore is complete on database.",
   "post_title": "DBA Scripts: Get Backup Restore Progress",
   "url": "https://sqldba.blog/dba-scripts-get-backup-restore-progress/"
  },
  {
   "question": "Why does this script sometimes return no rows?",
   "answer": "Because nothing matching the tracked commands is currently running. That's the normal, expected state most of the time. This script only returns rows while a backup, restore, or DBCC space-reclaim operation is actively in progress.",
+  "post_title": "DBA Scripts: Get Backup Restore Progress",
+  "url": "https://sqldba.blog/dba-scripts-get-backup-restore-progress/"
+ },
+ {
+  "question": "Why doesn't DBCC CHECKDB or RESTORE VERIFYONLY show up?",
+  "answer": "They report under other command names: DBCC CHECKDB as DBCC ALLOC CHECK then DBCC TABLE CHECK, and RESTORE VERIFYONLY as RESTORE HEADERONLY. Both fill in percent_complete, so add the name to the WHERE clause to watch one.",
   "post_title": "DBA Scripts: Get Backup Restore Progress",
   "url": "https://sqldba.blog/dba-scripts-get-backup-restore-progress/"
  },
@@ -2514,14 +2526,20 @@
   "url": "https://sqldba.blog/dba-scripts-install-and-configure-sql-server/"
  },
  {
+  "question": "Can I install SSMS 22 with winget?",
+  "answer": "Yes, with its own package id: winget install Microsoft.SQLServerManagementStudio.22, the form MS Docs documents. It installs the core workload and prompts for elevation. The plain id Microsoft.SQLServerManagementStudio is SSMS 20, and that is the one this script's -Method winget uses.",
+  "post_title": "DBA Scripts: Install and Update SSMS via PowerShell",
+  "url": "https://sqldba.blog/dba-scripts-install-and-update-ssms-via-powershell/"
+ },
+ {
   "question": "Does updating SSMS affect SQL Server itself?",
-  "answer": "No. SSMS is client tooling; updating it touches nothing server-side, no services restart, and no maintenance window is needed. Update it as casually as a browser.",
+  "answer": "No. SSMS is client tooling; updating it touches nothing server-side, no services restart, and no maintenance window is needed. What it does need on the machine itself is SSMS closed and admin rights, and the installer can still ask for a reboot of that machine, which the script reports as exit code 3010.",
   "post_title": "DBA Scripts: Install and Update SSMS via PowerShell",
   "url": "https://sqldba.blog/dba-scripts-install-and-update-ssms-via-powershell/"
  },
  {
   "question": "How do I know when a new SSMS version is out?",
-  "answer": "The patch-summary status check compares your installed SSMS against the latest release and prints a red BEHIND with this page's link when an update is waiting, so a routine status run catches it without watching release notes.",
+  "answer": "The patch-summary status check compares your installed SSMS against the latest release recorded in the script and prints a red BEHIND with this page's link when you are below it. That version is updated by hand each patch cycle, so when it matters, the SSMS 22 release notes on MS Docs are the authority.",
   "post_title": "DBA Scripts: Install and Update SSMS via PowerShell",
   "url": "https://sqldba.blog/dba-scripts-install-and-update-ssms-via-powershell/"
  },
@@ -2533,7 +2551,7 @@
  },
  {
   "question": "Why does the script refuse to upgrade my SSMS 20 install straight to SSMS 22?",
-  "answer": "SSMS 22+ moved to the Visual Studio Installer framework entirely, replacing the legacy WiX-based installer used by SSMS 17 through 20. The two frameworks can't upgrade over each other in place, an uninstall of the old one has to happen first.",
+  "answer": "SSMS 22 is a Visual Studio Installer product and SSMS 17 through 20 use the older standalone installer, so SSMS 22 never upgrades them in place. Per MS Docs it installs side by side with an earlier major version instead. The script stops rather than add that second copy; run Uninstall SSMS via PowerShell first, then this script.",
   "post_title": "DBA Scripts: Install and Update SSMS via PowerShell",
   "url": "https://sqldba.blog/dba-scripts-install-and-update-ssms-via-powershell/"
  },
@@ -3403,13 +3421,13 @@
  },
  {
   "question": "Should I just set ARITHABORT ON in my connection string?",
-  "answer": "It will probably make today's symptom disappear, and you should understand what you bought. Your application now shares a cache entry with every query window anyone opens, so the next plan it inherits could be compiled by a DBA running the procedure with an unusual parameter at 2am. You have replaced a bad plan you can reproduce with a random one you cannot. The underlying problem, one query that wants two plans for two parameter values, is untouched either way. Fix that with RECOMPILE, OPTIMIZE FOR or a forced plan.",
+  "answer": "There is no connection string keyword for it: SqlClient rejects one with Keyword not supported: 'arithabort', so it means running SET ARITHABORT ON on every connection the application opens. It will probably make today's symptom disappear, and you should understand what you bought. Your application now shares a cache entry with every query window anyone opens, so the next plan it inherits could be compiled by a DBA running the procedure with an unusual parameter at 2am. You have replaced a bad plan you can reproduce with a random one you cannot. The underlying problem, one query that wants two plans for two parameter values, is untouched either way. Fix that with RECOMPILE, OPTIMIZE FOR or a forced plan.",
   "post_title": "The Query Is Fast in SSMS but Slow From the Application",
   "url": "https://sqldba.blog/query-fast-in-ssms-slow-from-application/"
  },
  {
   "question": "The plan cache query returns nothing, or only one row. What does that mean?",
-  "answer": "One row for the object in the plan cache query means both connections are using the same plan, so the SET options are not your problem. Nothing at all usually means the plans have been evicted, which happens on any instance under memory pressure and after any restart, failover, index rebuild or statistics update on the objects involved. The plan cache is a live view with no history. That is exactly why the Query Store version of the query is the one to prefer: it is written to disk and it still answers the question tomorrow morning.",
+  "answer": "One row for the object in the plan cache query means both connections are using the same plan, so the SET options are not your problem, and the nvarchar parameter case is the next thing to check. Nothing at all usually means the plans have been evicted, which happens on any instance under memory pressure and after any restart, failover, index rebuild or statistics update on the objects involved. The plan cache is a live view with no history. That is exactly why the Query Store version of the query is the one to prefer: it is written to disk and it still answers the question tomorrow morning.",
   "post_title": "The Query Is Fast in SSMS but Slow From the Application",
   "url": "https://sqldba.blog/query-fast-in-ssms-slow-from-application/"
  },
@@ -5706,6 +5724,12 @@
   "url": "https://sqldba.blog/sqldba-mcp-server/"
  },
  {
+  "question": "Does Trust server certificate work with Strict encryption?",
+  "answer": "No. Strict always validates the certificate and the checkbox has no effect. Switch to Mandatory to use it, or fix the certificate so Strict can pass.",
+  "post_title": "SSMS Certificate Chain Not Trusted Error (Trust Server Certificate Fix)",
+  "url": "https://sqldba.blog/ssms-certificate-chain-not-trusted-error-trust-server-certificate-fix/"
+ },
+ {
   "question": "How do I confirm the connection ended up encrypted, rather than assume it?",
   "answer": "Ask the engine, from the session you care about: SELECT encrypt_option, auth_scheme, net_transport FROM sys.dm_exec_connections WHERE session_id = @@SPID;. encrypt_option comes back TRUE when the connection is encrypted and FALSE when it is not. This matters because TrustServerCertificate=True does not turn encryption off, it turns the identity check off: the traffic is still encrypted, you have simply stopped verifying who you are encrypting to. Drop the WHERE clause to audit every current connection at once.",
   "post_title": "SSMS Certificate Chain Not Trusted Error (Trust Server Certificate Fix)",
@@ -5713,7 +5737,7 @@
  },
  {
   "question": "I installed a certificate and it is still using the self-signed one.",
-  "answer": "The service rejected it silently. Nearly always the private key permission for the SQL Server service account, or a subject name that does not match the name clients actually connect with. The error log says which.",
+  "answer": "Check it was actually bound. A certificate that is only imported into the store, and never selected on the Certificate tab in Configuration Manager, is not used, and the ERRORLOG still says \"A self-generated certificate was successfully loaded for encryption.\" A certificate that is bound but does not meet the requirements does not fall back quietly: the service fails to start, with message 26014 in the ERRORLOG. The usual causes are the service account's read permission on the private key, a KeySpec other than AT_KEYEXCHANGE, or a name missing from the Subject Alternative Name.",
   "post_title": "SSMS Certificate Chain Not Trusted Error (Trust Server Certificate Fix)",
   "url": "https://sqldba.blog/ssms-certificate-chain-not-trusted-error-trust-server-certificate-fix/"
  },
@@ -5725,7 +5749,13 @@
  },
  {
   "question": "Why did this start after upgrading SSMS?",
-  "answer": "SSMS 20 and ODBC Driver 18 changed their defaults to encrypt and validate. Your server did not change, the client got stricter.",
+  "answer": "SSMS 20 and ODBC Driver 18 changed their defaults to encrypt and validate, and Microsoft.Data.SqlClient did the same from version 4.0. Your server did not change, the client got stricter.",
+  "post_title": "SSMS Certificate Chain Not Trusted Error (Trust Server Certificate Fix)",
+  "url": "https://sqldba.blog/ssms-certificate-chain-not-trusted-error-trust-server-certificate-fix/"
+ },
+ {
+  "question": "Why do I get it with Encryption set to Optional?",
+  "answer": "Because the server forces encryption. When Force Encryption is on at the instance, a client on Optional with Trust server certificate unticked still validates the certificate, and fails the same way (MS Docs, Encryption and certificate validation). Optional is not a fix for this error in any case: against a server that does not force encryption it leaves everything after the login unencrypted.",
   "post_title": "SSMS Certificate Chain Not Trusted Error (Trust Server Certificate Fix)",
   "url": "https://sqldba.blog/ssms-certificate-chain-not-trusted-error-trust-server-certificate-fix/"
  },
