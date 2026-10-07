@@ -3,7 +3,7 @@ Script Name : Get-LogShippingStatus
 Category    : high-availability
 Purpose     : Show every log shipping pair on this instance and how far behind each secondary is.
 Author      : Peter Whyte (https://sqldba.blog)
-Requires    : VIEW SERVER STATE, and membership of msdb (the monitor tables live there)
+Requires    : SELECT on msdb.dbo.log_shipping_monitor_primary and _secondary (db_datareader in msdb)
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
@@ -32,6 +32,14 @@ SET NOCOUNT ON;
   THRESHOLDS ARE THE CONFIGURED ONES, not invented. backup_threshold and restore_threshold are
   the values set when log shipping was configured, in minutes. This compares against those
   rather than against a number of my choosing.
+
+  AGES ARE UTC, the same way the alert job counts them. sys.sp_check_log_shipping_monitor_alert
+  compares the *_utc columns with GETUTCDATE(), so a primary or secondary in another time zone
+  from the monitor does not skew the ages. The last_* columns shown are the local times.
+
+  LATENCY COUNTS TOO. The 14421 alert also fires when last_restored_latency (minutes from the
+  log backup being taken to it being restored) passes the restore threshold, even when restores
+  are running on time. The verdict checks it as well.
 */
 
 IF NOT EXISTS (SELECT 1 FROM msdb.dbo.log_shipping_monitor_primary)
@@ -50,16 +58,17 @@ BEGIN
         p.primary_database                                     AS database_name,
         NULL                                                   AS partner_server,
         p.last_backup_date                                     AS last_backup,
-        DATEDIFF(MINUTE, p.last_backup_date, GETDATE())        AS backup_age_min,
+        DATEDIFF(MINUTE, p.last_backup_date_utc, GETUTCDATE()) AS backup_age_min,
         p.backup_threshold                                     AS backup_threshold_min,
         NULL                                                   AS last_copied,
         NULL                                                   AS copy_age_min,
         NULL                                                   AS last_restored,
         NULL                                                   AS restore_age_min,
+        NULL                                                   AS restore_latency_min,
         NULL                                                   AS restore_threshold_min,
         CASE
-            WHEN p.last_backup_date IS NULL THEN 'NO BACKUP RECORDED'
-            WHEN DATEDIFF(MINUTE, p.last_backup_date, GETDATE()) > p.backup_threshold
+            WHEN p.last_backup_date_utc IS NULL THEN 'NO BACKUP RECORDED'
+            WHEN DATEDIFF(MINUTE, p.last_backup_date_utc, GETUTCDATE()) > p.backup_threshold
                  THEN 'BACKUP LATE'
             ELSE 'OK'
         END                                                    AS verdict
@@ -76,19 +85,23 @@ BEGIN
         NULL,
         NULL,
         s.last_copied_date,
-        DATEDIFF(MINUTE, s.last_copied_date, GETDATE()),
+        DATEDIFF(MINUTE, s.last_copied_date_utc, GETUTCDATE()),
         s.last_restored_date,
-        DATEDIFF(MINUTE, s.last_restored_date, GETDATE()),
+        DATEDIFF(MINUTE, s.last_restored_date_utc, GETUTCDATE()),
+        s.last_restored_latency,
         s.restore_threshold,
         CASE
-            WHEN s.last_restored_date IS NULL THEN 'NOTHING RESTORED YET'
+            WHEN s.last_restored_date_utc IS NULL THEN 'NOTHING RESTORED YET'
             -- copy current but restore stale: the restore job is the failure, not the network
-            WHEN DATEDIFF(MINUTE, s.last_restored_date, GETDATE()) > s.restore_threshold
-                 AND DATEDIFF(MINUTE, s.last_copied_date, GETDATE()) <= s.restore_threshold
+            WHEN DATEDIFF(MINUTE, s.last_restored_date_utc, GETUTCDATE()) > s.restore_threshold
+                 AND DATEDIFF(MINUTE, s.last_copied_date_utc, GETUTCDATE()) <= s.restore_threshold
                  THEN 'RESTORE JOB BEHIND (copy is current)'
             -- both stale: the problem is upstream of the restore
-            WHEN DATEDIFF(MINUTE, s.last_restored_date, GETDATE()) > s.restore_threshold
+            WHEN DATEDIFF(MINUTE, s.last_restored_date_utc, GETUTCDATE()) > s.restore_threshold
                  THEN 'BEHIND - copy is stale too, check the backup job and the share'
+            -- restoring on time, but each file is applied long after it was taken (14421 fires)
+            WHEN s.last_restored_latency > s.restore_threshold
+                 THEN 'RESTORE LATENCY OVER THRESHOLD'
             ELSE 'OK'
         END
     FROM msdb.dbo.log_shipping_monitor_secondary AS s
