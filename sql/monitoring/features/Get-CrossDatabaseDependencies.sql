@@ -43,16 +43,12 @@ SELECT
     syn.name AS source_object,
     'SYNONYM' AS source_object_type,
     syn.base_object_name AS referenced_target,
-    /* Parse server from 4-part name (server.db.schema.obj) */
-    CASE WHEN syn.base_object_name LIKE '[[]%].%.[%].%'
-         THEN PARSENAME(REPLACE(syn.base_object_name, '].[', '.'), 4)
-         ELSE NULL END AS referenced_server_name,
-    /* Parse database: 4-part = part 3, 3-part = part 3 */
-    CASE WHEN LEN(syn.base_object_name) - LEN(REPLACE(syn.base_object_name, '.', '')) >= 2
-         THEN PARSENAME(REPLACE(REPLACE(syn.base_object_name,'[',''),']',''), 3)
-         ELSE NULL END AS referenced_database_name,
-    NULL AS referenced_schema_name,
-    NULL AS referenced_entity_name
+    /* base_object_name is stored bracketed ([srv].[db].[schema].[obj]), so PARSENAME reads each part;
+       it returns NULL for the parts a 3-part name does not have */
+    PARSENAME(syn.base_object_name, 4) AS referenced_server_name,
+    PARSENAME(syn.base_object_name, 3) AS referenced_database_name,
+    PARSENAME(syn.base_object_name, 2) AS referenced_schema_name,
+    PARSENAME(syn.base_object_name, 1) AS referenced_entity_name
 FROM sys.synonyms syn
 WHERE syn.base_object_name LIKE '%.%.%' /* at least a 3-part name */
 
