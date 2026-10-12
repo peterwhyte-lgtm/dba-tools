@@ -13,6 +13,8 @@ repeated DMV scans. downstream_waiters is pre-aggregated rather than computed
 via a correlated subquery. dm_exec_connections is joined only for sessions
 that have no active request (idle head blockers).
 
+query_plan is returned as xml, so in SSMS it is a link that opens the graphical plan.
+
 Reading the output: the head blocker row is the one to act on. query_plan is NULL
 on an idle head blocker because a sleeping session has no active request and so no
 plan_handle; its sql_text comes from most_recent_sql_handle and is the whole last
@@ -145,7 +147,7 @@ SELECT
             ELSE (ch.statement_end_offset - ch.statement_start_offset) / 2 + 1
         END
     ) AS sql_text,
-    CAST(qp.query_plan AS NVARCHAR(MAX)) AS query_plan
+    qp.query_plan AS query_plan
 FROM Chain AS ch
 LEFT JOIN DownstreamCounts AS dc ON dc.blocking_session_id = ch.session_id
 LEFT JOIN sys.dm_db_session_space_usage AS su ON su.session_id = ch.session_id
