@@ -57,11 +57,11 @@ SET QUOTED_IDENTIFIER ON;
 */
 
 SELECT
-    p.name                                             AS login_name,
-    p.type_desc                                        AS login_type,
+    p.name AS login_name,
+    p.type_desc AS login_type,
 
     -- A login recreated by name gets a new SID. This column is the one that matters most.
-    CONVERT(nvarchar(200), p.sid, 1)                   AS sid_hex,
+    CONVERT(nvarchar(200), p.sid, 1) AS sid_hex,
 
     p.is_disabled,
 
@@ -72,26 +72,26 @@ SELECT
             WHERE sp.grantee_principal_id = p.principal_id
               AND sp.permission_name      = N'CONNECT SQL'
               AND sp.state                = 'D')      -- D = DENY
-         THEN 1 ELSE 0 END                             AS connect_denied,
+         THEN 1 ELSE 0 END AS connect_denied,
 
-    ISNULL(p.default_database_name, N'(none)')         AS default_database,
+    ISNULL(p.default_database_name, N'(none)') AS default_database,
 
     -- Does that default database actually exist here? Blank on the target means the login
     -- is created but cannot connect, which reads as an authentication problem.
     CASE WHEN p.default_database_name IS NULL THEN 'n/a'
          WHEN DB_ID(p.default_database_name) IS NULL THEN 'MISSING'
-         ELSE 'present' END                            AS default_db_state,
+         ELSE 'present' END AS default_db_state,
 
-    ISNULL(p.default_language_name, N'(none)')         AS default_language,
+    ISNULL(p.default_language_name, N'(none)') AS default_language,
 
-    CASE WHEN p.type = 'S' THEN CAST(sl.is_policy_checked     AS nvarchar(5)) ELSE 'n/a' END AS check_policy,
+    CASE WHEN p.type = 'S' THEN CAST(sl.is_policy_checked AS nvarchar(5)) ELSE 'n/a' END AS check_policy,
     CASE WHEN p.type = 'S' THEN CAST(sl.is_expiration_checked AS nvarchar(5)) ELSE 'n/a' END AS check_expiration,
 
     -- Fingerprint, not the hash: enough to prove the password came across, safe to share.
     CASE WHEN p.type <> 'S' THEN 'n/a'
          WHEN sl.password_hash IS NULL THEN 'no-permission'
          ELSE RIGHT(CONVERT(nvarchar(300), sl.password_hash, 1), 12)
-    END                                                AS password_hash_id,
+    END AS password_hash_id,
 
     STUFF((
         SELECT N', ' + r.name
@@ -99,12 +99,12 @@ SELECT
         INNER JOIN sys.server_principals r ON srm.role_principal_id = r.principal_id
         WHERE srm.member_principal_id = p.principal_id
         ORDER BY r.name
-        FOR XML PATH(''), TYPE).value('.', 'nvarchar(max)'), 1, 2, N'')  AS server_roles,
+        FOR XML PATH(''), TYPE).value('.', 'nvarchar(max)'), 1, 2, N'') AS server_roles,
 
-    CONVERT(varchar(19), p.create_date, 120)           AS create_date,
-    CONVERT(varchar(19), p.modify_date, 120)           AS modify_date
+    CONVERT(varchar(19), p.create_date, 120) AS create_date,
+    CONVERT(varchar(19), p.modify_date, 120) AS modify_date
 FROM sys.server_principals AS p
-LEFT JOIN sys.sql_logins   AS sl ON sl.principal_id = p.principal_id
+LEFT JOIN sys.sql_logins AS sl ON sl.principal_id = p.principal_id
 -- 'S' = SQL_LOGIN, 'U' = WINDOWS_LOGIN, 'G' = WINDOWS_GROUP.
 -- There is no type 'W'; using one silently returns no Windows logins at all.
 WHERE p.type IN ('S', 'U', 'G')
