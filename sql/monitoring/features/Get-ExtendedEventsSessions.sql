@@ -29,12 +29,15 @@ SELECT
         WHERE t.event_session_address = s.address
         FOR XML PATH(''), TYPE
     ).value('.', 'NVARCHAR(500)'), 1, 2, '') AS targets,
+    /* Reads the counters above. The old version keyed on target type and looked for
+       asynchronous_file_target, the SQL Server 2008 name: since 2012 the file target is
+       event_file, so file sessions always read OK. Blocked firing only happens when the
+       session is set to EVENT_RETENTION_MODE = NO_EVENT_LOSS. */
     CASE
-        WHEN EXISTS (
-            SELECT 1 FROM sys.dm_xe_session_targets t
-            WHERE t.event_session_address = s.address
-              AND t.target_name IN ('asynchronous_file_target', 'ring_buffer')
-        ) THEN 'File/ring buffer - potential I/O or memory overhead'
+        WHEN s.blocked_event_fire_time > 0
+            THEN 'Blocking the workload - events waited for buffer space (NO_EVENT_LOSS); allow event loss or capture less'
+        WHEN s.dropped_event_count > 0 OR s.dropped_buffer_count > 0
+            THEN 'Losing events - buffers cannot keep up; raise MAX_MEMORY or filter the events'
         ELSE 'OK'
     END AS overhead_note,
     CASE s.name
