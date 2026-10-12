@@ -3,7 +3,7 @@ Script Name : Get-ExtendedEventsSessions
 Category    : monitoring
 Purpose     : Active Extended Events sessions — name, state, targets, and estimated disk impact.
               Surfaces unexpected or high-overhead XE sessions on inherited servers.
-Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-extended-events-sessions/)
+Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-active-xe-sessions/)
 Requires    : VIEW SERVER STATE
 HealthCheck : Yes
 */
