@@ -5,7 +5,8 @@ Purpose     : Returns all explicit object- and schema-level GRANT/DENY permissio
               current database. Shows grantee, permission, object, and grantor. Run in the
               context of each user database — does not iterate across databases.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-permissions-and-role-membership/)
-Requires    : VIEW DATABASE STATE or membership in db_securityadmin
+Requires    : VIEW DEFINITION or membership in db_securityadmin. VIEW DATABASE STATE is not
+              enough: it returns only your own permissions, silently, with no error.
               Run against each target database: -Database YourDatabase
 */
 -- SAFE:ReadOnly
