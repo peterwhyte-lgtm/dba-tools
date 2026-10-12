@@ -376,6 +376,15 @@ Add `HealthCheck : Yes` (after `Requires`) to any script that runs as part of `I
 - `OUTER APPLY` not `CROSS APPLY` when the applied function may return no rows
 - No trailing blank lines; 0–1 blank lines at end of file
 - Keep output readable and deterministic
+- **One space before `AS`. Never pad aliases out to a column** (Peter, 2026-10-12: *"this is not good for me"*).
+  Write `d.name AS database_name,` not `d.name` followed by 60 spaces and `AS database_name,`. Padded
+  alignment breaks the moment one expression is longer than the rest, and it reads as a wall of
+  whitespace in SSMS, on the blog and in screenshots. Same for `CASE ... ELSE` branches: one space.
+  44 of 196 scripts used padding on 2026-10-12. **Fix on touch, never as a sweep**: every script has
+  a copy in its post, so a repo-wide reformat leaves 44 posts out of sync with the repo.
+- **The output must mean one thing per column.** A sentinel the engine stores (e.g. an unlimited log
+  file's `max_size` of 268435456 pages, which reads as 2097152.00 MB) gets decoded in the query, not
+  explained away in the post. If the post needs a paragraph to excuse a value, fix the query.
 
 ## Adding new scripts
 

@@ -48,6 +48,10 @@ SET QUOTED_IDENTIFIER ON;
 - **Modern DMVs only** — `sys.objects` not `sys.sysobjects`, `sys.server_principals` not `sys.syslogins`, `sys.dm_exec_sessions` not `sys.sysprocesses`.
 - **`OUTER APPLY` not `CROSS APPLY`** when the applied function may return no rows (e.g. `sys.dm_exec_sql_text`).
 - **No trailing blank lines** — 0–1 blank lines at end of file.
+- **One space before `AS`, no padded alias columns.** `d.name AS database_name,`, never the name padded
+  with spaces out to an aligned `AS`. Fix on touch, never as a sweep (each script has a copy in its post).
+- **One meaning per output column.** Decode engine sentinels in the query (an unlimited log's `max_size`
+  of 268435456 pages becomes NULL, like `-1`) rather than explaining them in the post.
 - **Deterministic output** — order by something meaningful. Unordered results make CSVs hard to diff.
 
 ### Where scripts go

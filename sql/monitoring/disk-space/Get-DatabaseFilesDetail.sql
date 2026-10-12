@@ -9,29 +9,33 @@ HealthCheck : Yes
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 SELECT
-    d.name                                                             AS database_name,
-    d.state_desc                                                       AS db_state,
-    d.recovery_model_desc                                              AS recovery_model,
+    d.name AS database_name,
+    d.state_desc AS db_state,
+    d.recovery_model_desc AS recovery_model,
     mf.file_id,
-    mf.name                                                            AS logical_name,
-    mf.type_desc                                                       AS file_type,
-    LEFT(mf.physical_name, 1)                                         AS drive_letter,
-    mf.physical_name                                                   AS physical_path,
-    CAST(mf.size * 8.0 / 1024 AS DECIMAL(12,2))                      AS current_size_mb,
-    CASE mf.max_size
-        WHEN -1 THEN NULL
-        WHEN  0 THEN CAST(mf.size * 8.0 / 1024 AS DECIMAL(12,2))
-        ELSE        CAST(mf.max_size * 8.0 / 1024 AS DECIMAL(12,2))
-    END                                                                AS max_size_mb,
+    mf.name AS logical_name,
+    mf.type_desc AS file_type,
+    LEFT(mf.physical_name, 1) AS drive_letter,
+    mf.physical_name AS physical_path,
+    CAST(mf.size * 8.0 / 1024 AS DECIMAL(12,2)) AS current_size_mb,
+    -- NULL = no maximum. An unlimited log file is stored as 268435456 pages (the 2 TB log
+    -- ceiling), not -1, so it is mapped to NULL as well; otherwise logs read 2097152.00.
+    CASE
+        WHEN mf.max_size = -1 THEN NULL
+        WHEN mf.type = 1 AND mf.max_size = 268435456 THEN NULL
+        WHEN mf.max_size = 0 THEN CAST(mf.size * 8.0 / 1024 AS DECIMAL(12,2))
+        ELSE CAST(mf.max_size * 8.0 / 1024 AS DECIMAL(12,2))
+    END AS max_size_mb,
     CASE mf.is_percent_growth
         WHEN 1 THEN CAST(mf.growth AS VARCHAR(10)) + '%'
-        ELSE        CAST(CAST(mf.growth * 8.0 / 1024 AS INT) AS VARCHAR(20)) + ' MB'
-    END                                                                AS auto_growth,
-    mf.is_percent_growth                                               AS growth_is_percent,
-    mf.state_desc                                                      AS file_state
-FROM sys.master_files  AS mf
+        ELSE CAST(CAST(mf.growth * 8.0 / 1024 AS INT) AS VARCHAR(20)) + ' MB'
+    END AS auto_growth,
+    mf.is_percent_growth AS growth_is_percent,
+    mf.state_desc AS file_state
+FROM sys.master_files AS mf
 INNER JOIN sys.databases AS d ON d.database_id = mf.database_id
 WHERE d.database_id > 4
 ORDER BY d.name, mf.type, mf.file_id;
