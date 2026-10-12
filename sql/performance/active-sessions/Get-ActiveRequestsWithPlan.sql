@@ -5,6 +5,8 @@ Purpose     : Point-in-time snapshot of all active requests with XML execution
               plans. Same columns as Get-ActiveRequests.sql with the addition of
               query_plan from sys.dm_exec_query_plan. Use the PowerShell wrapper
               to extract plans to individual XML files for SSMS analysis.
+              query_plan is returned as xml, so in SSMS it is a link that opens
+              the graphical plan.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-active-sessions-and-requests/)
 Requires    : VIEW SERVER STATE
 */
@@ -43,7 +45,7 @@ SELECT
             ELSE (r.statement_end_offset - r.statement_start_offset) / 2 + 1
         END
     ) AS sql_text,
-    CAST(qp.query_plan AS NVARCHAR(MAX)) AS query_plan
+    qp.query_plan AS query_plan
 FROM sys.dm_exec_requests AS r
 JOIN sys.dm_exec_sessions AS s ON s.session_id = r.session_id
 LEFT JOIN sys.dm_db_session_space_usage AS su ON su.session_id = r.session_id
