@@ -34,7 +34,9 @@ DECLARE @db SYSNAME;
 DECLARE @sql NVARCHAR(MAX);
 
 DECLARE db_cursor CURSOR FAST_FORWARD FOR
-    SELECT name FROM sys.databases WHERE database_id > 4 AND state = 0;
+    -- msdb is included: Database Mail runs on Service Broker there, so it is the one
+    -- database where Service Broker is in use on most instances
+    SELECT name FROM sys.databases WHERE (database_id > 4 OR name = N'msdb') AND state = 0;
 
 OPEN db_cursor;
 FETCH NEXT FROM db_cursor INTO @db;
