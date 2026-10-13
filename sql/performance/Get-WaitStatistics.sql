@@ -93,7 +93,7 @@ SELECT TOP 20
     waiting_tasks_count,
     wait_time_ms,
     CAST(100.0 * wait_time_ms / NULLIF(SUM(wait_time_ms) OVER (), 0) AS DECIMAL(5,2)) AS pct_total_wait,
-    CAST(wait_time_ms / NULLIF(waiting_tasks_count, 0) AS DECIMAL(10,0))              AS avg_wait_ms,
+    CAST(wait_time_ms / NULLIF(waiting_tasks_count, 0) AS DECIMAL(10,0)) AS avg_wait_ms,
     max_wait_time_ms,
     signal_wait_time_ms,
     resource_wait_time_ms
