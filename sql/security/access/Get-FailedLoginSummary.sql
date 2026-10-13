@@ -34,15 +34,23 @@ EXEC xp_readerrorlog 0, 1, N'Login failed';
 
 WITH parsed AS (
     SELECT
-        -- Login name sits between the first pair of single quotes
-        SUBSTRING(
-            log_text,
-            CHARINDEX('''', log_text) + 1,
-            CHARINDEX('''', log_text, CHARINDEX('''', log_text) + 1) - CHARINDEX('''', log_text) - 1
-        ) AS login_name,
+        -- Login name sits between the first pair of single quotes. Some entries carry no
+        -- name at all (18452 "untrusted domain" is logged as "Login failed. The login is
+        -- from..."), so guard the SUBSTRING or one such line fails the whole run (Msg 537).
+        CASE
+            WHEN CHARINDEX('''', log_text) > 0
+             AND CHARINDEX('''', log_text, CHARINDEX('''', log_text) + 1) > 0
+            THEN SUBSTRING(
+                log_text,
+                CHARINDEX('''', log_text) + 1,
+                CHARINDEX('''', log_text, CHARINDEX('''', log_text) + 1) - CHARINDEX('''', log_text) - 1
+            )
+            ELSE NULL
+        END AS login_name,
         -- Client IP/host is in the trailing [CLIENT: ...] tag
         CASE
             WHEN CHARINDEX('[CLIENT: ', log_text) > 0
+             AND CHARINDEX(']', log_text, CHARINDEX('[CLIENT: ', log_text)) > 0
             THEN SUBSTRING(
                 log_text,
                 CHARINDEX('[CLIENT: ', log_text) + 9,
@@ -71,8 +79,9 @@ WITH parsed AS (
             WHEN log_text LIKE '%only administrators%' THEN 18451
             WHEN log_text LIKE '%account is disabled%' THEN 18470
             WHEN log_text LIKE '%password must be changed%' THEN 18488
-            WHEN log_text LIKE '%explicitly specified database%' THEN 4064
+            WHEN log_text LIKE '%explicitly specified database%' THEN 4060
             WHEN log_text LIKE '%default database%' THEN 4064
+            WHEN log_text LIKE '%specified in the login properties%' THEN 4064
             WHEN log_text LIKE '%password did not match%' THEN 18456
             WHEN log_text LIKE '%error occurred while evaluating the password%' THEN 18456
             WHEN log_text LIKE '%could not find a login%' THEN 18456
@@ -103,7 +112,8 @@ SELECT
         WHEN 18451 THEN 'Login failed, only admin connections are allowed'
         WHEN 18470 THEN 'Account is disabled'
         WHEN 18488 THEN 'Password must be changed'
-        WHEN 4064  THEN 'Credentials are valid, the requested database is not usable'
+        WHEN 4060  THEN 'Credentials are valid, the requested database could not be opened'
+        WHEN 4064  THEN 'Credentials are valid, the default database is not usable'
         WHEN 4818  THEN 'Password does not meet complexity requirements'
         ELSE 'Error ' + CAST(agg.error_code AS VARCHAR(10))
     END AS error_description,
@@ -122,7 +132,7 @@ SELECT
         ELSE NULL
     END AS bad_password_count,
     CASE
-        WHEN agg.error_code = 4064
+        WHEN agg.error_code IN (4060, 4064)
         THEN 'CONFIG - valid credentials, database not usable (' + CAST(agg.failure_count AS VARCHAR) +
              ' in log); fix the database or the default database, not the password'
         WHEN agg.failure_count >= 50
