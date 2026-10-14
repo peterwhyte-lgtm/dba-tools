@@ -792,7 +792,7 @@ def answer_question(question: str) -> str:
     # Coverage floor: a single shared term is not an answer. See Index.search.
     # 8, not 4: the candidate WINDOW is the 0.85 score ratio applied below, and the limit
     # only has to be wide enough to hold it. See the note at that filter.
-    hits = data.faq_index().search(q, limit=8, min_coverage=0.5)
+    hits = data.faq_index().search(q, limit=16, min_coverage=0.5)
     cleared_floor = {id(h[0]) for h in hits}   # survived the COVERAGE floor
 
     # THE ANSWER MUST HAVE SOMETHING TO DO WITH THE QUESTION.
