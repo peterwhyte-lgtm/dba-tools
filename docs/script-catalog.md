@@ -68,6 +68,7 @@ Health posture, integrity-check readiness, DBCC CHECKDB history, suspect pages.
 | Script | What it returns | Post | Writes | HC |
 |--------|-----------------|------|--------|----|
 | `Get-DatabaseHealth` | Review the health and sizing posture of user databases. | [post](https://sqldba.blog/dba-scripts-get-database-health/) |  | yes |
+| `Get-IdentityColumnUsage` | How close every identity column on the instance is to the maximum value of its data type, so an int key is found at 85% rather than when inserts fail with Msg 8115. |  |  |  |
 | `Get-DatabaseIntegrityChecks` | Pre-check database readiness and configuration for integrity validation runs. | [post](https://sqldba.blog/dba-scripts-get-suspect-pages-and-integrity-checks/) |  |  |
 | `Get-LastDbccCheckdb` | Show when each user database last had a successful DBCC CHECKDB run. | [post](https://sqldba.blog/dba-scripts-get-last-dbcc-checkdb/) |  | yes |
 | `Get-SuspectPages` | Show any pages recorded in msdb.dbo.suspect_pages — evidence of I/O or corruption errors. | [post](https://sqldba.blog/dba-scripts-get-suspect-pages-and-integrity-checks/) |  | yes |
@@ -112,6 +113,7 @@ Job overview, failures, schedules, duration trends, alerts and operators.
 | `Get-JobDurationTrends` | SQL Agent job duration over the last 30 days — flags jobs that are running significantly longer than their average. | [post](https://sqldba.blog/dba-scripts-get-job-schedules-and-duration-trends/) |  |  |
 | `Get-JobScheduleSummary` | Show enabled SQL Agent jobs with their schedules and next scheduled run time. | [post](https://sqldba.blog/dba-scripts-get-job-schedules-and-duration-trends/) |  |  |
 | `Get-SqlAgentJobFailureSummary` | Show SQL Agent job failures from the last 7 days with readable timestamps and error messages. | [post](https://sqldba.blog/dba-scripts-get-sql-agent-job-failure-summary/) |  | yes |
+| `Get-SqlAgentJobOwnerAccess` | Checks every SQL Agent job owner the way Agent does before a job starts, and lists the jobs that will fail with error 15404 or "does not have server access". |  |  |  |
 | `Get-SqlAgentJobOverview` | Show all SQL Agent jobs with enabled state, owner, and last run outcome. | [post](https://sqldba.blog/dba-scripts-get-sql-agent-job-overview/) |  | yes |
 
 ### Monitoring: error log — `sql/monitoring/error-log/`
@@ -135,7 +137,7 @@ CDC and Change Tracking, Query Store, Extended Events, Service Broker, Database 
 | `Get-CompressionCandidates` | Largest uncompressed tables and heaps in the current database, ordered by reserved space — identifies the best candidates for row or page compression. | [post](https://sqldba.blog/dba-scripts-get-compression-candidates/) |  |  |
 | `Get-CrossDatabaseDependencies` | Objects in the current database that reference other databases via 3-part names or linked servers — critical to find before a migration, rename, or decommission. Note: only captures statically-resolvable references. Dynamic SQL built at runtime will not appear here. | [post](https://sqldba.blog/dba-scripts-get-collation-conflicts-and-cross-database-dependencies/) |  |  |
 | `Get-DatabaseMailQueue` | Database Mail items that are failed, retrying, or unsent — plus last 24 hours of sent mail for context. Shows error detail for failed items. | [post](https://sqldba.blog/dba-scripts-get-service-broker-health-and-database-mail-queue/) |  |  |
-| `Get-ExtendedEventsSessions` | Active Extended Events sessions — name, state, targets, and estimated disk impact. Surfaces unexpected or high-overhead XE sessions on inherited servers. |  |  | yes |
+| `Get-ExtendedEventsSessions` | Active Extended Events sessions — name, state, targets, and estimated disk impact. Surfaces unexpected or high-overhead XE sessions on inherited servers. | [post](https://sqldba.blog/dba-scripts-get-active-xe-sessions/) |  | yes |
 | `Get-QueryStoreStatus` | Query Store enablement, fill ratio, capture mode, and health across all user databases. Surfaces databases where QS is off, full, or auto-switched to READ_ONLY. | [post](https://sqldba.blog/dba-scripts-get-query-store-status/) |  | yes |
 | `Get-ServiceBrokerHealth` | Service Broker health across all user databases. Orphaned/disconnected conversation endpoints accumulate silently over months, eventually degrading SB infrastructure. SB is implicitly active on many instances (Database Mail, AG health checks use it). Surfaces conversation endpoint counts by state, transmission queue depth, and queue activation status. | [post](https://sqldba.blog/dba-scripts-get-service-broker-health-and-database-mail-queue/) |  | yes |
 
@@ -214,6 +216,7 @@ Top queries, regressions, and forced plans from Query Store.
 
 | Script | What it returns | Post | Writes | HC |
 |--------|-----------------|------|--------|----|
+| `Get-MemoryGrantFeedback` | Queries in the current database that memory grant feedback has had to correct, read from Query Store (sys.query_store_plan_feedback). Survives a restart and a plan cache flush. |  |  |  |
 | `Get-QueryStoreForcedPlans` | Forced plans in Query Store with failure counts, plan age, forcing reason, and whether the forced plan is still the cheapest available option. A force_failure_count > 0 means QS is silently reverting to natural plans — queries you think are protected are not. Run in the context of the target database (-Database <dbname>). | [post](https://sqldba.blog/dba-scripts-get-query-store-regressions-and-forced-plans/) |  |  |
 | `Get-QueryStoreRegressions` | Queries that regressed in the last 24 hours vs their 7-day average CPU/duration. Uses Query Store time-bucketed runtime stats to detect "what changed today" — queries running >2x slower or using >2x more CPU than their recent baseline. Run in the context of the target database (-Database <dbname>). | [post](https://sqldba.blog/dba-scripts-get-query-store-regressions-and-forced-plans/) |  |  |
 | `Get-QueryStoreTopQueries` | Top queries from Query Store by CPU, duration, execution count, or plan regressions. Change @sort_by at the top to switch modes. Must run in the context of the target database — change the database in SSMS or pass -Database <dbname> via the PS wrapper. | [post](https://sqldba.blog/dba-scripts-get-query-store-top-queries/) |  |  |
@@ -416,7 +419,7 @@ Dev and test only. Never run these against production.
 
 ## PowerShell scripts
 
-Scripts with real logic — orchestrators, DDL generators, and OS-level tools. The 157 thin wrappers
+Scripts with real logic — orchestrators, DDL generators, and OS-level tools. The 160 thin wrappers
 under `powershell/wrappers/` are not listed here: there is exactly one per SQL script, it carries the
 same name, and it does nothing but pass your parameters to the matching `.sql` file. Adding one is
 what makes a SQL script appear in the web UI.
@@ -556,9 +559,9 @@ Dev and test only.
 
 | Layer | Count |
 |-------|-------|
-| SQL scripts | 192 |
-| — of which have a companion post | 184 |
+| SQL scripts | 195 |
+| — of which have a companion post | 185 |
 | — of which are in the health check suite | 45 |
 | — of which create objects or write data | 13 |
 | PowerShell scripts with real logic | 52 |
-| Thin wrappers (one per SQL script) | 157 |
+| Thin wrappers (one per SQL script) | 160 |

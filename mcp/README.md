@@ -27,7 +27,7 @@ and a wrong pick is worse than no server at all — so anything else this could 
 or a Prompt instead. A test enforces the cap.
 
 Covering **92 errors**, **260 wait types**, **7 SQL Server versions** with all **472 published
-builds** behind them, **241 scripts** (192 SQL, 49 PowerShell) and **987 answered questions**.
+builds** behind them, **244 scripts** (195 SQL, 49 PowerShell) and **1011 answered questions**.
 
 ### Also included
 
@@ -178,9 +178,9 @@ The boundary is deliberately asymmetric:
 
 Tests assert both directions, so a later refactor cannot quietly flip either one.
 
-## The 8 scripts with no link
+## The 10 scripts with no link
 
-`find_script` returns a write-up URL for 184 of the 192 SQL scripts. The other 8 come back
+`find_script` returns a write-up URL for 185 of the 195 SQL scripts. The other 10 come back
 with no link — and that is a **header** problem, not missing content. Checked against the live
 site: most of those left already have a published write-up. Their `Author :` line just reads
 `https://sqldba.blog` instead of naming the post, so nothing can map the script to it.

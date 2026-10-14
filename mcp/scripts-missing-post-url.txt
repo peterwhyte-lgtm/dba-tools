@@ -16,4 +16,7 @@ sql/lab/Create-BlockingScenario.sql
 sql/lab/Kill-BlockingSession.sql
 sql/maintenance/Generate-IndexMaintenanceScript.sql
 sql/maintenance/Set-AgentJobState.sql
+sql/monitoring/databases/Get-IdentityColumnUsage.sql
 sql/monitoring/disk-space/Get-DatabaseGrowthEvents.sql
+sql/monitoring/jobs/Get-SqlAgentJobOwnerAccess.sql
+sql/performance/query-store/Get-MemoryGrantFeedback.sql

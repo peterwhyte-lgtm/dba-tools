@@ -12,11 +12,11 @@
   "faqs": 1011,
   "faq_posts": 256,
   "posts": 557,
-  "scripts": 241,
-  "scripts_sql": 192,
+  "scripts": 244,
+  "scripts_sql": 195,
   "scripts_powershell": 49,
   "scripts_healthcheck": 45,
-  "scripts_without_post": 7,
+  "scripts_without_post": 10,
   "docs": 9,
   "prompts": 1
  }

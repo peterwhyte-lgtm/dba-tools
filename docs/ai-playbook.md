@@ -129,7 +129,7 @@ The 45 scripts in the healthcheck suite are tagged `HealthCheck : Yes` in their 
 
 ## What is safe to run immediately
 
-**179 of the 192 scripts in `sql/` are read-only** — `SET NOCOUNT ON`, no `USE database`, safe to run in production at any time. That is all of `inventory/`, `monitoring/`, `performance/`, `backups/`, `security/`, `high-availability/`, `migration/`, and `collectors/`, plus everything in `maintenance/` except `Set-AgentJobState`.
+**182 of the 195 scripts in `sql/` are read-only** — `SET NOCOUNT ON`, no `USE database`, safe to run in production at any time. That is all of `inventory/`, `monitoring/`, `performance/`, `backups/`, `security/`, `high-availability/`, `migration/`, and `collectors/`, plus everything in `maintenance/` except `Set-AgentJobState`.
 
 Only 13 are not, and each says so in its own `-- SAFE:` annotation:
 
