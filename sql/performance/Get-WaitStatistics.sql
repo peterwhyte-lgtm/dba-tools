@@ -30,9 +30,10 @@ WITH filtered_waits AS (
           'SLEEP_MSDBSTARTUP',              'SLEEP_PHYSMASTERDBREADY',
           'SLEEP_SAFEMODE',                 'SLEEP_SETUP',
           'SLEEP_RBPEXSHRINKTASK',          'SLEEP_RETRY_VIRTUALALLOC',
-          'SLEEP_BPOOL_FLUSH',              'SLEEP_BPOOL_STEAL',
-          'SLEEP_BUFFERPOOL_HELPLW',        'SLEEP_MEMORYPOOL_ALLOCATEPAGES',
-          'SLEEP_WORKSPACE_ALLOCATEPAGE',
+          'SLEEP_BPOOL_FLUSH',              'SLEEP_WORKSPACE_ALLOCATEPAGE',
+          -- SLEEP_BPOOL_STEAL, SLEEP_BUFFERPOOL_HELPLW and SLEEP_MEMORYPOOL_ALLOCATEPAGES
+          -- are deliberately NOT here: free-list stalls, near zero on a healthy
+          -- instance, and a memory-pressure signal when they rank.
           'DISPATCHER_QUEUE_SEMAPHORE',     'CHECKPOINT_QUEUE',
           'DBMIRROR_EVENTS_QUEUE',          'DBMIRROR_WORKER_QUEUE',
           'SQLTRACE_INCREMENTAL_FLUSH_SLEEP','SQLTRACE_WAIT_ENTRIES',
@@ -61,9 +62,10 @@ WITH filtered_waits AS (
           -- Extended Events plumbing: dispatcher, session and buffer bookkeeping.
           -- These rank by call count, not by stall. Measured on an idle instance:
           -- PREEMPTIVE_XE_CALLBACKEXECUTE 132,833,917 waits for 3,828,650 ms, an
-          -- average of 0.00003 ms each. XE_FILE_TARGET_TVF is deliberately NOT here,
-          -- because reading an event file target is a query and can stall on I/O.
+          -- average of 0.00003 ms each. XE_FILE_TARGET_TVF meters reads of event files
+          -- through sys.fn_xe_file_target_read_file: the reader's own cost, not a stall.
           'XE_DISPATCHER_WAIT',             'XE_DISPATCHER_JOIN',
+          'XE_FILE_TARGET_TVF',
           'XE_LIVE_TARGET_TVF',             'XE_CALLBACK_LIST',
           'XE_MODULEMGR_SYNC',              'XE_SESSION_CREATE_SYNC',
           'XE_SESSION_FLUSH',               'XE_SESSION_SYNC',
@@ -80,6 +82,13 @@ WITH filtered_waits AS (
           'QDS_SHUTDOWN_QUEUE',             'QDS_TASK_START',
           'QDS_ASYNC_PERSIST_TASK_START',   'PWAIT_EXTENSIBILITY_CLEANUP_TASK',
           'PARALLEL_REDO_WORKER_WAIT_WORK', 'HADR_TIMER_TASK',
+          -- AG plumbing that idles by design: log capture caught up, redo waiting for
+          -- work, and the parallel redo coordination waits MS Docs lists as internal.
+          'HADR_LOGCAPTURE_WAIT',           'REDO_THREAD_PENDING_WORK',
+          'PARALLEL_REDO_DRAIN_WORKER',     'PARALLEL_REDO_LOG_CACHE',
+          'PARALLEL_REDO_TRAN_LIST',        'PARALLEL_REDO_WORKER_SYNC',
+          -- Memory allocation bookkeeping: millions of microsecond waits on every instance.
+          'MEMORY_ALLOCATION_EXT',
           'PVS_PREALLOCATE',                'WAIT_XTP_HOST_WAIT',
           -- Older builds only. Absent from sys.dm_os_wait_stats on 2025 (17.0.4075.5),
           -- so they exclude nothing there; kept because they are still returned on the

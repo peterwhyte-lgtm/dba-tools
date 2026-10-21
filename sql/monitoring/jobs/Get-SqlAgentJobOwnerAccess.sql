@@ -12,7 +12,7 @@ SET NOCOUNT ON;
 SET QUOTED_IDENTIFIER ON;
 
 DECLARE @CheckWindowsOwners bit     = 1;      -- 0 = skip the xp_logininfo lookups (no AD calls)
-DECLARE @NewOwner           sysname = N'sa';  -- owner written into fix_command (use a dedicated service login if you have one)
+DECLARE @NewOwner           sysname = SUSER_SNAME(0x01);  -- the sa login by SID, whatever it is named (use a dedicated service login if you have one)
 
 DECLARE @agent_xps_in_use int =
     (SELECT CONVERT(int, value_in_use) FROM sys.configurations WHERE name = N'Agent XPs');
