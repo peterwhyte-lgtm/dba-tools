@@ -31,9 +31,9 @@ BEGIN
         SELECT
             p.query_id,
             SUM(rs.count_executions) AS exec_count,
-            AVG(rs.avg_cpu_time) / 1000.0 AS avg_cpu_ms,
-            AVG(rs.avg_duration) / 1000.0 AS avg_duration_ms,
-            AVG(rs.avg_logical_io_reads) AS avg_logical_reads,
+            SUM(rs.avg_cpu_time * rs.count_executions) / NULLIF(SUM(rs.count_executions), 0) / 1000.0 AS avg_cpu_ms,
+            SUM(rs.avg_duration * rs.count_executions) / NULLIF(SUM(rs.count_executions), 0) / 1000.0 AS avg_duration_ms,
+            SUM(rs.avg_logical_io_reads * rs.count_executions) / NULLIF(SUM(rs.count_executions), 0) AS avg_logical_reads,
             MAX(rs.max_cpu_time) / 1000.0 AS max_cpu_ms
         FROM sys.query_store_runtime_stats AS rs
         JOIN sys.query_store_runtime_stats_interval AS ri ON ri.runtime_stats_interval_id = rs.runtime_stats_interval_id
@@ -47,9 +47,9 @@ BEGIN
         SELECT
             p.query_id,
             SUM(rs.count_executions) AS exec_count,
-            AVG(rs.avg_cpu_time) / 1000.0 AS avg_cpu_ms,
-            AVG(rs.avg_duration) / 1000.0 AS avg_duration_ms,
-            AVG(rs.avg_logical_io_reads) AS avg_logical_reads
+            SUM(rs.avg_cpu_time * rs.count_executions) / NULLIF(SUM(rs.count_executions), 0) / 1000.0 AS avg_cpu_ms,
+            SUM(rs.avg_duration * rs.count_executions) / NULLIF(SUM(rs.count_executions), 0) / 1000.0 AS avg_duration_ms,
+            SUM(rs.avg_logical_io_reads * rs.count_executions) / NULLIF(SUM(rs.count_executions), 0) AS avg_logical_reads
         FROM sys.query_store_runtime_stats AS rs
         JOIN sys.query_store_runtime_stats_interval AS ri ON ri.runtime_stats_interval_id = rs.runtime_stats_interval_id
         JOIN sys.query_store_plan AS p ON p.plan_id = rs.plan_id
@@ -76,19 +76,19 @@ BEGIN
             (SELECT COUNT(DISTINCT plan_id) FROM sys.query_store_plan
              WHERE query_id = rw.query_id) AS total_plan_count,
             CASE
-                WHEN rw.avg_cpu_ms > bw.avg_cpu_ms * (@regression_factor * 2)
+                WHEN bw.avg_cpu_ms > 0 AND rw.avg_cpu_ms > bw.avg_cpu_ms * (@regression_factor * 2)
                 THEN 'CRITICAL - CPU ' +
                      CAST(CAST(rw.avg_cpu_ms / NULLIF(bw.avg_cpu_ms, 0) AS INT) AS VARCHAR) +
                      'x baseline; likely plan regression or stats change'
-                WHEN rw.avg_duration_ms > bw.avg_duration_ms * (@regression_factor * 2)
+                WHEN bw.avg_duration_ms > 0 AND rw.avg_duration_ms > bw.avg_duration_ms * (@regression_factor * 2)
                 THEN 'CRITICAL - duration ' +
                      CAST(CAST(rw.avg_duration_ms / NULLIF(bw.avg_duration_ms, 0) AS INT) AS VARCHAR) +
                      'x baseline'
-                WHEN rw.avg_cpu_ms > bw.avg_cpu_ms * @regression_factor
+                WHEN bw.avg_cpu_ms > 0 AND rw.avg_cpu_ms > bw.avg_cpu_ms * @regression_factor
                 THEN 'WARN - CPU ' +
                      CAST(CAST(rw.avg_cpu_ms / NULLIF(bw.avg_cpu_ms, 0) AS DECIMAL(4,1)) AS VARCHAR) +
                      'x baseline'
-                WHEN rw.avg_duration_ms > bw.avg_duration_ms * @regression_factor
+                WHEN bw.avg_duration_ms > 0 AND rw.avg_duration_ms > bw.avg_duration_ms * @regression_factor
                 THEN 'WARN - duration ' +
                      CAST(CAST(rw.avg_duration_ms / NULLIF(bw.avg_duration_ms, 0) AS DECIMAL(4,1)) AS VARCHAR) +
                      'x baseline'
@@ -99,8 +99,8 @@ BEGIN
         JOIN baseline_window AS bw ON bw.query_id = rw.query_id
         JOIN sys.query_store_query AS q ON q.query_id = rw.query_id
         JOIN sys.query_store_query_text AS qt ON qt.query_text_id = q.query_text_id
-        WHERE rw.avg_cpu_ms > bw.avg_cpu_ms * @regression_factor
-           OR rw.avg_duration_ms > bw.avg_duration_ms * @regression_factor
+        WHERE (bw.avg_cpu_ms > 0 AND rw.avg_cpu_ms > bw.avg_cpu_ms * @regression_factor)
+           OR (bw.avg_duration_ms > 0 AND rw.avg_duration_ms > bw.avg_duration_ms * @regression_factor)
     )
     SELECT *
     FROM regressed

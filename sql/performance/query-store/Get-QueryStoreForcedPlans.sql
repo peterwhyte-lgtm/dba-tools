@@ -32,8 +32,8 @@ BEGIN
             p.plan_forcing_type_desc,
             p.last_execution_time,
             p.initial_compile_start_time AS plan_created,
-            DATEDIFF(DAY, p.initial_compile_start_time, GETDATE()) AS plan_age_days,
-            AVG(rs.avg_cpu_time) / 1000.0 AS forced_avg_cpu_ms,
+            DATEDIFF(DAY, p.initial_compile_start_time, SYSUTCDATETIME()) AS plan_age_days,
+            SUM(rs.avg_cpu_time * rs.count_executions) / NULLIF(SUM(rs.count_executions), 0) / 1000.0 AS forced_avg_cpu_ms,
             SUM(rs.count_executions) AS forced_exec_count
         FROM sys.query_store_plan AS p
         LEFT JOIN sys.query_store_runtime_stats AS rs ON rs.plan_id = p.plan_id
@@ -49,7 +49,8 @@ BEGIN
             MIN(rs_agg.avg_cpu_ms) AS best_avg_cpu_ms
         FROM sys.query_store_plan AS p
         JOIN (
-            SELECT plan_id, AVG(avg_cpu_time) / 1000.0 AS avg_cpu_ms
+            SELECT plan_id,
+                   SUM(avg_cpu_time * count_executions) / NULLIF(SUM(count_executions), 0) / 1000.0 AS avg_cpu_ms
             FROM sys.query_store_runtime_stats
             GROUP BY plan_id
         ) AS rs_agg ON rs_agg.plan_id = p.plan_id
