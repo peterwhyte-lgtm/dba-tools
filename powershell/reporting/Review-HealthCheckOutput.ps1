@@ -400,15 +400,12 @@ foreach ($row in $linkedSec) {
 # ── vlf-count ─────────────────────────────────────────────────────────────────
 $vlfData = Read-Csv-Safe 'vlf-count'
 foreach ($row in $vlfData) {
-    if ($row.status -eq 'CRITICAL') {
-        Add-Finding 'CRITICAL' 'VLF Count' $row.database_name (
-            "VLF count $($row.vlf_count) is severe (>1000). Shrink log to near-zero then grow in one fixed-MB step.")
-    } elseif ($row.status -eq 'HIGH') {
+    if ($row.status -eq 'HIGH') {
         Add-Finding 'WARNING' 'VLF Count' $row.database_name (
-            "VLF count $($row.vlf_count) is high (>200). Shrink and resize the log file.")
+            "VLF count $($row.vlf_count) is high (>1000). Monitor it and plan a log shrink then one fixed-MB regrow in a quiet window.")
     } elseif ($row.status -eq 'ELEVATED') {
         Add-Finding 'INFO' 'VLF Count' $row.database_name (
-            "VLF count $($row.vlf_count) is elevated (>50). Monitor - resize on next maintenance window.")
+            "VLF count $($row.vlf_count) is elevated (100+). A baseline to monitor, resize on the next maintenance window.")
     }
 }
 
