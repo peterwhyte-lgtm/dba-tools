@@ -1278,8 +1278,8 @@ const FREE_SPACE_CRIT  = 10;   // free_pct %            → red  (low free = bad
 const FREE_SPACE_WARN  = 20;   // free_pct %            → orange
 const FRAG_CRIT        = 30;   // fragmentation %       → red
 const FRAG_WARN        = 10;   // fragmentation %       → orange
-const VLF_CRIT         = 1000; // vlf_count             → red
-const VLF_WARN         = 200;  // vlf_count             → orange
+const VLF_CRIT         = 10000; // vlf_count            → red (collector CRITICAL)
+const VLF_WARN         = 1000; // vlf_count             → orange (HIGH)
 const LATENCY_CRIT_MS  = 100;  // io latency ms         → red
 const LATENCY_WARN_MS  = 50;   // io latency ms         → orange
 const MOD_PCT_CRIT     = 20;   // modification_pct %    → red  (stale stats)

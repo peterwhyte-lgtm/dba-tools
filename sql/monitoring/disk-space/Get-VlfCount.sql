@@ -8,7 +8,8 @@ Purpose     : Reports virtual log file (VLF) count per database transaction log,
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-vlf-counts/)
 Requires    : VIEW SERVER STATE
 HealthCheck : Yes
-Notes       : Target: < 50 VLFs per database. > 200 is elevated. > 1000 is severe.
+Notes       : Bands match the VLF collector: under 100 OK, 100-1000 ELEVATED, over 1000 HIGH.
+              A baseline to monitor, not an alarm: plan the fix for a quiet window.
               Fix: shrink the log to near-zero, then grow it in one large fixed-MB
               increment matching expected steady-state size.
               Run Get-TransactionLogSizeAndUsage first to size the target correctly.
@@ -28,9 +29,8 @@ BEGIN
         COUNT(*) AS vlf_count,
         CAST(SUM(li.vlf_size_mb) AS DECIMAL(10,2)) AS log_size_mb,
         CASE 
-            WHEN COUNT(*) > 1000 THEN 'CRITICAL'
-            WHEN COUNT(*) > 200 THEN 'HIGH'
-            WHEN COUNT(*) > 50  THEN 'ELEVATED'
+            WHEN COUNT(*) > 1000 THEN 'HIGH'
+            WHEN COUNT(*) >= 100 THEN 'ELEVATED'
             ELSE 'OK'
         END AS status
     FROM sys.databases d
@@ -93,9 +93,8 @@ BEGIN
                 COUNT(*),
                 CAST(SUM(FileSize) / 1048576.0 AS DECIMAL(10,2)),
                 CASE 
-                    WHEN COUNT(*) > 1000 THEN 'CRITICAL'
-                    WHEN COUNT(*) > 200 THEN 'HIGH'
-                    WHEN COUNT(*) > 50  THEN 'ELEVATED'
+                    WHEN COUNT(*) > 1000 THEN 'HIGH'
+                    WHEN COUNT(*) >= 100 THEN 'ELEVATED'
                     ELSE 'OK'
                 END
             FROM #loginfo;

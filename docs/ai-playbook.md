@@ -123,7 +123,7 @@ The 45 scripts in the healthcheck suite are tagged `HealthCheck : Yes` in their 
 
 **Flags raised by Review-HealthCheckOutput:**
 - CRITICAL: suspect pages, SA enabled, database not ONLINE, no full backup ever
-- WARNING: stale backups, DBCC CHECKDB >7 days, log >80% used, percent-based autogrowth, max memory unconfigured, I/O latency >50ms, VLF >200, maintenance job missing/failed
+- WARNING: stale backups, DBCC CHECKDB >7 days, log >80% used, percent-based autogrowth, max memory unconfigured, I/O latency >50ms, VLF >1000, maintenance job missing/failed
 
 ---
 
