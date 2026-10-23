@@ -17,16 +17,16 @@ IF NOT EXISTS (SELECT 1 FROM msdb.dbo.restorehistory)
 BEGIN
     SELECT
         CAST('NO RESTORE HISTORY - no restore has ever been recorded on this instance'
-             AS NVARCHAR(128))          AS database_name,
-        CAST(NULL AS DATETIME)          AS restore_date,
-        CAST(NULL AS INT)               AS days_since_restore,
-        CAST(NULL AS NVARCHAR(12))      AS restore_type,
-        CAST(NULL AS NVARCHAR(128))     AS source_database,
-        CAST(NULL AS DATETIME)          AS backup_taken_date,
-        CAST(NULL AS INT)               AS backup_age_at_restore_days,
-        CAST(NULL AS NVARCHAR(128))     AS user_name,
-        CAST(NULL AS BIT)               AS with_recovery,
-        CAST(NULL AS BIT)               AS with_replace;
+             AS NVARCHAR(128)) AS database_name,
+        CAST(NULL AS DATETIME) AS restore_date,
+        CAST(NULL AS INT) AS days_since_restore,
+        CAST(NULL AS NVARCHAR(20)) AS restore_type,
+        CAST(NULL AS NVARCHAR(128)) AS source_database,
+        CAST(NULL AS DATETIME) AS backup_taken_date,
+        CAST(NULL AS INT) AS backup_age_at_restore_days,
+        CAST(NULL AS NVARCHAR(128)) AS user_name,
+        CAST(NULL AS BIT) AS with_recovery,
+        CAST(NULL AS BIT) AS with_replace;
     RETURN;
 END
 
@@ -37,13 +37,18 @@ END
         rh.destination_database_name,
         rh.restore_date,
         DATEDIFF(DAY, rh.restore_date, GETDATE()) AS days_since_restore,
+        -- msdb restorehistory.restore_type (Microsoft Learn): D = Database, F = File,
+        -- G = Filegroup, I = Differential, L = Log, V = Verifyonly. P and R are not on
+        -- the Learn page, so their labels keep the raw code; anything else shows as-is.
         CASE rh.restore_type
-            WHEN 'D' THEN 'Full'
+            WHEN 'D' THEN 'Database'
             WHEN 'I' THEN 'Differential'
             WHEN 'L' THEN 'Log'
             WHEN 'F' THEN 'File'
-            WHEN 'P' THEN 'Page'
-            WHEN 'R' THEN 'Revert'
+            WHEN 'G' THEN 'Filegroup'
+            WHEN 'P' THEN 'Partial (P)'
+            WHEN 'R' THEN 'Revert (R)'
+            WHEN 'V' THEN 'Verify only (V)'
             ELSE rh.restore_type
         END AS restore_type,
         bs.database_name AS source_database,
