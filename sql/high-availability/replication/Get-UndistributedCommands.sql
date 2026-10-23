@@ -33,11 +33,11 @@ BEGIN
     -- MSdistribution_agents and are joined in on agent_id.
     DECLARE @sql nvarchar(max) = N'
     SELECT
-        a.publisher_db  AS publisher_database,
-        a.publication   AS publication_name,
+        a.publisher_db AS publisher_database,
+        a.publication AS publication_name,
         a.subscriber_db AS subscriber_database,
         SUM(s.UndelivCmdsInDistDB) AS undistributed_commands,
-        SUM(s.DelivCmdsInDistDB)   AS delivered_commands
+        SUM(s.DelivCmdsInDistDB) AS delivered_commands
     FROM ' + QUOTENAME(@distdb) + N'.dbo.MSdistribution_status s
     JOIN ' + QUOTENAME(@distdb) + N'.dbo.MSdistribution_agents a ON a.id = s.agent_id
     GROUP BY a.publisher_db, a.publication, a.subscriber_db
