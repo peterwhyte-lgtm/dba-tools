@@ -2,8 +2,8 @@
 Script Name : Get-BackupEncryptionStatus
 Category    : backups
 Purpose     : Shows TDE status and backup encryption coverage per database. Identifies
-              databases where TDE is on but backups are not encrypted, or where neither
-              TDE nor backup encryption is used.
+              databases with no recent full backup, and databases where neither TDE
+              nor backup encryption protects the backup files.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-backup-encryption-status/)
 Requires    : VIEW DATABASE STATE; VIEW SERVER STATE for sys.dm_database_encryption_keys
 */
@@ -32,20 +32,20 @@ SELECT
     MAX(CASE bs.type WHEN 'D'
          THEN SUBSTRING(CONVERT(varchar(max), bs.encryptor_thumbprint, 2), 1, 16)
          ELSE NULL END) AS backup_encryptor_thumbprint_prefix,
-    -- Assessment
+    -- Assessment. A TDE database's backup files are encrypted by its TDE key, so TDE without backup encryption is
+    -- covered, not a gap; the risk is losing the TDE certificate. The missing-backup check comes first so a TDE
+    -- database with no recent backup is reported as that.
     CASE
-        WHEN d.is_encrypted = 1
-             AND MAX(CASE bs.type WHEN 'D' THEN bs.key_algorithm END) IS NOT NULL
-            THEN 'OK - TDE + encrypted backups'
-        WHEN d.is_encrypted = 1
-             AND MAX(CASE bs.type WHEN 'D' THEN bs.key_algorithm END) IS NULL
-            THEN 'WARN - TDE enabled but backups not encrypted'
-        WHEN d.is_encrypted = 0
-             AND MAX(CASE bs.type WHEN 'D' THEN bs.key_algorithm END) IS NOT NULL
-            THEN 'INFO - backup encrypted (no TDE on data files)'
         WHEN MAX(CASE bs.type WHEN 'D' THEN bs.backup_finish_date END) IS NULL
             THEN 'WARN - no full backup in last 30 days'
-        ELSE 'INFO - no encryption on TDE or backup'
+        WHEN d.is_encrypted = 1
+             AND MAX(CASE bs.type WHEN 'D' THEN bs.key_algorithm END) IS NOT NULL
+            THEN 'OK - TDE and backup encryption'
+        WHEN d.is_encrypted = 1
+            THEN 'OK - TDE (backup file encrypted by the TDE key)'
+        WHEN MAX(CASE bs.type WHEN 'D' THEN bs.key_algorithm END) IS NOT NULL
+            THEN 'OK - backup encryption (data files not TDE)'
+        ELSE 'INFO - no TDE or backup encryption'
     END AS encryption_status
 FROM sys.databases d
 LEFT JOIN sys.dm_database_encryption_keys dek
