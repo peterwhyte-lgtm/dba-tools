@@ -24,6 +24,10 @@ Related     : Get-BackupCoverage, Get-LastDatabaseBackupTimes, Get-BackupAge che
 -- msdb history clean-up is a separate job, so orphaned history is excluded here rather than
 -- flagged (same model as Get-BackupCoverage and Get-LastDatabaseBackupTimes, which both start
 -- from sys.databases).
+-- Databases that are not ONLINE (RECOVERY_PENDING, SUSPECT, OFFLINE, RESTORING, EMERGENCY) are
+-- reported too. The no-full-backup branch used to filter d.state = 0, so a database that could
+-- not come online and had never been backed up returned no row at all: the worst case was the
+-- invisible one. Its state is now in the chain_status text.
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
@@ -143,11 +147,15 @@ combined AS (
         d.name, NULL, NULL, NULL, NULL, NULL, NULL,
         0, 0, 0, NULL, NULL, NULL,
         d.recovery_model_desc, d.log_reuse_wait_desc,
-        'CRITICAL - no full backup on record for this database',
+        CASE
+            WHEN d.state = 0
+            THEN 'CRITICAL - no full backup on record for this database'
+            ELSE 'CRITICAL - no full backup on record and database is ' + d.state_desc +
+                 '; it cannot be backed up until it is brought ONLINE'
+        END,
         NULL
     FROM sys.databases AS d
     WHERE d.database_id > 4
-      AND d.state = 0
       AND d.name NOT IN (SELECT database_name FROM full_details)
 )
 SELECT *
