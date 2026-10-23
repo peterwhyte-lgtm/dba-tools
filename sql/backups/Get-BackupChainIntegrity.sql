@@ -150,6 +150,8 @@ combined AS (
         CASE
             WHEN d.state = 0
             THEN 'CRITICAL - no full backup on record for this database'
+            WHEN d.state = 1
+            THEN 'INFO - database is RESTORING (log shipping secondary or restore in progress); backups are taken on the primary'
             ELSE 'CRITICAL - no full backup on record and database is ' + d.state_desc +
                  '; it cannot be backed up until it is brought ONLINE'
         END,
