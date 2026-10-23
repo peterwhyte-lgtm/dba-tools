@@ -78,7 +78,8 @@ WITH parsed AS (
             WHEN log_text LIKE '%untrusted domain%' THEN 18452
             WHEN log_text LIKE '%only administrators%' THEN 18451
             WHEN log_text LIKE '%account is disabled%' THEN 18470
-            WHEN log_text LIKE '%password must be changed%' THEN 18488
+            WHEN log_text LIKE '%password of the account has expired%' THEN 18487
+            WHEN log_text LIKE '%password of the account must be changed%' THEN 18488
             WHEN log_text LIKE '%explicitly specified database%' THEN 4060
             WHEN log_text LIKE '%default database%' THEN 4064
             WHEN log_text LIKE '%specified in the login properties%' THEN 4064
@@ -111,10 +112,10 @@ SELECT
         WHEN 18452 THEN 'Login from untrusted domain or cannot use Windows auth'
         WHEN 18451 THEN 'Login failed, only admin connections are allowed'
         WHEN 18470 THEN 'Account is disabled'
+        WHEN 18487 THEN 'Password has expired'
         WHEN 18488 THEN 'Password must be changed'
-        WHEN 4060  THEN 'Credentials are valid, the requested database could not be opened'
-        WHEN 4064  THEN 'Credentials are valid, the default database is not usable'
-        WHEN 4818  THEN 'Password does not meet complexity requirements'
+        WHEN 4060 THEN 'Credentials are valid, the requested database could not be opened'
+        WHEN 4064 THEN 'Credentials are valid, the default database is not usable'
         ELSE 'Error ' + CAST(agg.error_code AS VARCHAR(10))
     END AS error_description,
     agg.reason,
@@ -135,11 +136,10 @@ SELECT
         WHEN agg.error_code IN (4060, 4064)
         THEN 'CONFIG - valid credentials, database not usable (' + CAST(agg.failure_count AS VARCHAR) +
              ' in log); fix the database or the default database, not the password'
-        WHEN agg.failure_count >= 50
-        THEN 'CRITICAL - ' + CAST(agg.failure_count AS VARCHAR) +
-             ' failures in error log; likely brute-force or application misconfiguration'
         WHEN agg.failure_count >= 10
-        THEN 'WARN - repeated failures for login [' + ISNULL(agg.login_name, '(unknown)') + ']'
+        THEN 'WARN - ' + CAST(agg.failure_count AS VARCHAR) + ' failures for login [' +
+             ISNULL(agg.login_name, '(unknown)') + '] in the current error log; baseline is under 10' +
+             ', check client_host for a stale application password or brute force'
         ELSE 'INFO'
     END AS status
 FROM aggregated AS agg

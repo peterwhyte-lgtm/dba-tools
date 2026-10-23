@@ -20,7 +20,11 @@ SET QUOTED_IDENTIFIER ON;
   Risk assessment:
     HIGH — catch-all or specific mapping with stored remote credentials
     MEDIUM — self-credentials (impersonation) mapping
-    LOW — no mapping / will fail for unmatched logins
+    LOW — a mapping row with uses_self_credential = 0 and no remote_name, which is what
+          sp_addlinkedsrvlogin @useself = 'FALSE' with no @rmtuser stores ("Be made without
+          using a security context"). It connects with no credentials; it is not a missing mapping.
+    UNKNOWN — no sys.linked_logins row at all for the server ("Not be made"): the LEFT JOIN
+          leaves every ll column NULL, so no risk branch matches and unmatched logins are refused.
 */
 
 SELECT
