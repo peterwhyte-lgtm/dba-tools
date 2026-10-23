@@ -438,10 +438,10 @@ foreach ($row in $failedLogins) {
     if ($row.is_currently_locked -in @('1','True','true')) {
         Add-Finding 'CRITICAL' 'Failed Logins' $row.login_name 'Login is currently locked out'
     }
-    if ($row.status -like 'CRITICAL*') {
-        Add-Finding 'CRITICAL' 'Failed Logins' $row.login_name "$($row.failure_count) failures in error log - likely brute-force or app misconfiguration"
-    } elseif ($row.status -like 'WARN*') {
-        Add-Finding 'WARNING' 'Failed Logins' $row.login_name "$($row.failure_count) repeated failures in error log"
+    # The SQL labels repeated failures WARN against a baseline (under 10 per log); a count is
+    # never CRITICAL on its own. A locked account above is the CRITICAL signal.
+    if ($row.status -like 'WARN*') {
+        Add-Finding 'WARNING' 'Failed Logins' $row.login_name "$($row.failure_count) repeated failures in error log (baseline under 10)"
     }
 }
 
