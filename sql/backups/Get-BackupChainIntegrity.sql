@@ -156,6 +156,7 @@ combined AS (
         NULL
     FROM sys.databases AS d
     WHERE d.database_id > 4
+      AND d.source_database_id IS NULL -- a database snapshot cannot be backed up
       AND d.name NOT IN (SELECT database_name FROM full_details)
 )
 SELECT *
