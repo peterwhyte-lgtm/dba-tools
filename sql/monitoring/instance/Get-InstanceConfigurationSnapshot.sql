@@ -12,8 +12,8 @@ SET NOCOUNT ON;
 
 SELECT
     name,
-    value         AS configured_value,
-    value_in_use  AS running_value,
+    value AS configured_value,
+    value_in_use AS running_value,
     minimum,
     maximum,
     description,

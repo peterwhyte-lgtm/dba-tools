@@ -17,6 +17,13 @@ Related     : Get-BackupCoverage, Get-LastDatabaseBackupTimes, Get-BackupAge che
 -- the word "check" on every backup-recency question - so "i need to check when my databases
 -- were last backed up" returned the continuity script instead of Get-LastDatabaseBackupTimes.
 -- A Purpose line that describes its neighbours competes with them. Comparisons go in Related.
+-- Only databases that exist in sys.databases are reported. msdb keeps backup history for
+-- dropped databases until it is purged (sp_delete_backuphistory), and those rows used to come
+-- back with a NULL recovery model and fall through to "OK - chain is intact", which is a false
+-- all-clear for a database that is not there. A dropped database has no chain to protect, and
+-- msdb history clean-up is a separate job, so orphaned history is excluded here rather than
+-- flagged (same model as Get-BackupCoverage and Get-LastDatabaseBackupTimes, which both start
+-- from sys.databases).
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
@@ -105,6 +112,8 @@ combined AS (
         d.recovery_model_desc,
         d.log_reuse_wait_desc,
         CASE
+            WHEN d.recovery_model_desc IS NULL
+            THEN 'WARN - recovery model unknown (database not visible in sys.databases); chain not assessed'
             WHEN fd.full_is_damaged = 1
             THEN 'CRITICAL - last full backup is marked damaged in msdb'
             WHEN ISNULL(lg.chain_gaps, 0) > 0
@@ -126,7 +135,7 @@ combined AS (
     FROM full_details AS fd
     LEFT JOIN log_gaps AS lg ON lg.database_name = fd.database_name
     LEFT JOIN last_log AS ll ON ll.database_name = fd.database_name
-    LEFT JOIN sys.databases AS d ON d.name = fd.database_name
+    JOIN sys.databases AS d ON d.name = fd.database_name
 
     UNION ALL
 
