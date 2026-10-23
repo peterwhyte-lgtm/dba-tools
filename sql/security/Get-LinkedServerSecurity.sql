@@ -23,8 +23,12 @@ SET QUOTED_IDENTIFIER ON;
     LOW — a mapping row with uses_self_credential = 0 and no remote_name, which is what
           sp_addlinkedsrvlogin @useself = 'FALSE' with no @rmtuser stores ("Be made without
           using a security context"). It connects with no credentials; it is not a missing mapping.
-    UNKNOWN — no sys.linked_logins row at all for the server ("Not be made"): the LEFT JOIN
-          leaves every ll column NULL, so no risk branch matches and unmatched logins are refused.
+          LOW, not NONE: nothing is stored to leak, and a SQL Server target refuses it
+          (Msg 7399 "Authentication failed"), but a source that accepts anonymous connections
+          (a file or ODBC provider) would be open to every local login, so it is worth seeing.
+    NONE — no sys.linked_logins row at all for the server ("Not be made"): the LEFT JOIN
+          leaves every ll column NULL and every connection is refused (Msg 7416).
+    UNKNOWN — any row that matches none of the above.
 */
 
 SELECT
@@ -33,7 +37,10 @@ SELECT
     s.provider,
     s.data_source,
     ISNULL(s.catalog, '') AS remote_catalog,
-    ISNULL(SUSER_SNAME(NULLIF(ll.local_principal_id, 0)), '(any login)') AS local_login,
+    CASE
+        WHEN ll.server_id IS NULL THEN '(no login mappings)'
+        ELSE ISNULL(SUSER_SNAME(NULLIF(ll.local_principal_id, 0)), '(any login)')
+    END AS local_login,
     CASE
         WHEN ll.uses_self_credential = 1
             THEN 'Impersonate - context of the calling login'
@@ -41,7 +48,9 @@ SELECT
             THEN 'Catch-all mapping -> ' + ll.remote_name
         WHEN ll.remote_name IS NOT NULL
             THEN 'Explicit mapping -> ' + ll.remote_name
-        ELSE '(no mapping - will fail for unmatched logins)'
+        WHEN ll.server_id IS NULL
+            THEN 'Not be made - no login mappings, connections are refused'
+        ELSE 'No security context - connects with no credentials'
     END AS security_context,
     ll.uses_self_credential,
     ll.remote_name AS remote_login,
@@ -53,7 +62,9 @@ SELECT
         WHEN ll.uses_self_credential = 1
             THEN 'MEDIUM - impersonation (caller context)'
         WHEN ll.remote_name IS NULL AND ll.uses_self_credential = 0
-            THEN 'LOW - no mapping (access denied for unmatched logins)'
+            THEN 'LOW - no security context (connects with no credentials)'
+        WHEN ll.server_id IS NULL
+            THEN 'NONE - no login mappings (all connections refused)'
         ELSE 'UNKNOWN'
     END AS risk_level,
     s.is_remote_login_enabled,
