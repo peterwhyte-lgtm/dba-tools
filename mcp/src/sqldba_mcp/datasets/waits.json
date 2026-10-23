@@ -69,7 +69,7 @@
   "verdict_question": "Is This Wait Expected?",
   "matters": true,
   "when_to_ignore": "SSMS result grid, SSMS displays results incrementally as they arrive.",
-  "what_to_do": "If queries return too many rows: Add WHERE clauses to filter earlier Add TOP or pagination (OFFSET/FETCH) to return only what's needed Move aggregation into SQL (GROUP BY, SUM, COUNT) rather than returning raw rows to the application If it's cursor-style row-by-row processing: Refactor the application to process results in batches Consider server-side cursor alternatives (but usually set-based is better) Can the processing move into SQL Server (stored procedure, table-valued function)? If it's a reporting tool pulling large data sets: Review whether the report actually needs all those rows Add indexes to make the queries faster so the fetch time is reduced Consider pre-aggregating into summary tables for common report patterns If network latency is genuinely high: Move application closer to SQL Server (same data centre) Check network infrastructure, QoS, routing, VPN encryption overhead Consider reducing the size of result sets to minimise round trips",
+  "what_to_do": "If queries return too many rows: Add WHERE clauses to filter earlier Add TOP or pagination (OFFSET/FETCH) to return only what's needed Move aggregation into SQL (GROUP BY, SUM, COUNT) rather than returning raw rows to the application If it's cursor-style row-by-row processing: Refactor the application to process results in batches Read the whole result set first, then do the slow work (writing files, calling APIs), instead of doing it between reads Can the processing move into SQL Server (stored procedure, table-valued function)? If it's a reporting tool pulling large data sets: Review whether the report actually needs all those rows Consider pre-aggregating into summary tables for common report patterns If network latency is genuinely high: Move application closer to SQL Server (same data centre) Check network infrastructure, QoS, routing, VPN encryption overhead Consider reducing the size of result sets to minimise round trips",
   "url": "https://sqldba.blog/sql-server-wait-statistics-async-network-io/"
  },
  {
@@ -94,7 +94,7 @@
   "verdict_question": "Is This Wait Expected?",
   "matters": true,
   "when_to_ignore": "",
-  "what_to_do": "Enable backup compression, the single highest-impact change you can make to improve backup performance: -- For a single backup: BACKUP DATABASE [YourDatabase] TO DISK = 'D:\\Backups\\YourDatabase.bak' WITH COMPRESSION, STATS = 10; -- Set as default for all future backups: EXEC sp_configure 'backup compression default', 1; RECONFIGURE; Compression typically reduces backup size by 60\u201380% on mixed data, cutting both write I/O and network transfer time proportionally. Stripe across multiple backup files, write to multiple destinations simultaneously: BACKUP DATABASE [YourDatabase] TO DISK = '\\\\backup1\\share\\YourDatabase_1.bak', DISK = '\\\\backup2\\share\\YourDatabase_2.bak', DISK = 'D:\\LocalBackup\\YourDatabase_3.bak' WITH COMPRESSION, STATS = 5; This spreads I/O across destinations and can multiply effective throughput. Move backups to faster or dedicated backup storage, a dedicated backup LUN or a local fast disk for landing backups, followed by a secondary copy job, is faster than writing directly to a shared NAS over the network. Tune BUFFERCOUNT and MAXTRANSFERSIZE, for large databases, increasing these can improve backup throughput: BACKUP DATABASE [YourDatabase] TO DISK = 'D:\\Backups\\YourDatabase.bak' WITH COMPRESSION, MAXTRANSFERSIZE = 4194304, BUFFERCOUNT = 50; MAXTRANSFERSIZE = 4194304 (4 MB) is common for large databases. Increasing BUFFERCOUNT uses more memory but can improve throughput on fast destinations. [trimmed for size - the full steps are in the write-up linked below]",
+  "what_to_do": "Enable backup compression, the single highest-impact change you can make to improve backup performance: -- For a single backup: BACKUP DATABASE [YourDatabase] TO DISK = 'D:\\Backups\\YourDatabase.bak' WITH COMPRESSION, STATS = 10; -- Set as default for all future backups: EXEC sp_configure 'backup compression default', 1; RECONFIGURE; Fewer bytes means less write I/O and less network transfer, at the cost of CPU while the backup runs. How much it saves depends on the data: read compression_pct in the history query after the first compressed backup. Stripe across multiple backup files, write to multiple destinations simultaneously: BACKUP DATABASE [YourDatabase] TO DISK = '\\\\backup1\\share\\YourDatabase_1.bak', DISK = '\\\\backup2\\share\\YourDatabase_2.bak', DISK = 'D:\\LocalBackup\\YourDatabase_3.bak' WITH COMPRESSION, STATS = 5; This spreads I/O across destinations and can multiply effective throughput. Move backups to faster or dedicated backup storage, a dedicated backup LUN or a local fast disk for landing backups, followed by a secondary copy job, is faster than writing directly to a shared NAS over the network. Tune BUFFERCOUNT and MAXTRANSFERSIZE, for large databases, increasing these can improve backup throughput: BACKUP DATABASE [YourDatabase] TO DISK = 'D:\\Backups\\YourDatabase.bak' WITH COMPRESSION, MAXTRANSFERSIZE = 4194304, BUFFERCOUNT = 50; MAXTRANSFERSIZE = 4194304 (4 MB) is the maximum. [trimmed for size - the full steps are in the write-up linked below]",
   "url": "https://sqldba.blog/sql-server-wait-statistics-backupio/"
  },
  {
@@ -1163,11 +1163,11 @@
    "LCK_M_SCH_M"
   ],
   "title": "LCK_M_SCH_M Wait Type in SQL Server",
-  "verdict": "The wait itself hurts twice.",
+  "verdict": "Yes, while it lasts, because it hurts twice.",
   "verdict_question": "Is It a Problem?",
   "matters": true,
   "when_to_ignore": "",
-  "what_to_do": "When DDL hangs, check sys.dm_os_waiting_tasks for the SCH-M waiter and follow blocking_session_id to the culprit. sys.dm_tran_locks shows what it still holds. Kill or complete the blocker if it is an abandoned transaction; DBCC OPENTRAN in the database points at the oldest one. Schedule DDL for quiet windows, and use ONLINE = ON operations where the edition allows, which need SCH-M only briefly at the start and end. On SQL Server 2014 and later, use WAIT_AT_LOW_PRIORITY with ABORT_AFTER_WAIT so index operations fail fast or kill blockers deliberately, instead of freezing the table for everyone.",
+  "what_to_do": "Kill or complete the blocker if it is an abandoned transaction; DBCC OPENTRAN in the database points at the oldest one, and killing the session rolls its open work back, which can take a while on a big transaction. Schedule DDL for quiet windows, and use ONLINE = ON where the edition allows. An online rebuild still takes a short shared lock at the start and a brief SCH-M at the end, so it can still queue behind a long transaction, but it does not hold the table for the whole rebuild. On SQL Server 2014 and later, use WAIT_AT_LOW_PRIORITY with ABORT_AFTER_WAIT so index operations and partition switches give up or remove blockers deliberately, instead of freezing the table for everyone. Those waits show as the LOW_PRIORITY and ABORT_BLOCKERS variants. Keep ETL steps that switch partitions or truncate tables away from long reports on the same tables, since both take SCH-M.",
   "url": "https://sqldba.blog/sql-server-wait-lck-m-sch-m/"
  },
  {
@@ -1407,8 +1407,8 @@
   "verdict": "Some PAGEIOLATCH_SH is normal.",
   "verdict_question": "Is This Wait Expected?",
   "matters": true,
-  "when_to_ignore": "After a restart, the buffer pool is empty.",
-  "what_to_do": "Which fix applies depends entirely on what the diagnosis above returned. These are not steps to work through in order; pick the row that matches your evidence. What the diagnosis says What to do Storage latency is high avg_read_ms above 15 ms consistently Move the data files to faster storage. Check whether the array is shared and already busy, and check disk queue depth in Performance Monitor under PhysicalDisk\\Current Disk Queue Length. Fix the volume before touching the instance. Latency is fine but reads are constant low avg_read_ms, high read counts This is buffer pool churn. Check whether max server memory has been set too low, look for other processes eating RAM on the box, and add indexes to cut the logical reads of the worst queries. Add RAM only once the working set genuinely does not fit. One query is responsible Add the missing index, validating it against an execution plan first. Consider partitioning if the query only needs a slice of the table, and check whether it needs every row it asks for or can filter earlier.",
+  "when_to_ignore": "After a restart. The buffer pool is empty.",
+  "what_to_do": "Which fix applies depends entirely on what the diagnosis above returned. These are not steps to work through in order; pick the row that matches your evidence. What the diagnosis says What to do Storage latency is high avg_read_ms consistently above about 15 ms Move the data files to faster storage. Check whether the array is shared and already busy, and confirm the latency outside SQL Server with Performance Monitor\u2019s PhysicalDisk\\Avg. Disk sec/Read for that volume. Fix the volume before touching the instance. Latency is fine but reads are constant low avg_read_ms, high read counts This is buffer pool churn. Check whether max server memory has been set too low, look for other processes eating RAM on the box, and add indexes to cut the logical reads of the worst queries. Add RAM only once the working set genuinely does not fit. One query is responsible Add the missing index, validating it against an execution plan first. Consider partitioning if the query only needs a slice of the table, and check whether it needs every row it asks for or can filter earlier.",
   "url": "https://sqldba.blog/sql-server-wait-statistics-pageiolatch-sh/"
  },
  {
@@ -2442,7 +2442,7 @@
   "verdict": "Some SOS_SCHEDULER_YIELD is always present.",
   "verdict_question": "Is This Wait Expected?",
   "matters": true,
-  "when_to_ignore": "Normal background cooperative yielding, a small amount of SOS_SCHEDULER_YIELD is inherent in how SQL Server schedules work.",
+  "when_to_ignore": "Normal background yielding.",
   "what_to_do": "In priority order. Step 1 fixes the cause; everything below it manages the symptom, and the last one costs money. STEP 1",
   "url": "https://sqldba.blog/sql-server-wait-statistics-sos-scheduler-yield/"
  },
@@ -2766,11 +2766,11 @@
    "XE_DISPATCHER_WAIT"
   ],
   "title": "XE_DISPATCHER_WAIT Wait Type in SQL Server",
-  "verdict": "No; it is the idle half of the XE delivery machinery and belongs on the benign filter list alongside XE_TIMER_EVENT.",
+  "verdict": "No. XE_DISPATCHER_WAIT is the idle time of the Extended Events dispatcher threads, and it belongs on the benign filter list next to XE_TIMER_EVENT.",
   "verdict_question": "Is It a Problem?",
   "matters": false,
   "when_to_ignore": "",
-  "what_to_do": "Filter it out of wait analysis. If you suspect XE delivery is struggling, check dropped_event_count and buffer metrics in sys.dm_xe_sessions, and tighten event predicates on chatty sessions. Leave the dispatchers alone; they size and pace themselves.",
+  "what_to_do": "",
   "url": "https://sqldba.blog/sql-server-wait-xe-dispatcher-wait/"
  },
  {

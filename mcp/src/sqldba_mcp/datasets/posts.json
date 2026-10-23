@@ -10,6 +10,11 @@
   "url": "https://sqldba.blog/applying-data-retention-safely-in-sql-server/"
  },
  {
+  "title": "Azure Data Studio Is Retired: What Replaces Each Job It Did",
+  "lead": "Azure Data Studio was retired on 28 February 2026. Where each job it did lives now: SSMS 22 for administration, VS Code with the MSSQL extension for Mac, Linux and notebooks, and how to bring your connections across.",
+  "url": "https://sqldba.blog/azure-data-studio-retired-what-replaces-it/"
+ },
+ {
   "title": "Backing Up a SQL Server Database with Encryption",
   "lead": "Encrypted backups are no longer optional in most environments.",
   "url": "https://sqldba.blog/backing-up-a-sql-server-database-with-encryption/"
@@ -370,6 +375,11 @@
   "url": "https://sqldba.blog/dba-scripts-get-error-log-patterns/"
  },
  {
+  "title": "DBA Scripts: Get Failed Login Summary",
+  "lead": "The error log is full of Login failed for user \u2018sa\u2019. One script groups every failure by login, client address and reason, adds the lockout state, and tells a scan from a stale password or a missing database.",
+  "url": "https://sqldba.blog/dba-scripts-get-failed-login-summary/"
+ },
+ {
   "title": "DBA Scripts: Get Filegroup Space",
   "lead": "\ud83d\udd27 Part of the DBA-Tools Project, copy/paste SQL Server scripts and health checks.",
   "url": "https://sqldba.blog/dba-scripts-get-filegroup-space/"
@@ -378,6 +388,11 @@
   "title": "DBA Scripts: Get Heaps",
   "lead": "\ud83d\udd27 Part of the DBA-Tools Project, copy/paste SQL Server scripts and health checks.",
   "url": "https://sqldba.blog/dba-scripts-get-heaps/"
+ },
+ {
+  "title": "DBA Scripts: Get Identity Column Usage",
+  "lead": "Find every SQL Server identity column close to its data type limit, before inserts fail with Msg 8115: arithmetic overflow converting IDENTITY to int.",
+  "url": "https://sqldba.blog/dba-scripts-get-identity-column-usage/"
  },
  {
   "title": "DBA Scripts: Get Implicit Conversions",
@@ -448,6 +463,11 @@
   "title": "DBA Scripts: Get Log Reuse Waits",
   "lead": "\ud83d\udd27 Part of the DBA-Tools Project, copy/paste SQL Server scripts and health checks.",
   "url": "https://sqldba.blog/dba-scripts-get-log-reuse-waits/"
+ },
+ {
+  "title": "DBA Scripts: Get Log Shipping Status",
+  "lead": "Log shipping secondary behind, or a 14420 or 14421 alert just fired? Run this on the monitor server to see the backup, copy and restore ages side by side and which job stopped.",
+  "url": "https://sqldba.blog/dba-scripts-get-log-shipping-status/"
  },
  {
   "title": "DBA Scripts: Get Login and Job Inventory",
@@ -801,7 +821,7 @@
  },
  {
   "title": "Deleting Rows in Batches in SQL Server",
-  "lead": "Deleting large volumes of data from a SQL Server table looks simple, but it can cause real problems if done carelessly.",
+  "lead": "A DELETE that removes hundreds of thousands of rows in one go is the one that fills the transaction log, locks the whole table and leaves everything else waiting.",
   "url": "https://sqldba.blog/deleting-rows-in-batches-in-sql-server/"
  },
  {
@@ -811,7 +831,7 @@
  },
  {
   "title": "Disable Change Data Capture in SQL Server",
-  "lead": "Disabling Change Data Capture (CDC) is straightforward, but it has to happen in the right order: every tracked table first, then the database.",
+  "lead": "Turning Change Data Capture off for a database takes one command, sys.sp_cdc_disable_db.",
   "url": "https://sqldba.blog/disable-change-data-capture-in-sql-server/"
  },
  {
@@ -825,8 +845,18 @@
   "url": "https://sqldba.blog/drop-table-if-exists-in-sql-server/"
  },
  {
+  "title": "Dynamic Data Masking: What a WHERE Clause Still Reveals",
+  "lead": "A masked salary can still be tested with WHERE. This lab example shows the row returned to a low-privilege user and what Dynamic Data Masking does not protect.",
+  "url": "https://sqldba.blog/dynamic-data-masking-what-it-actually-hides/"
+ },
+ {
+  "title": "SQL Injection in Dynamic SQL: Use sp_executesql",
+  "lead": "A SQL Server name search can return every row when untrusted input is concatenated into the query. This lab demo compares EXEC with a parameterized sp_executesql call.",
+  "url": "https://sqldba.blog/dynamic-sql-sp-executesql-vs-exec-and-sql-injection/"
+ },
+ {
   "title": "Enabling TCP Connections in SQL Server",
-  "lead": "TCP/IP must be enabled in SQL Server for remote connections to work.",
+  "lead": "A remote client cannot connect and the instance is running.",
   "url": "https://sqldba.blog/enabling-tcp-connections-in-sql-server/"
  },
  {
@@ -836,12 +866,12 @@
  },
  {
   "title": "Forcing Encrypted Connections in SQL Server Using Certificates",
-  "lead": "In the previous post, we looked at how to verify what protocol and encryption SQL Server is actually using at runtime.",
+  "lead": "You want every TCP connection to SQL Server encrypted, every time, with no client able to opt out.",
   "url": "https://sqldba.blog/forcing-encrypted-connections-in-sql-server-using-certificates/"
  },
  {
   "title": "Get Current Date & Time in SQL Server",
-  "lead": "Getting the current date and time in SQL Server is straightforward.",
+  "lead": "SQL Server has 6 functions that return the current date and time.",
   "url": "https://sqldba.blog/get-current-date-time-in-sql-server/"
  },
  {
@@ -865,13 +895,18 @@
   "url": "https://sqldba.blog/github-copilot-in-ssms/"
  },
  {
+  "title": "GitHub Copilot Tools, Skills and MCP Servers in SSMS",
+  "lead": "Where GitHub Copilot keeps its tools, skills and MCP servers in SSMS, what each built-in tool group can do, which tools can change things, and how to add your own skills and servers.",
+  "url": "https://sqldba.blog/github-copilot-tools-skills-mcp-ssms/"
+ },
+ {
   "title": "Grant VIEW SERVER STATE in SQL Server",
   "lead": "\ud83d\udea8 Part of the SQL Server Errors series, the exact messages and what actually causes them.",
   "url": "https://sqldba.blog/grant-view-server-state-in-sql-server/"
  },
  {
-  "title": "Hidden Log Performance Problem",
-  "lead": "VLF count is one of those checks that doesn't appear in most performance reviews, doesn't generate an alert, and doesn't slow down any single query you can point to.",
+  "title": "Hidden Log Performance Problem: High VLF Counts",
+  "lead": "VLF count is one of those checks that doesn't show up in most performance reviews, doesn't raise an alert, and doesn't slow down any single query you can point to.",
   "url": "https://sqldba.blog/hidden-log-performance-problem/"
  },
  {
@@ -881,7 +916,7 @@
  },
  {
   "title": "How to Add Columns to Tables in SQL Server",
-  "lead": "Adding columns to tables in SQL Server is a routine task, but it is not always a harmless one.",
+  "lead": "Adding a column is one line of T-SQL, and on most tables it finishes at once.",
   "url": "https://sqldba.blog/how-to-add-columns-to-tables-in-sql-server/"
  },
  {
@@ -896,7 +931,7 @@
  },
  {
   "title": "How to Check Listening Ports on Windows",
-  "lead": "When troubleshooting connectivity issues, it\u2019s often not enough to test whether a remote port is reachable.",
+  "lead": "An application cannot connect, and before you look at firewalls, DNS or logins you need one fact: is SQL Server listening on this machine, and on which port?",
   "url": "https://sqldba.blog/how-to-check-listening-ports-on-windows/"
  },
  {
@@ -906,7 +941,7 @@
  },
  {
   "title": "How to Delete Duplicate Rows in SQL Server",
-  "lead": "Every DBA hits this one eventually.",
+  "lead": "A table has rows that should exist once and now exist two or three times: a load ran twice, an import fired again, and nothing on the table stopped it.",
   "url": "https://sqldba.blog/how-to-delete-duplicate-rows-in-sql-server/"
  },
  {
@@ -915,13 +950,13 @@
   "url": "https://sqldba.blog/how-to-enable-change-data-capture-cdc-in-sql-server/"
  },
  {
-  "title": "How to Enable Dark Mode in SSMS",
+  "title": "Dark Mode and Themes in SSMS",
   "lead": "\ud83d\udee0\ufe0f Part of the SSMS Complete Guide, installing, configuring and fixing SQL Server Management Studio.",
   "url": "https://sqldba.blog/how-to-enable-dark-mode-in-ssms/"
  },
  {
   "title": "How to Get the SQL Server IP Address",
-  "lead": "When troubleshooting connectivity, firewall rules, or unexpected routing, you often need one simple answer: which IP address and port did my session actually connect to?",
+  "lead": "The firewall team, or a vendor, wants the exact IP address and port before they will open an allow-list rule, and the server has more than one address.",
   "url": "https://sqldba.blog/how-to-get-the-sql-server-ip-address/"
  },
  {
@@ -931,7 +966,7 @@
  },
  {
   "title": "How to Kill a SPID in SQL Server",
-  "lead": "In SQL Server, every connection to the database engine is assigned a Session Process ID, commonly known as a SPID.",
+  "lead": "\u26a1 Find the head blocker, then KILL 69; with its session id.",
   "url": "https://sqldba.blog/how-to-kill-a-spid-in-sql-server/"
  },
  {
@@ -1025,9 +1060,24 @@
   "url": "https://sqldba.blog/query-fast-in-ssms-slow-from-application/"
  },
  {
+  "title": "Query Was Fast Yesterday, Slow Today: Find What Changed",
+  "lead": "Query fast yesterday, slow today, and nothing deployed? Rule out blocking, prove the plan changed with Query Store, find what threw it away and force the old plan back, with real lab output.",
+  "url": "https://sqldba.blog/query-fast-yesterday-slow-today/"
+ },
+ {
   "title": "RAND() vs NEWID() in SQL Server",
   "lead": "Most people searching for \u201crandom numbers in SQL Server\u201d want one of two things: A random value they can use for test data Rows to come back in a random order SQL Server gives you two common tools for this: RAND() and NEWID().",
   "url": "https://sqldba.blog/rand-vs-newid-in-sql-server/"
+ },
+ {
+  "title": "Restrict What GitHub Copilot Can Run in SSMS (agentExecuteAsUser)",
+  "lead": "GitHub Copilot in SSMS runs every query with your permissions. Since SSMS 22.7 you can give it its own low-privilege identity per database: create the user, set agentExecuteAsUser in CONSTITUTION.md, grant IMPERSONATE. Tested, with the errors and the trade-offs.",
+  "url": "https://sqldba.blog/restrict-github-copilot-permissions-in-ssms/"
+ },
+ {
+  "title": "SQL Server Row-Level Security: The Filter Does Not Stop Cross-Tenant Writes",
+  "lead": "A Row-Level Security filter can hide another tenant\u2019s rows while still allowing a cross-tenant insert. See the lab reproduction, add block predicates, and treat session context as a trust boundary.",
+  "url": "https://sqldba.blog/row-level-security-a-real-working-example/"
  },
  {
   "title": "MSSQL Scripts",
@@ -1065,9 +1115,19 @@
   "url": "https://sqldba.blog/sql-agent-job-failed/"
  },
  {
+  "title": "Unable to Determine if the Owner of Job Has Server Access (15404)",
+  "lead": "SQL Agent job failed before step 1 with \u201cUnable to determine if the owner of job has server access\u201d. The reason in brackets names the cause: 15404 and its error codes, Agent XPs, a denied login. Find every job that will fail next with one script, then change the owner safely.",
+  "url": "https://sqldba.blog/sql-agent-job-owner-server-access-15404/"
+ },
+ {
   "title": "SQL Server: Ad hoc Update to System Catalogs is Not Supported (Fix)",
-  "lead": "While enabling show advanced options using sp_configure, I encountered an unexpected failure when executing RECONFIGURE: Msg 5808, Level 16, State 1 Ad hoc update to system catalogs is not supported.",
+  "lead": "\ud83d\udea8 Part of the SQL Server Errors series, the exact messages and what actually causes them.",
   "url": "https://sqldba.blog/sql-server-ad-hoc-update-system-catalogs-not-supported/"
+ },
+ {
+  "title": "SQL Server Agent Jobs Queued on Maximum User Working Threads (Fix)",
+  "lead": "SQL Server Agent jobs queued with message [398]: how to see what is waiting for a thread right now, which of 3 similarly named limits you hit, and the Windows desktop heap value that cleared it on a clustered distributor.",
+  "url": "https://sqldba.blog/sql-server-agent-jobs-queued-maximum-user-working-threads/"
  },
  {
   "title": "SQL Server Agent Will Not Start, or \u201cAgent XPs Component Is Turned Off\u201d (Error 15281)",
@@ -1078,6 +1138,11 @@
   "title": "SQL Server: ALTER DATABASE SET ENABLE_BROKER Taking a Long Time (Fix)",
   "lead": "After a recent Availability Group failover, Database Mail stopped sending emails.",
   "url": "https://sqldba.blog/sql-server-alter-database-set-enable-broker-hanging/"
+ },
+ {
+  "title": "BACKUP LOG Cannot Be Performed Because There Is No Current Database Backup (Error 4214)",
+  "lead": "A log backup fails with Msg 4214 when a FULL recovery database has no log chain yet. One check finds it and one full backup fixes it.",
+  "url": "https://sqldba.blog/sql-server-backup-log-no-current-database-backup-4214/"
  },
  {
   "title": "The Backup Set Holds a Backup of a Database Other Than the Existing Database (Error 3154)",
@@ -1131,7 +1196,7 @@
  },
  {
   "title": "SQL Server Collation: Case Sensitivity and the Cross-Database Trap",
-  "lead": "Get Collation Conflicts and Cross-Database Dependencies finds real collation mismatches, but assumes you already know what collation actually controls.",
+  "lead": "A WHERE clause that matches rows it should not, or a join that worked yesterday and now fails with Msg 468 after a restore: both come down to collation.",
   "url": "https://sqldba.blog/sql-server-collation-case-sensitivity-and-the-cross-database-trap/"
  },
  {
@@ -1148,6 +1213,26 @@
   "title": "Compatibility Levels: What Actually Changes When You Bump It",
   "lead": "\"Bump the compatibility level after a migration\" is standard advice, and Version Upgrade Readiness already tells you which databases are behind.",
   "url": "https://sqldba.blog/sql-server-compatibility-level-what-actually-changes/"
+ },
+ {
+  "title": "SQL Server Configuration Manager: Where to Find It and What a DBA Uses It For",
+  "lead": "Not in the Start menu? Open it by name: SQLServerManager17.msc. Where to find it for every version, and the jobs a DBA uses it for: service accounts, TCP/IP, ports and encryption.",
+  "url": "https://sqldba.blog/sql-server-configuration-manager-2/"
+ },
+ {
+  "title": "Cannot Connect to WMI Provider: SQL Server Configuration Manager Will Not Open",
+  "lead": "Configuration Manager will not open: Cannot connect to WMI provider, Invalid namespace. Why it happens, the mofcomp fix with the right file for your version, and how to check it worked.",
+  "url": "https://sqldba.blog/sql-server-configuration-manager-cannot-connect-to-wmi-provider-2/"
+ },
+ {
+  "title": "Cannot Connect to WMI Provider: SQL Server Configuration Manager Will Not Open",
+  "lead": "Configuration Manager will not open: Cannot connect to WMI provider, Invalid namespace. Why it happens, the mofcomp fix with the right file for your version, and how to check it worked.",
+  "url": "https://sqldba.blog/sql-server-configuration-manager-cannot-connect-to-wmi-provider/"
+ },
+ {
+  "title": "SQL Server Configuration Manager: Where to Find It and What a DBA Uses It For",
+  "lead": "Not in the Start menu? Open it by name: SQLServerManager17.msc. Where to find it for every version, and the jobs a DBA uses it for: service accounts, TCP/IP, ports and encryption.",
+  "url": "https://sqldba.blog/sql-server-configuration-manager/"
  },
  {
   "title": "Conversion Failed When Converting the varchar Value to Data Type int (Error 245)",
@@ -1173,6 +1258,11 @@
   "title": "The Database Could Not Be Exclusively Locked to Perform the Operation (Error 5030)",
   "lead": "\ud83d\udea8 Part of the SQL Server Errors series, the exact messages and what actually causes them.",
   "url": "https://sqldba.blog/sql-server-database-could-not-be-exclusively-locked-5030/"
+ },
+ {
+  "title": "SQL Server Error 3906: Writes Fail Because the Database Is Read-Only",
+  "lead": "Msg 3906 means SQL Server considers the target database read-only. Check its state and recovery role before changing it. A log-shipping secondary may be read-only by design.",
+  "url": "https://sqldba.blog/sql-server-database-is-read-only-3906/"
  },
  {
   "title": "Database Marked SUSPECT (Error 926): EMERGENCY, CHECKDB, or the Backup",
@@ -1213,6 +1303,11 @@
   "title": "The Server Network Address Cannot Be Reached or Does Not Exist (Error 1418)",
   "lead": "Error 1418 says the server network address cannot be reached and never says why. The error log names the fault, and then there are five checks in the order that finds it.",
   "url": "https://sqldba.blog/sql-server-endpoint-cannot-be-reached-1418/"
+ },
+ {
+  "title": "Error Locating Server/Instance Specified (Error 26)",
+  "lead": "Error 26 means the client could not look up a named instance\u2019s port. Check the instance name, the SQL Server Browser and UDP 1434, or connect with server,port.",
+  "url": "https://sqldba.blog/sql-server-error-locating-server-instance-specified-26/"
  },
  {
   "title": "SQL Server Error Severities Explained",
@@ -1285,7 +1380,7 @@
   "url": "https://sqldba.blog/sql-server-kerberos-vs-ntlm/"
  },
  {
-  "title": "Linked Server: Login Failed for User NT AUTHORITY\\ANONYMOUS LOGON, and Error 7391 Distributed Transactions",
+  "title": "Linked Server Login Failed for NT AUTHORITY\\ANONYMOUS LOGON",
   "lead": "A linked server that works on the server and fails from your desktop is the double hop. The query that proves it, the four login mappings and what each one fails with, plus error 7391 and MS DTC.",
   "url": "https://sqldba.blog/sql-server-linked-server-login-failed-anonymous-logon/"
  },
@@ -1323,6 +1418,11 @@
   "title": "SQL Server Login Migration: What Gets Silently Left Behind",
   "lead": "sp_help_revlogin carries more than you think, including disabled state. What nothing carries, and why the script you actually ran matters more.",
   "url": "https://sqldba.blog/sql-server-login-migration-what-gets-left-behind/"
+ },
+ {
+  "title": "Login Failed: Password Expired or Must Be Changed (Errors 18487 and 18488)",
+  "lead": "Login failed, and the reason is the password: 18488 must be changed, 18487 expired. Check the login, reset it in the right order (Msg 15128 if you do not), and find the next one before it expires.",
+  "url": "https://sqldba.blog/sql-server-login-password-expired-must-change-18487-18488/"
  },
  {
   "title": "Login Failed: The Login Is From an Untrusted Domain (Error 18452)",
@@ -1405,14 +1505,29 @@
   "url": "https://sqldba.blog/sql-server-replication-monitoring-scripts/"
  },
  {
+  "title": "RESOURCE_SEMAPHORE When SQL Server Is Nowhere Near Its Memory Cap",
+  "lead": "RESOURCE_SEMAPHORE waits while SQL Server sits far below max server memory: why the grant pool follows target memory and not the cap, the one query that shows it, and how to let a query run with MAX_GRANT_PERCENT while you free memory.",
+  "url": "https://sqldba.blog/sql-server-resource-semaphore-below-max-server-memory/"
+ },
+ {
   "title": "Troubleshoot RESOURCE_SEMAPHORE Waits in SQL Server (Memory Grant Pressure)",
   "lead": "\u23f3 Part of the SQL Server Wait Types Library, every wait type explained.",
   "url": "https://sqldba.blog/sql-server-resource-semaphore-wait-troubleshooting/"
  },
  {
+  "title": "RESTORE Fails: Exclusive Access Could Not Be Obtained (Error 3101)",
+  "lead": "Msg 3101 means SQL Server cannot get exclusive access to the database you are restoring. Find the connected sessions, stop clients reconnecting, and retry only when it is safe to disconnect users.",
+  "url": "https://sqldba.blog/sql-server-restore-exclusive-access-could-not-be-obtained-3101/"
+ },
+ {
   "title": "Restore From a Newer SQL Server Version (Error 3169)",
   "lead": "The backup is from a newer version of SQL Server than the server restoring it, and no option changes that. What the two version numbers mean, why attach fails with 948, and the routes that work.",
   "url": "https://sqldba.blog/sql-server-restore-from-newer-version-3169/"
+ },
+ {
+  "title": "RESTORE VERIFYONLY Fails: Reached the End of the File (Error 3203)",
+  "lead": "RESTORE VERIFYONLY returned Msg 3203 on a truncated backup in a lab test. The header was readable, but the file was incomplete. Direct RESTORE returned Msg 3287 instead.",
+  "url": "https://sqldba.blog/sql-server-restore-reached-end-of-file-3203/"
  },
  {
   "title": "RESTORE Is Terminating Abnormally (Errors 3013 and 3241)",
@@ -1450,6 +1565,11 @@
   "url": "https://sqldba.blog/sql-server-silent-failures/"
  },
  {
+  "title": "Sort and Hash Spills to TempDB: Find the Query and Fix the Grant",
+  "lead": "Read the spill warning in the actual plan, find why the memory grant was too small, and find the queries that memory grant feedback on SQL Server 2022 and 2025 does not fix.",
+  "url": "https://sqldba.blog/sql-server-sort-hash-spill-tempdb/"
+ },
+ {
   "title": "SSPI Handshake Failed in SQL Server (Error 17806)",
   "lead": "\ud83d\udea8 Part of the SQL Server Errors series, the exact messages and what actually causes them.",
   "url": "https://sqldba.blog/sql-server-sspi-handshake-failed/"
@@ -1465,9 +1585,19 @@
   "url": "https://sqldba.blog/sql-server-table-variable-vs-temp-table/"
  },
  {
+  "title": "TDE Restore Fails: Cannot Find Server Certificate (Error 33111)",
+  "lead": "A TDE database restore on another server fails with Msg 33111. Match the thumbprint in the message, create the certificate in master from its.cer and.pvk backup files, and the same restore goes through.",
+  "url": "https://sqldba.blog/sql-server-tde-restore-cannot-find-certificate-33111/"
+ },
+ {
   "title": "SQL Server: The Database Is in Single User Mode (Fix)",
   "lead": "You try to connect to a database and get: The database is in single user mode.",
   "url": "https://sqldba.blog/sql-server-the-database-is-in-single-user-mode-fix/"
+ },
+ {
+  "title": "The Current Transaction Cannot Be Committed (Error 3930)",
+  "lead": "Msg 3930 is never the real error. An earlier error doomed the transaction and a CATCH block tried to write anyway. How to find the swallowed error with XACT_STATE() and Extended Events, and the CATCH pattern that fixes it, captured on a lab database.",
+  "url": "https://sqldba.blog/sql-server-transaction-cannot-be-committed-3930/"
  },
  {
   "title": "SQL Server Transaction Log Full",
@@ -2671,7 +2801,7 @@
  },
  {
   "title": "sqlcmd Examples for SQL Server",
-  "lead": "sqlcmd is a command line utility for connecting to SQL Server and executing Transact-SQL without a GUI.",
+  "lead": "No SSMS on the box, or SSMS will not connect, and you need to run a query or a script file from a shell right now.",
   "url": "https://sqldba.blog/sqlcmd-examples-for-sql-server/"
  },
  {
@@ -2690,6 +2820,11 @@
   "url": "https://sqldba.blog/ssms-execution-timeout-expired/"
  },
  {
+  "title": "SSMS Query Hint Recommendation Tool: Let SSMS Find the Hint",
+  "lead": "One slow query, no code change possible this week: SSMS 22 runs it with one hint after another and reports the hints that halve its time. How to run it safely and what to do with the answer.",
+  "url": "https://sqldba.blog/ssms-query-hint-recommendation-tool/"
+ },
+ {
   "title": "SSMS Query Shortcuts: Run sp_whoisactive on a Hotkey",
   "lead": "\ud83d\udee0\ufe0f Part of the SSMS Complete Guide, installing, configuring and fixing SQL Server Management Studio.",
   "url": "https://sqldba.blog/ssms-query-shortcuts/"
@@ -2703,6 +2838,26 @@
   "title": "SSMS \u201cSaving Changes Is Not Permitted\u201d: The Two Ways Out, and Why the Guard Exists",
   "lead": "SSMS refuses to save your Table Designer change because it needs the table dropped and re-created. Write it as ALTER TABLE instead, and here is what the re-creation would have cost, measured on 300,000 rows.",
   "url": "https://sqldba.blog/ssms-saving-changes-is-not-permitted/"
+ },
+ {
+  "title": "SSMS Schema Compare: Execution Timeout Expired During Population of Source Model",
+  "lead": "Schema Compare stops with Execution Timeout Expired when its catalog reads cannot get memory or are stuck behind a lock. Check the memory grant queue and whether Windows is short of RAM, then compare again or compare against a.dacpac.",
+  "url": "https://sqldba.blog/ssms-schema-compare-execution-timeout-expired/"
+ },
+ {
+  "title": "SSMS Schema Compare: Find What Differs Between Two Databases",
+  "lead": "Schema Compare in SSMS lists every difference between 2 databases as the change that would make the target match the source. How to run it, read the results the right way round, set the options that matter, and check the generated script before it touches production.",
+  "url": "https://sqldba.blog/ssms-schema-compare/"
+ },
+ {
+  "title": "SSMS SQL Formatter: Format T-SQL Without an Add-in",
+  "lead": "SSMS 22 formats T-SQL itself: Ctrl+K, Ctrl+Q formats the window or the selection, Ctrl+Z undoes it. What the defaults change, and the settings worth setting.",
+  "url": "https://sqldba.blog/ssms-sql-formatter/"
+ },
+ {
+  "title": "Switch the GitHub Account Copilot Uses in SSMS",
+  "lead": "Copilot in SSMS signed in to the wrong GitHub account, or inactive? The switch is on your profile picture: Add another account, sign in, Set as active account, restart. Plus what the profile card and the Copilot badge are telling you.",
+  "url": "https://sqldba.blog/switch-github-account-copilot-ssms/"
  },
  {
   "title": "TempDB Is Full or Still Growing: Find What Is Using It, Right Now",
