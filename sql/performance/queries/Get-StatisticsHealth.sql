@@ -5,11 +5,13 @@ Purpose     : Identifies stale, low-sample, and never-updated statistics in the 
               Returns the UPDATE STATISTICS command per row for direct copy-paste remediation.
               Run in the context of the target user database.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-statistics-health/)
-Requires    : VIEW DATABASE STATE
+Requires    : SELECT on the tables, or db_owner / db_ddladmin. sys.dm_db_stats_properties returns
+              nothing for a table you cannot read, and VIEW DATABASE STATE alone does not unlock it.
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 -- SCOPE:CurrentDatabase
 -- Fixes : the update_statement column contains the ready-to-run UPDATE STATISTICS command
 
@@ -19,9 +21,17 @@ DECLARE @stale_days INT = 30; -- AGED threshold: flag stats not updated in this 
                                 -- modification_counter > 0 (stats exist but are being ignored)
 
 -- Dynamic update threshold (SQL 2016+ compat 130+): SQRT(1000 * rows)
--- Legacy threshold was 20% of row count — dynamic is more conservative on large tables.
+-- Legacy threshold was 20% of row count; dynamic is more conservative on large tables.
+-- Row counts come from sys.partitions: a statistic that was never built (created on an empty
+-- table) has NULL rows in sys.dm_db_stats_properties and would otherwise fail the @min_rows filter.
 
-WITH stats_health AS (
+WITH table_rows AS (
+    SELECT p.object_id, SUM(p.rows) AS table_rows
+    FROM sys.partitions p
+    WHERE p.index_id IN (0, 1)
+    GROUP BY p.object_id
+),
+stats_health AS (
     SELECT
         OBJECT_SCHEMA_NAME(s.object_id) AS schema_name,
         OBJECT_NAME(s.object_id) AS table_name,
@@ -35,7 +45,7 @@ WITH stats_health AS (
         s.has_filter AS is_filtered,
         s.filter_definition,
         s.is_incremental,
-        sp.rows,
+        COALESCE(sp.rows, tr.table_rows) AS rows,
         sp.rows_sampled,
         CAST(sp.rows_sampled * 100.0
              / NULLIF(sp.rows, 0) AS DECIMAL(5,1)) AS sample_pct,
@@ -76,7 +86,9 @@ WITH stats_health AS (
     LEFT JOIN sys.columns c
         ON c.object_id = sc.object_id
         AND c.column_id = sc.column_id
-    WHERE ISNULL(sp.rows, 0) >= @min_rows
+    LEFT JOIN table_rows tr
+        ON tr.object_id = s.object_id
+    WHERE COALESCE(sp.rows, tr.table_rows, 0) >= @min_rows
 )
 SELECT
     schema_name,
