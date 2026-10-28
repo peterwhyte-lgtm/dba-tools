@@ -3,7 +3,7 @@ Script Name : Generate-AgentJobScript
 Category    : migration
 Purpose     : Generate sp_add_job DDL to recreate all SQL Agent jobs on the target server.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-generate-agent-job-script/)
-Requires    : db_datareader on msdb (or sysadmin); the Agent roles alone cannot SELECT sysoperators.
+Requires    : db_datareader on msdb (or sysadmin); SQLAgentReaderRole and SQLAgentOperatorRole alone cannot SELECT the msdb job tables.
               Without it the script stops with an error instead of returning an empty script.
 Notes       : Steps and schedules are built with STRING_AGG, not SELECT @var = @var + ... ORDER BY,
               which MS Docs calls nondeterministic. Needs SQL Server 2017 or later.
@@ -131,7 +131,7 @@ BEGIN
     SELECT @ddl = @ddl + ISNULL(STRING_AGG(CAST(
           N'    EXEC msdb.dbo.sp_add_jobstep' + @crlf
         + N'        @job_id          = @job_id,' + @crlf
-        + N'        @step_id         = '    + CAST(s.step_id          AS NVARCHAR(5))   + N',' + @crlf
+        + N'        @step_id         = '    + CAST(s.step_id          AS NVARCHAR(11)) + N',' + @crlf
         + N'        @step_name       = N''' + REPLACE(s.step_name,    N'''', N'''''') + N''',' + @crlf
         + N'        @subsystem       = N''' + s.subsystem                               + N''',' + @crlf
         + N'        @command         = N''' + REPLACE(ISNULL(s.command, N''), N'''', N'''''') + N''',' + @crlf
@@ -144,18 +144,18 @@ BEGIN
                THEN N'        @output_file_name = N''' + REPLACE(s.output_file_name, N'''', N'''''') + N''',' + @crlf ELSE N'' END
         + N'        @flags           = '    + CAST(s.flags             AS NVARCHAR(11)) + N',' + @crlf
         + N'        @on_success_action = '  + CAST(s.on_success_action AS NVARCHAR(1))  + N',' + @crlf
-        + N'        @on_success_step_id= '  + CAST(s.on_success_step_id AS NVARCHAR(5)) + N',' + @crlf
+        + N'        @on_success_step_id= '  + CAST(s.on_success_step_id AS NVARCHAR(11)) + N',' + @crlf
         + N'        @on_fail_action  = '    + CAST(s.on_fail_action    AS NVARCHAR(1))  + N',' + @crlf
-        + N'        @on_fail_step_id = '    + CAST(s.on_fail_step_id   AS NVARCHAR(5))  + N',' + @crlf
-        + N'        @retry_attempts  = '    + CAST(s.retry_attempts    AS NVARCHAR(5))  + N',' + @crlf
-        + N'        @retry_interval  = '    + CAST(s.retry_interval    AS NVARCHAR(5))  + N';' + @crlf + @crlf
+        + N'        @on_fail_step_id = '    + CAST(s.on_fail_step_id   AS NVARCHAR(11))  + N',' + @crlf
+        + N'        @retry_attempts  = '    + CAST(s.retry_attempts    AS NVARCHAR(11))  + N',' + @crlf
+        + N'        @retry_interval  = '    + CAST(s.retry_interval    AS NVARCHAR(11))  + N';' + @crlf + @crlf
         AS NVARCHAR(MAX)), N'') WITHIN GROUP (ORDER BY s.step_id), N'')
     FROM msdb.dbo.sysjobsteps s
     WHERE s.job_id = @job_id;
 
     -- ── Set start step ────────────────────────────────────────────────────────
     SET @ddl = @ddl
-        + N'    EXEC msdb.dbo.sp_update_job @job_id = @job_id, @start_step_id = ' + CAST(@start_step AS NVARCHAR(5)) + N';' + @crlf + @crlf;
+        + N'    EXEC msdb.dbo.sp_update_job @job_id = @job_id, @start_step_id = ' + CAST(@start_step AS NVARCHAR(11)) + N';' + @crlf + @crlf;
 
     -- ── Schedules: reuse one only when name AND definition match, attach by id ─
     SELECT @ddl = @ddl + ISNULL(STRING_AGG(CAST(
