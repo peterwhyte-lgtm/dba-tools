@@ -173,8 +173,8 @@ Write-Host "  SSMS" -ForegroundColor Cyan
 
 $ssmsFound = $false
 # Latest released SSMS - update alongside the CU map each patch cycle.
-# Source: https://learn.microsoft.com/en-us/ssms/release-notes-ssms (checked 2026-08-16)
-$ssmsLatest = '22.9.0'
+# Source: https://learn.microsoft.com/en-us/ssms/release-notes-ssms (checked 2026-10-28)
+$ssmsLatest = '22.11.2'
 $paths = @(
     'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
     'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'
