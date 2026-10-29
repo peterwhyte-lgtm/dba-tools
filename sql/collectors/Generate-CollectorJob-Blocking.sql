@@ -46,7 +46,9 @@ WITH blocking_chain AS (
         s.login_name,
         s.host_name,
         s.program_name,
-        r.sql_handle
+        r.sql_handle,
+        r.statement_start_offset,
+        r.statement_end_offset
     FROM sys.dm_exec_requests r
     JOIN sys.dm_exec_sessions s ON s.session_id = r.session_id
     WHERE r.blocking_session_id > 0
@@ -77,8 +79,10 @@ SELECT
     bc.login_name,
     bc.host_name,
     bc.program_name,
-    SUBSTRING(REPLACE(REPLACE(st_blocked.text, CHAR(13), | |), CHAR(10), | |),
-              (bc.blocked_spid % 128) + 1, 1000)            AS blocked_statement,
+    LEFT(REPLACE(REPLACE(SUBSTRING(st_blocked.text, bc.statement_start_offset / 2 + 1,
+              CASE WHEN bc.statement_end_offset = -1 THEN 1000000
+                   ELSE (bc.statement_end_offset - bc.statement_start_offset) / 2 + 1 END),
+              CHAR(13), | |), CHAR(10), | |), 1000)         AS blocked_statement,
     SUBSTRING(REPLACE(REPLACE(ISNULL(st_blocker.text, |(no active request)|),
               CHAR(13), | |), CHAR(10), | |), 1, 500)       AS blocker_last_statement
 FROM blocking_chain bc
