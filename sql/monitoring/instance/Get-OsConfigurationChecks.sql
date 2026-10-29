@@ -34,7 +34,7 @@ cfg AS (
 SELECT
     osi.cpu_count AS logical_cpu_count,
     osi.cpu_count / NULLIF(osi.hyperthread_ratio, 0) AS physical_cpu_count,
-    osi.hyperthread_ratio AS cores_per_socket,
+    osi.cores_per_socket,
     n.numa_node_count,
     n.online_schedulers AS sql_online_schedulers,
     os_off.offline_count AS sql_offline_schedulers,
