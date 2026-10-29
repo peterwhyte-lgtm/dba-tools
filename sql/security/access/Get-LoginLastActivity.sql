@@ -15,8 +15,8 @@ Notes       : Role membership is read from sys.server_role_members AND IS_SRVROL
               CU8), so the catalog is the primary source and the function adds Windows group
               membership the catalog cannot see.
               is_securityadmin additionally excludes sysadmins: IS_SRVROLEMEMBER returns 1 for
-              every role when the principal is a sysadmin, which reported 11 logins as
-              securityadmin on a lab instance whose catalog holds only 3. Without that
+              every role when the principal is a sysadmin, which reported 14 logins as
+              securityadmin on a lab instance whose catalog holds only 4. Without that
               exclusion the column means "sysadmin or securityadmin", not securityadmin.
 */
 -- SAFE:ReadOnly
