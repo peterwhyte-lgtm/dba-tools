@@ -155,7 +155,11 @@ foreach ($row in $backups) {
 
     if (-not $row.last_full_backup -or $row.last_full_backup -eq '') {
         Add-Finding 'CRITICAL' 'Backup' $dbName 'No full backup on record'
+        if ($dbName -eq 'model') { continue }
     }
+    # model needs a backup after it is customised, not a daily one, and no log backups even
+    # though it ships in FULL recovery: only the never-backed-up check applies to it.
+    elseif ($dbName -eq 'model') { continue }
     elseif ([double]::TryParse($row.full_backup_age_hours, [ref]$null)) {
         $ageH = [double]$row.full_backup_age_hours
         if ($ageH -gt 24) {

@@ -14,6 +14,11 @@ Notes       : last_log_backup means "the latest log backup that TRUNCATED the lo
 
               Only ONLINE databases are reported: an offline database cannot be backed up, and
               including it produced a row that looked like a database with no backups at all.
+
+              master, model and msdb are reported: Microsoft lists all three as needing backups,
+              and a never-backed-up master read clean when only database_id > 4 was checked.
+              tempdb and database snapshots are skipped, neither can be backed up.
+              Tested on SQL Server 2025.
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
@@ -51,10 +56,8 @@ FROM sys.databases AS d
 LEFT JOIN latest_backups AS lb
     ON d.name = lb.database_name
    AND lb.rn = 1
-WHERE d.database_id > 4
+WHERE d.database_id <> 2               /* tempdb cannot be backed up */
+  AND d.source_database_id IS NULL      /* nor can a database snapshot */
   AND d.state_desc = 'ONLINE'
 GROUP BY d.name, d.recovery_model_desc
 ORDER BY d.name;
-
-
-
