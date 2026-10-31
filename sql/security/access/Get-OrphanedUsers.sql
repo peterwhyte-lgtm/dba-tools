@@ -13,6 +13,9 @@ Notes       : Orphaned users cause login failures for that account. Fix with
               Users created WITHOUT LOGIN (authentication_type NONE) and contained database
               users (authentication_type DATABASE) also have no server login by design and are
               deliberately excluded, they are not orphans.
+              The matching_login lookup compares names in the server collation, so a database on
+              another collation (e.g. case-sensitive) no longer stops the run with Msg 468.
+              SQL Server 2012+ (sys.database_principals.authentication_type). Tested on 2025.
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
@@ -30,6 +33,9 @@ CREATE TABLE #orphaned (
 );
 
 DECLARE @sql NVARCHAR(MAX) = N'';
+/* Login names resolve in the server collation. A database on a different collation (a case-sensitive
+   vendor database, say) makes a bare sp2.name = dp.name fail with Msg 468 and abort the whole run. */
+DECLARE @server_collation SYSNAME = CONVERT(SYSNAME, SERVERPROPERTY('Collation'));
 
 SELECT @sql += N'
 USE ' + QUOTENAME(name) + N';
@@ -40,7 +46,7 @@ SELECT
     dp.type_desc AS user_type,
     (SELECT TOP (1) sp2.name
      FROM sys.server_principals AS sp2
-     WHERE sp2.name = dp.name
+     WHERE sp2.name = dp.name COLLATE ' + @server_collation + N'
        AND sp2.type IN (''S'', ''U'', ''G'')) AS matching_login,
     dp.create_date
 FROM sys.database_principals AS dp
