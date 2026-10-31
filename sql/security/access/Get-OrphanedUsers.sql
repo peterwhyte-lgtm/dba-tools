@@ -15,6 +15,10 @@ Notes       : Orphaned users cause login failures for that account. Fix with
               deliberately excluded, they are not orphans.
               The matching_login lookup compares names in the server collation, so a database on
               another collation (e.g. case-sensitive) no longer stops the run with Msg 468.
+              Windows users and groups are reported only when the server has no Windows group
+              login. A Windows account with no login of its own can still connect through a
+              group login and map to its database user (Microsoft lists this as an exception),
+              so with group logins present it is not reported; check one with xp_logininfo.
               SQL Server 2012+ (sys.database_principals.authentication_type). Tested on 2025.
 */
 -- SAFE:ReadOnly
@@ -36,6 +40,9 @@ DECLARE @sql NVARCHAR(MAX) = N'';
 /* Login names resolve in the server collation. A database on a different collation (a case-sensitive
    vendor database, say) makes a bare sp2.name = dp.name fail with Msg 468 and abort the whole run. */
 DECLARE @server_collation SYSNAME = CONVERT(SYSNAME, SERVERPROPERTY('Collation'));
+/* A Windows user or group with no login of its own can still connect through a Windows group login,
+   so it is only certain to be orphaned when the server has no group logins at all. */
+DECLARE @has_group_login BIT = CASE WHEN EXISTS (SELECT 1 FROM sys.server_principals WHERE type = 'G') THEN 1 ELSE 0 END;
 
 SELECT @sql += N'
 USE ' + QUOTENAME(name) + N';
@@ -54,6 +61,7 @@ WHERE dp.type IN (''S'', ''U'', ''G'')
   AND dp.principal_id > 4
   AND dp.sid IS NOT NULL
   AND dp.authentication_type IN (1, 3)   /* 1 INSTANCE, 3 WINDOWS. Excludes 0 NONE (WITHOUT LOGIN) and 2 DATABASE (contained). */
+  AND (dp.authentication_type = 1 OR ' + CAST(@has_group_login AS NCHAR(1)) + N' = 0)
   AND dp.name NOT IN (''guest'', ''INFORMATION_SCHEMA'', ''sys'', ''dbo'')
   AND NOT EXISTS (
       SELECT 1
