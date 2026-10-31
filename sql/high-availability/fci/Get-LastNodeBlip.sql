@@ -10,9 +10,8 @@ Purpose     : Returns SQL Server error log entries that mention failover, alongs
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-last-node-blip/)
 Requires    : VIEW SERVER STATE, EXECUTE on xp_readerrorlog (sysadmin or securityadmin in practice)
 HealthCheck : Yes
-Notes       : days_up counts whole days from the start time. DATEDIFF(DAY) counts midnights, so an
-              instance restarted at 23:00 read as 1 day up an hour later. Tested on SQL Server 2025
-              (not clustered, so the no-entries row; the failover rows need an FCI).
+Notes       : days_up is whole days since the instance started.
+              Tested on SQL Server 2025 (standalone, status row only).
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low

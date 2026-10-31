@@ -5,10 +5,8 @@ Purpose     : Reads the current SQL Server error log and groups entries by categ
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-error-log-patterns/)
 Requires    : EXECUTE on xp_readerrorlog, which is granted to sysadmin and securityadmin.
               VIEW SERVER STATE does not grant it.
-Notes       : The error log writes every error as two lines, an 'Error: 18456, Severity: 14,
-              State: 38.' header and then the message. occurrences counts the message line only
-              and categorises it with its header's error number attached, so 60 failed logins
-              read 60, not 120. Tested on SQL Server 2025.
+Notes       : occurrences counts each error once (the 'Error: N, Severity' line is merged into
+              its message). Tested on SQL Server 2025.
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
@@ -34,9 +32,8 @@ EXEC xp_readerrorlog 0, 1, NULL, NULL, @StartDate, NULL, N'desc';
 /* Categorise once, in a CTE. The CASE used to be written out twice, in the SELECT and
    again in the GROUP BY, so any change to a pattern had to be made in both places or the
    two would silently disagree. */
-/* Each error is a header line plus a message line with the same time and spid. The header is
-   dropped from the count and its text is prefixed to the message (match_txt), so the error number
-   still decides the category (Error: 823 is corruption) without the event being counted twice. */
+/* Each error is an 'Error: N, Severity' line plus a message line (same time and spid). Count the
+   message once and match on both, so Error: 823 still files as corruption. */
 WITH entries AS (
     SELECT
         e.LogDate,

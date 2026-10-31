@@ -4,9 +4,7 @@ Category    : performance
 Purpose     : Active transactions with age, session details, and the SQL currently running or last executed — long-running open transactions cause log growth and block readers in READ_COMMITTED isolation.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-open-transactions/)
 Requires    : VIEW SERVER STATE
-Notes       : sql_text is the statement running now, or for a sleeping session the last batch it
-              sent (sys.dm_exec_connections.most_recent_sql_handle). That second case is the one
-              that matters: an idle session holding a transaction open has no request to read.
+Notes       : sql_text is the running statement, or for a sleeping session the last batch it sent.
               Tested on SQL Server 2025.
 */
 -- SAFE:ReadOnly

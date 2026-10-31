@@ -6,9 +6,8 @@ Purpose     : Find database users whose SID matches no server login, the state t
               Reports whether a login of the same name exists, which is what decides between
               a straight remap and creating a login first.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-orphaned-users/)
-Requires    : VIEW ANY DEFINITION, plus access to each online database it inspects (it opens every
-              database). Without VIEW ANY DEFINITION the catalog views hide other principals and
-              the script returns no rows, which reads as no orphans (tested 2026-10-31).
+Requires    : VIEW ANY DEFINITION, plus access to each online database it inspects.
+              Without VIEW ANY DEFINITION it returns no rows, not an error.
 HealthCheck : Yes
 Notes       : Orphaned users cause login failures for that account. Fix with
               ALTER USER [username] WITH LOGIN = [login_name]; or DROP USER [username].
@@ -17,10 +16,8 @@ Notes       : Orphaned users cause login failures for that account. Fix with
               deliberately excluded, they are not orphans.
               The matching_login lookup compares names in the server collation, so a database on
               another collation (e.g. case-sensitive) no longer stops the run with Msg 468.
-              Windows users and groups are reported only when the server has no Windows group
-              login. A Windows account with no login of its own can still connect through a
-              group login and map to its database user (Microsoft lists this as an exception),
-              so with group logins present it is not reported; check one with xp_logininfo.
+              Windows users and groups are listed only when the instance has no Windows group
+              login (with one, they may connect through it). Check them with xp_logininfo.
               SQL Server 2012+ (sys.database_principals.authentication_type). Tested on 2025.
 */
 -- SAFE:ReadOnly

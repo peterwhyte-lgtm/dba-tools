@@ -4,12 +4,8 @@ Category    : maintenance-and-reliability
 Purpose     : Identify sessions consuming the most TempDB space for contention and spill triage.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-temp-db-hotspots/)
 Requires    : VIEW SERVER STATE
-Notes       : Space is what each session holds in TempDB now: pages allocated minus pages
-              deallocated, from completed work (sys.dm_db_session_space_usage) plus the requests
-              still running (sys.dm_db_task_space_usage). The session view alone only counts
-              finished tasks and never subtracts, so a pooled connection that creates and drops
-              temp tables all day reads as gigabytes, and a query spilling right now reads 0.
-              elapsed_sec is NULL for a session with no request running.
+Notes       : Sizes are TempDB space held now (allocated minus deallocated), running queries included.
+              elapsed_sec is NULL when the session has no request running.
               Tested on SQL Server 2025.
 */
 -- SAFE:ReadOnly

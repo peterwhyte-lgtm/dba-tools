@@ -5,11 +5,8 @@ Purpose     : Show OS version, hardware specs (CPU, RAM), and SQL Server uptime 
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-os-and-hardware-info/)
 Requires    : VIEW SERVER STATE
 HealthCheck : Yes
-Notes       : socket_count and cores_per_socket come straight from sys.dm_os_sys_info (SQL Server
-              2016 SP2 and later). cpu_count / hyperthread_ratio is the socket count, not the
-              physical cores, since hyperthread_ratio is logical CPUs per socket.
-              Uptime is counted in whole minutes. DATEDIFF(DAY) counts midnights, so an instance
-              started at 23:00 read as 1 day up an hour later.
+Notes       : Physical cores = socket_count x cores_per_socket (SQL Server 2016 SP2+).
+              Uptime is SQL Server service uptime, in whole days and hours.
               Tested on SQL Server 2025.
 */
 -- SAFE:ReadOnly
