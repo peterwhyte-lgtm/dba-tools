@@ -12,28 +12,44 @@
     "date": "2025-11-18"
    },
    "latest_cu": {
-    "name": "CU9",
-    "build": "17.0.5005.3",
-    "kb": "KB5122048",
-    "kb_url": "https://support.microsoft.com/help/5122048",
-    "date": "2026-09-15"
+    "name": "CU10",
+    "build": "17.0.5035.5",
+    "kb": "KB5125471",
+    "kb_url": "https://support.microsoft.com/help/5125471",
+    "date": "2026-10-22"
    },
    "latest_cu_gdr": {
-    "name": "CU8 + GDR",
-    "build": "17.0.4085.5",
-    "kb": "KB5122769",
-    "kb_url": "https://support.microsoft.com/help/5122769",
-    "date": "2026-09-08"
+    "name": "CU9 + GDR",
+    "build": "17.0.5015.4",
+    "kb": "KB5126967",
+    "kb_url": "https://support.microsoft.com/help/5126967",
+    "date": "2026-10-13"
    },
    "latest_gdr": {
     "name": "GDR (RTM security train)",
-    "build": "17.0.1135.8",
-    "kb": "KB5122770",
-    "kb_url": "https://support.microsoft.com/help/5122770",
-    "date": "2026-09-08"
+    "build": "17.0.1145.4",
+    "kb": "KB5128492",
+    "kb_url": "https://support.microsoft.com/help/5128492",
+    "date": "2026-10-13"
    },
    "latest_sp": null,
    "updates": [
+    {
+     "name": "CU10",
+     "build": "17.0.5035.5",
+     "train": "CU",
+     "kb": "KB5125471",
+     "kb_url": "https://support.microsoft.com/help/5125471",
+     "date": "2026-10-22"
+    },
+    {
+     "name": "CU9 + GDR",
+     "build": "17.0.5015.4",
+     "train": "GDR",
+     "kb": "KB5126967",
+     "kb_url": "https://support.microsoft.com/help/5126967",
+     "date": "2026-10-13"
+    },
     {
      "name": "CU9",
      "build": "17.0.5005.3",
@@ -148,6 +164,14 @@
     },
     {
      "name": "GDR",
+     "build": "17.0.1145.4",
+     "train": "GDR",
+     "kb": "KB5128492",
+     "kb_url": "https://support.microsoft.com/help/5128492",
+     "date": "2026-10-13"
+    },
+    {
+     "name": "GDR",
      "build": "17.0.1135.8",
      "train": "GDR",
      "kb": "KB5122770",
@@ -229,21 +253,29 @@
     "date": "2026-09-15"
    },
    "latest_cu_gdr": {
-    "name": "CU26 + GDR",
-    "build": "16.0.4275.2",
-    "kb": "KB5122768",
-    "kb_url": "https://support.microsoft.com/help/5122768",
-    "date": "2026-09-08"
+    "name": "CU27 + GDR",
+    "build": "16.0.4305.5",
+    "kb": "KB5126934",
+    "kb_url": "https://support.microsoft.com/help/5126934",
+    "date": "2026-10-13"
    },
    "latest_gdr": {
     "name": "GDR (RTM security train)",
-    "build": "16.0.1200.5",
-    "kb": "KB5122771",
-    "kb_url": "https://support.microsoft.com/help/5122771",
-    "date": "2026-09-08"
+    "build": "16.0.1210.3",
+    "kb": "KB5128493",
+    "kb_url": "https://support.microsoft.com/help/5128493",
+    "date": "2026-10-13"
    },
    "latest_sp": null,
    "updates": [
+    {
+     "name": "CU27 + GDR",
+     "build": "16.0.4305.5",
+     "train": "GDR",
+     "kb": "KB5126934",
+     "kb_url": "https://support.microsoft.com/help/5126934",
+     "date": "2026-10-13"
+    },
     {
      "name": "CU27",
      "build": "16.0.4295.3",
@@ -598,6 +630,14 @@
     },
     {
      "name": "GDR",
+     "build": "16.0.1210.3",
+     "train": "GDR",
+     "kb": "KB5128493",
+     "kb_url": "https://support.microsoft.com/help/5128493",
+     "date": "2026-10-13"
+    },
+    {
+     "name": "GDR",
      "build": "16.0.1200.5",
      "train": "GDR",
      "kb": "KB5122771",
@@ -776,20 +816,28 @@
    },
    "latest_cu_gdr": {
     "name": "CU32 + GDR",
-    "build": "15.0.4490.9",
-    "kb": "KB5122772",
-    "kb_url": "https://support.microsoft.com/help/5122772",
-    "date": "2026-09-08"
+    "build": "15.0.4500.2",
+    "kb": "KB5128494",
+    "kb_url": "https://support.microsoft.com/help/5128494",
+    "date": "2026-10-13"
    },
    "latest_gdr": {
     "name": "GDR (RTM security train)",
-    "build": "15.0.2190.7",
-    "kb": "KB5122773",
-    "kb_url": "https://support.microsoft.com/help/5122773",
-    "date": "2026-09-08"
+    "build": "15.0.2200.2",
+    "kb": "KB5128495",
+    "kb_url": "https://support.microsoft.com/help/5128495",
+    "date": "2026-10-13"
    },
    "latest_sp": null,
    "updates": [
+    {
+     "name": "CU32 + GDR",
+     "build": "15.0.4500.2",
+     "train": "GDR",
+     "kb": "KB5128494",
+     "kb_url": "https://support.microsoft.com/help/5128494",
+     "date": "2026-10-13"
+    },
     {
      "name": "CU32 + GDR",
      "build": "15.0.4490.9",
@@ -1192,6 +1240,14 @@
     },
     {
      "name": "GDR",
+     "build": "15.0.2200.2",
+     "train": "GDR",
+     "kb": "KB5128495",
+     "kb_url": "https://support.microsoft.com/help/5128495",
+     "date": "2026-10-13"
+    },
+    {
+     "name": "GDR",
      "build": "15.0.2190.7",
      "train": "GDR",
      "kb": "KB5122773",
@@ -1378,20 +1434,28 @@
    },
    "latest_cu_gdr": {
     "name": "CU31 + GDR",
-    "build": "14.0.3550.4",
-    "kb": "KB5122774",
-    "kb_url": "https://support.microsoft.com/help/5122774",
-    "date": "2026-09-08"
+    "build": "14.0.3560.2",
+    "kb": "KB5128496",
+    "kb_url": "https://support.microsoft.com/help/5128496",
+    "date": "2026-10-13"
    },
    "latest_gdr": {
     "name": "GDR (RTM security train)",
-    "build": "14.0.2130.4",
-    "kb": "KB5122775",
-    "kb_url": "https://support.microsoft.com/help/5122775",
-    "date": "2026-09-08"
+    "build": "14.0.2140.2",
+    "kb": "KB5128497",
+    "kb_url": "https://support.microsoft.com/help/5128497",
+    "date": "2026-10-13"
    },
    "latest_sp": null,
    "updates": [
+    {
+     "name": "CU31 + GDR",
+     "build": "14.0.3560.2",
+     "train": "GDR",
+     "kb": "KB5128496",
+     "kb_url": "https://support.microsoft.com/help/5128496",
+     "date": "2026-10-13"
+    },
     {
      "name": "CU31 + GDR",
      "build": "14.0.3550.4",
@@ -1807,6 +1871,14 @@
      "kb": "KB4038634",
      "kb_url": "https://support.microsoft.com/help/4038634",
      "date": "2017-10-24"
+    },
+    {
+     "name": "GDR",
+     "build": "14.0.2140.2",
+     "train": "GDR",
+     "kb": "KB5128497",
+     "kb_url": "https://support.microsoft.com/help/5128497",
+     "date": "2026-10-13"
     },
     {
      "name": "GDR",
@@ -4145,5 +4217,5 @@
    "url": "https://sqldba.blog/sql-server-builds-complete-version-list-and-support-lifecycle/"
   }
  ],
- "data_checked": "2026-10-08"
+ "data_checked": "2026-10-31"
 }

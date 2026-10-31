@@ -534,6 +534,18 @@
   "url": "https://sqldba.blog/dba-scripts-generate-agent-job-script/"
  },
  {
+  "question": "One job's block failed. What did it leave on the target?",
+  "answer": "Nothing for that job. When sp_add_job fails, usually on a missing operator or owner login (Msg 14234), the block skips the rest of that job, so there are no follow-on errors and no schedule attached to nothing. Fix that one error on the target and run the block again.",
+  "post_title": "DBA Scripts: Generate Agent Job Script",
+  "url": "https://sqldba.blog/dba-scripts-generate-agent-job-script/"
+ },
+ {
+  "question": "Two jobs have schedules with the same name. Will they share one on the target?",
+  "answer": "No. The script reuses a schedule only when the name and the whole definition match, then attaches it by id, so two different schedules called Daily come back as two. On the lab, jobs at 01:30 and 03:00 kept their own times.",
+  "post_title": "DBA Scripts: Generate Agent Job Script",
+  "url": "https://sqldba.blog/dba-scripts-generate-agent-job-script/"
+ },
+ {
   "question": "What happens if a job's owner login doesn't exist on the target?",
   "answer": "sp_add_job fails with Msg 14234 ( The specified '@owner_login_name' is invalid ) and the job is not created. Run Generate Login Script first so every job owner already resolves on the target, or change @owner_login_name in that block.",
   "post_title": "DBA Scripts: Generate Agent Job Script",
@@ -541,19 +553,7 @@
  },
  {
   "question": "What permissions does the script need?",
-  "answer": "SELECT on the msdb job tables: db_datareader on msdb, or sysadmin. SQLAgentReaderRole and SQLAgentOperatorRole are not enough. They get Msg 229 and a result that is only the header, with no jobs in it.",
-  "post_title": "DBA Scripts: Generate Agent Job Script",
-  "url": "https://sqldba.blog/dba-scripts-generate-agent-job-script/"
- },
- {
-  "question": "Why do I get \"The specified @job_name does not exist\" after running the script?",
-  "answer": "Those are follow-on errors. sp_add_job failed first, usually a missing category, operator or owner login, and every later call in that block names a job that was never created. Scroll to the first error in the block, fix it on the target, and run that block again.",
-  "post_title": "DBA Scripts: Generate Agent Job Script",
-  "url": "https://sqldba.blog/dba-scripts-generate-agent-job-script/"
- },
- {
-  "question": "Why is a recreated job running on another job's schedule?",
-  "answer": "Two schedules on the source share a name. The script creates a schedule only when no schedule of that name exists, then attaches by name, so the second job gets the first job's schedule. Rename the duplicates on the source and generate again, or fix the times on the target with sp_update_schedule.",
+  "answer": "SELECT on the msdb job tables: db_datareader on msdb, or sysadmin. SQLAgentReaderRole and SQLAgentOperatorRole are not enough: they are denied most of those tables, and the script stops with an error that says so rather than returning a script with no jobs in it.",
   "post_title": "DBA Scripts: Generate Agent Job Script",
   "url": "https://sqldba.blog/dba-scripts-generate-agent-job-script/"
  },
@@ -637,7 +637,7 @@
  },
  {
   "question": "What permission does this need?",
-  "answer": "Generating needs none: the script reads no catalog view, and a login with only CONNECT SQL produced identical DDL. Running the output needs sysadmin, because it sets @owner_login_name = N'sa'. A member of SQLAgentOperatorRole got Msg 229 (SELECT denied on sysjobs ) and Msg 14515, Only a member of the sysadmin server role can add a job for a different owner, for each job, and the run still left 3 orphan schedules behind. MS Docs lists the SQL Server Agent fixed database roles.",
+  "answer": "Generating needs none: the script reads no catalog view, and a login with only CONNECT SQL produced identical DDL. Running the output needs sysadmin, because it sets @owner_login_name = N'sa'. A member of SQLAgentOperatorRole got Msg 229 (SELECT denied on sysjobs ) and Msg 14515, Only a member of the sysadmin server role can add a job for a different owner, for each job, and the run still left three orphan schedules behind. MS Docs lists the SQL Server Agent fixed database roles.",
   "post_title": "DBA Scripts: Generate Database Integrity and Housekeeping Jobs",
   "url": "https://sqldba.blog/dba-scripts-generate-database-integrity-and-housekeeping-jobs/"
  },
@@ -685,7 +685,7 @@
  },
  {
   "question": "Why does the script need ALTER ANY LINKED SERVER?",
-  "answer": "Without it, provider_string in sys.servers reads NULL, so settings such as TrustServerCertificate=yes silently drop out of the generated script. Without VIEW ANY DEFINITION as well, the logins named in each mapping can't be seen, and a mapping for one login is written as a mapping for every login. sysadmin has both.",
+  "answer": "Without it, provider_string in sys.servers reads NULL, so settings such as TrustServerCertificate=yes would drop out of the generated script. Without VIEW ANY DEFINITION as well, the logins named in each mapping cannot be seen. Rather than write that wrong script, it stops with Msg 50000 and says what it needs. sysadmin has both.",
   "post_title": "DBA Scripts: Generate Linked Server Script",
   "url": "https://sqldba.blog/dba-scripts-generate-linked-server-script/"
  },
@@ -715,7 +715,7 @@
  },
  {
   "question": "I ran the login script and the database users are still orphaned. Why?",
-  "answer": "The target already had a login with that name. Every block is wrapped in IF NOT EXISTS on the name, so the existing login is left alone with its own SID and its own password, the block does nothing and prints nothing, and the database user stays orphaned. Compare the SIDs with the query in the answer above. If the existing login is not needed, drop it and run that login's block again; otherwise re-map each user with ALTER USER [YourUser] WITH LOGIN = [YourLogin];, or use Fix-OrphanedUsers.sql across every database.",
+  "answer": "The target already had a login with that name. Every block is wrapped in IF NOT EXISTS on the name, so the existing login is left alone with its own SID and its own password, the block does nothing and prints nothing, and the database user stays orphaned. Compare the SIDs with the query in the answer above. If the existing login is not needed, drop it and run that login's block again; otherwise re-map each user with ALTER USER [YourUser] WITH LOGIN = [YourLogin];, or use Fix Orphaned Users across every database.",
   "post_title": "DBA Scripts: Generate Login Script",
   "url": "https://sqldba.blog/dba-scripts-generate-login-script/"
  },
@@ -739,7 +739,7 @@
  },
  {
   "question": "Why doesn't it script server-level permissions or DENY CONNECT SQL?",
-  "answer": "Because guessing at them is worse than leaving them out. Explicit grants and denies at server scope are a separate audit, and a generator that half-covers them gives you a false sense that permissions came across. Run Get-MigrationLoginAudit.sql on the source, keep the output, and compare after the migration.",
+  "answer": "Because guessing at them is worse than leaving them out. Explicit grants and denies at server scope are a separate audit, and a generator that half-covers them gives you a false sense that permissions came across. Run Get Migration Login Audit and Post-Migration Validation on the source, keep the output, and compare after the migration.",
   "post_title": "DBA Scripts: Generate Login Script",
   "url": "https://sqldba.blog/dba-scripts-generate-login-script/"
  },
@@ -823,7 +823,7 @@
  },
  {
   "question": "Why does it return nothing but Msg 916?",
-  "answer": "The full text is \"The server principal... is not able to access the database... under the current security context.\" The generator reads every online, writable user database, and the first one your login cannot open stops the run, so nothing comes back. Run it as sysadmin, or grant the login CONNECT ANY DATABASE and VIEW ANY DEFINITION. Both matter: with database access but no VIEW ANY DEFINITION, it cannot see other logins and marks every mapped user MANUAL.",
+  "answer": "The full text is \"The server principal... is not able to access the database... under the current security context.\" The generator reads every online, writable user database, and the first one your login cannot open stops the run, so nothing comes back. Run it as sysadmin, or grant the login CONNECT ANY DATABASE and VIEW ANY DEFINITION. Both matter: without VIEW ANY DEFINITION it stops before it starts, with Msg 50000 naming the permission.",
   "post_title": "DBA Scripts: Generate User Mapping Script",
   "url": "https://sqldba.blog/dba-scripts-generate-user-mapping-script/"
  },
@@ -943,7 +943,7 @@
  },
  {
   "question": "What permissions do these scripts need?",
-  "answer": "VIEW ANY DEFINITION covers the audit and trigger scripts at server level. Get-AuditSpecifications also has to enter each database for the DB_SPEC rows: CONNECT ANY DATABASE alongside VIEW ANY DEFINITION returned all 11 lab rows. Get-ProxyAndCredentials reads the msdb proxy tables: without db_datareader on msdb it stops with Msg 229, SELECT permission denied on sysproxylogin, and VIEW SERVER STATE or SQLAgentOperatorRole membership did not change that. With db_datareader alone it returned the proxy with runs_as NULL and left the standalone credential out. MS Docs says only sysadmin can read dbo.sysproxies; on SQL Server 2025 CU8 db_datareader on msdb read it.",
+  "answer": "VIEW ANY DEFINITION covers the audit and trigger scripts at server level. Get-AuditSpecifications also has to enter each database for the DB_SPEC rows: without CONNECT ANY DATABASE alongside VIEW ANY DEFINITION, those rows drop out with no error. Get-ProxyAndCredentials reads the msdb proxy tables: without db_datareader on msdb it stops with Msg 229, SELECT permission denied on sysproxylogin, and VIEW SERVER STATE or SQLAgentOperatorRole membership did not change that. With db_datareader alone it returned the proxy with runs_as NULL, left the standalone credential out and dropped the msdb role from allowed_logins. MS Docs says only sysadmin can read dbo.sysproxies; on SQL Server 2025 CU8 db_datareader on msdb read it.",
   "post_title": "DBA Scripts: Get Audit Specifications, DDL Triggers, and Proxy Credentials",
   "url": "https://sqldba.blog/dba-scripts-get-audit-triggers-and-proxy-credentials/"
  },
@@ -997,7 +997,7 @@
  },
  {
   "question": "Can I fix a broken log chain without taking a new full backup?",
-  "answer": "No. Once the LSN sequence breaks, nothing after the gap can be restored to a point in time using the old chain. A fresh full backup is the only way to restart it.",
+  "answer": "Yes, with a differential backup, as long as the full backup it is based on is still intact: Microsoft names a full or a differential as the backup that starts a log chain ( MS Docs ). What you cannot do is bridge the gap with log backups. Once the LSN sequence breaks, nothing after it can be restored to a point in time using the old chain.",
   "post_title": "DBA Scripts: Get Backup Chain Integrity",
   "url": "https://sqldba.blog/dba-scripts-get-backup-chain-integrity/"
  },
@@ -1213,7 +1213,7 @@
  },
  {
   "question": "A restore fails with Msg 33111. What now?",
-  "answer": "The lab\u2019s restore failed with Msg 33111, Level 16, State 3, Cannot find server certificate with thumbprint '0x777B8C1BC6EAA06500EEEB510481763A48C17129'. The target server does not have the certificate that protects the backup\u2019s database encryption key. RESTORE FILELISTONLY fails the same way, so the backup cannot even be listed. On the source, run Get-CertificatesAndKeys in master and find that thumbprint. Back the certificate up with BACKUP CERTIFICATE... WITH PRIVATE KEY, create it on the target with CREATE CERTIFICATE... FROM FILE, then restore. On the lab the same restore then succeeded. Move a TDE protected database to another SQL Server (MS Docs) has the full steps, including the database master key the target needs in master first.",
+  "answer": "The lab\u2019s restore failed with Msg 33111, Cannot find server certificate with thumbprint '0x777B8C1BC6EAA06500EEEB510481763A48C17129'. The target server does not have the certificate that protects the backup\u2019s database encryption key. RESTORE FILELISTONLY fails the same way, so the backup cannot even be listed. On the source, run Get-CertificatesAndKeys in master and find that thumbprint. Back the certificate up with BACKUP CERTIFICATE... WITH PRIVATE KEY, create it on the target with CREATE CERTIFICATE... FROM FILE, then restore. On the lab the same restore then succeeded. Move a TDE protected database to another SQL Server (MS Docs) has the full steps, including the database master key the target needs in master first.",
   "post_title": "DBA Scripts: Get Certificates, Keys, and TDE Status",
   "url": "https://sqldba.blog/dba-scripts-get-certificates-keys-and-tde-status/"
  },
@@ -1260,14 +1260,32 @@
   "url": "https://sqldba.blog/dba-scripts-get-compression-candidates/"
  },
  {
+  "question": "Do the edition limits count hyperthreads on a VM?",
+  "answer": "Yes. In a virtual machine the limit is based on logical processors, not cores, so every vCPU counts whether it is a full core or a hyperthread on the host. On bare metal it's the other way round: the limit counts cores, and hyperthreading gives each licensed core two schedulers.",
+  "post_title": "DBA Scripts: Get CPU Topology and OS Configuration Checks",
+  "url": "https://sqldba.blog/dba-scripts-get-cpu-topology-and-os-config/"
+ },
+ {
   "question": "Does IFI apply to transaction log files too?",
-  "answer": "No, Instant File Initialization only applies to data files. Log files are always zero-initialized by SQL Server regardless of IFI, that\u2019s a SQL Server design requirement, not a configurable setting.",
+  "answer": "Mostly no. Before SQL Server 2022 every log growth is zero-filled whatever IFI is set to. From SQL Server 2022, log growths of 64 MB or less skip the zero-fill, and larger ones are still zeroed in full. Instant File Initialization: What It Does and How to Enable It covers both.",
+  "post_title": "DBA Scripts: Get CPU Topology and OS Configuration Checks",
+  "url": "https://sqldba.blog/dba-scripts-get-cpu-topology-and-os-config/"
+ },
+ {
+  "question": "How do I know if my Enterprise instance is capped at 20 cores?",
+  "answer": "Check sql_edition. Server + CAL Enterprise reports plain Enterprise Edition and is limited to 20 cores per instance; core-based Enterprise reports Enterprise Edition: Core-based Licensing and has no cap beyond the operating system.",
   "post_title": "DBA Scripts: Get CPU Topology and OS Configuration Checks",
   "url": "https://sqldba.blog/dba-scripts-get-cpu-topology-and-os-config/"
  },
  {
   "question": "Is a single NUMA node always a problem?",
   "answer": "No, plenty of smaller servers run fine on a single NUMA node. The INFO flag here is only a note that soft-NUMA becomes worth considering once CPU count climbs past a rough threshold, it\u2019s a tuning opportunity, not a misconfiguration.",
+  "post_title": "DBA Scripts: Get CPU Topology and OS Configuration Checks",
+  "url": "https://sqldba.blog/dba-scripts-get-cpu-topology-and-os-config/"
+ },
+ {
+  "question": "Why does SQL Server only use some of my cores?",
+  "answer": "Either the edition caps it or an affinity mask does. Compare online_schedulers with logical_cpu_count, then read the startup line in the error log that ends \"based on SQL Server licensing\". If affinity_mask is 0 and the log shows fewer logical processors in use than detected, it's the edition: Standard stops at 24 cores on SQL Server 2022 and 32 on 2025, Express at 4.",
   "post_title": "DBA Scripts: Get CPU Topology and OS Configuration Checks",
   "url": "https://sqldba.blog/dba-scripts-get-cpu-topology-and-os-config/"
  },
@@ -1285,7 +1303,7 @@
  },
  {
   "question": "Where does SQL Server store backup history?",
-  "answer": "In msdb, mainly backupset, backupmediafamily, and backupfile. This history persists until msdb 's own maintenance jobs prune it, so it's usually available well beyond the 2 months this script defaults to.",
+  "answer": "In msdb, mainly backupset, backupmediafamily, and backupfile. This history persists until a cleanup job or maintenance plan prunes it with sp_delete_backuphistory ( MS Docs ), since SQL Server never trims it on its own, so it's usually available well beyond the 2 months this script defaults to.",
   "post_title": "DBA Scripts: Get Database Backup History",
   "url": "https://sqldba.blog/dba-scripts-get-database-backup-history/"
  },
@@ -1429,7 +1447,7 @@
  },
  {
   "question": "Do I need sysadmin to run this?",
-  "answer": "No. VIEW SERVER STATE is enough ( VIEW SERVER PERFORMANCE STATE on SQL Server 2022 and later), and returns the same 6 rows as sysadmin. Without it nothing comes back quietly wrong: the script fails with Msg 300 and returns no rows, because sys.dm_server_registry and sys.dm_exec_connections both need it. The 4 sys.configurations rows on their own are readable by any login.",
+  "answer": "No. VIEW SERVER STATE is enough ( VIEW SERVER PERFORMANCE STATE on SQL Server 2022 and later), and returns the same six rows as sysadmin. Without it nothing comes back quietly wrong: the script fails with a permission error and returns no rows, because sys.dm_exec_connections needs it. The four sys.configurations rows on their own are readable by any login.",
   "post_title": "DBA Scripts: Get Database Mail and xp_cmdshell Configuration",
   "url": "https://sqldba.blog/dba-scripts-get-database-mail-and-xp-cmd-shell/"
  },
@@ -1446,8 +1464,8 @@
   "url": "https://sqldba.blog/dba-scripts-get-database-mail-and-xp-cmd-shell/"
  },
  {
-  "question": "Why does force encryption read 0 when Force Encryption is set to Yes?",
-  "answer": "Because the script never finds the value. ForceEncryption sits on the SuperSocketNetLib registry key itself, and sys.dm_server_registry only returns that key's subkeys, so the lookup comes back empty and the script substitutes 0. Check Force Encryption in SQL Server Configuration Manager, under the Protocols properties for the instance, or look at encrypt_option in sys.dm_exec_connections to see which connections are actually encrypted.",
+  "question": "Why does force encryption read unknown?",
+  "answer": "Because the script could not read the registry value, and it says so rather than guess 0. ForceEncryption sits on the SuperSocketNetLib key itself, which sys.dm_server_registry does not return, so the script reads it with xp_instance_regread. When that fails, check Force Encryption in SQL Server Configuration Manager, under the Protocols properties for the instance, or look at encrypt_option in sys.dm_exec_connections to see which connections are actually encrypted.",
   "post_title": "DBA Scripts: Get Database Mail and xp_cmdshell Configuration",
   "url": "https://sqldba.blog/dba-scripts-get-database-mail-and-xp-cmd-shell/"
  },
@@ -1855,13 +1873,13 @@
  },
  {
   "question": "How is this different from Get Instance Configuration Score?",
-  "answer": "This script is the raw snapshot, every setting, unfiltered. Instance Configuration Score (a separate post) is a graded audit that scores a subset of settings against best-practice recommendations. Use this one for a full baseline or drift comparison; use the score for a quick pass/fail read.",
+  "answer": "This script is the raw snapshot, every setting, unfiltered. Get Instance Configuration Score is a graded audit that scores a subset of settings against best-practice recommendations. Use this one for a full baseline or drift comparison; use the score for a quick pass/fail read.",
   "post_title": "DBA Scripts: Get Instance Configuration Snapshot",
   "url": "https://sqldba.blog/dba-scripts-get-instance-configuration-snapshot/"
  },
  {
   "question": "Why does a setting show a different configured and running value?",
-  "answer": "Because that setting requires a service restart to take effect. RECONFIGURE applies most changes immediately, but memory and CPU-related settings often need a restart before running_value catches up to configured_value.",
+  "answer": "Either RECONFIGURE has not been run since the change, or the setting is not dynamic and waits for a service restart. is_dynamic in sys.configurations says which. Memory settings are dynamic and apply on RECONFIGURE, and a few pairs differ by design, such as min server memory reading 0 against 16 ( MS Docs ).",
   "post_title": "DBA Scripts: Get Instance Configuration Snapshot",
   "url": "https://sqldba.blog/dba-scripts-get-instance-configuration-snapshot/"
  },
@@ -1909,7 +1927,7 @@
  },
  {
   "question": "Do log shipping secondaries show up?",
-  "answer": "Yes. Every RESTORE LOG is recorded, so a log shipping secondary shows a restore every few minutes with restore_type of Log and days_since_restore at 0. That is expected and is not a DR test; look for the Full and Differential restores when you are checking whether backups have been proven.",
+  "answer": "Yes. Every RESTORE LOG is recorded, so a log shipping secondary shows a restore every few minutes with restore_type of Log and days_since_restore at 0. That is expected and is not a DR test; look for the Database and Differential restores when you are checking whether backups have been proven.",
   "post_title": "DBA Scripts: Get Last Restore History",
   "url": "https://sqldba.blog/dba-scripts-get-last-restore-history/"
  },
@@ -1944,8 +1962,8 @@
   "url": "https://sqldba.blog/dba-scripts-get-linked-servers/"
  },
  {
-  "question": "My script just failed with Msg 208, invalid object name sys.linked_servers. What replaced it?",
-  "answer": "sys.servers WHERE is_linked = 1, and the swap is usually the only change needed. sys.linked_servers no longer resolves at all on SQL Server 2025, so the failure is a plain Msg 208 rather than anything to do with the linked server itself. All four scripts on this page already read sys.servers.",
+  "question": "My script just failed with Msg 208, invalid object name sys.linked_servers. What should it read?",
+  "answer": "sys.servers WHERE is_linked = 1, and the swap is usually the only change needed. sys.linked_servers has never been a catalog view in SQL Server, so the name fails on every version and the failure is a plain Msg 208 rather than anything to do with the linked server itself. All four scripts on this page already read sys.servers.",
   "post_title": "DBA Scripts: Get Linked Servers",
   "url": "https://sqldba.blog/dba-scripts-get-linked-servers/"
  },
@@ -1994,6 +2012,12 @@
  {
   "question": "Is it safe to just switch a stuck database to SIMPLE recovery?",
   "answer": "Only if you don\u2019t need point-in-time restore for it. SIMPLE recovery removes the LOG_BACKUP wait entirely since the log truncates on checkpoint, but you lose the ability to restore to any point other than your last full or differential backup. That is a recovery promise being quietly downgraded, so make it a decision rather than a fix: Recovery Model Audit shows which databases are already in that position by accident.",
+  "post_title": "DBA Scripts: Get Log Reuse Waits",
+  "url": "https://sqldba.blog/dba-scripts-get-log-reuse-waits/"
+ },
+ {
+  "question": "Why are master, model, msdb and tempdb not in the results?",
+  "answer": "The script skips the system databases on purpose ( database_id > 4 ), because their logs are rarely the one filling a disk. If you query sys.databases directly you will usually see model reading LOG_BACKUP: it is in FULL recovery by default and nothing backs its log up. That is harmless, since almost nothing writes to model, and its recovery model is what new databases inherit, which is the part worth checking.",
   "post_title": "DBA Scripts: Get Log Reuse Waits",
   "url": "https://sqldba.blog/dba-scripts-get-log-reuse-waits/"
  },
@@ -2088,14 +2112,20 @@
   "url": "https://sqldba.blog/dba-scripts-get-login-migration-parity/"
  },
  {
-  "question": "Does this tell me exactly when a login last connected, historically?",
-  "answer": "Not by default. SQL Server doesn\u2019t track historical last-login time without a configured Server Audit with the LOGIN action group enabled. Get-LoginLastActivity shows what\u2019s available without one: current active sessions and login metadata, genuinely useful, but not a substitute for audit-based history if you need it.",
+  "question": "Get-WeakLoginSettings found no blank passwords. Can I trust that?",
+  "answer": "Only if you ran it with CONTROL SERVER or as a sysadmin. PWDCOMPARE reads sys.sql_logins.password_hash, which only CONTROL SERVER can see; without it the hash reads NULL, both password tests return 0, and nothing raises an error. On the lab instance as sysadmin: 41 hashes, 1 blank password. As an ordinary SQL login: 0 hashes, no password finding even for a login whose password is its own name, and no error.",
   "post_title": "DBA Scripts: Get Login Security Audit",
   "url": "https://sqldba.blog/dba-scripts-get-login-security-audit/"
  },
  {
-  "question": "Why does SQL Server 2025 need xp_readerrorlog instead of the ring buffer?",
-  "answer": "RING_BUFFER_SECURITY_ERROR no longer captures 18456 failed-login events on SQL Server 2025 in this repo\u2019s testing. xp_readerrorlog reading the actual error log text is the reliable, cross-version source this script relies on instead.",
+  "question": "Why does is_sysadmin disagree with IS_SRVROLEMEMBER?",
+  "answer": "Neither source is complete. IS_SRVROLEMEMBER returned 0 for a virtual service account that sys.server_role_members lists as a direct sysadmin, and it returns 1 for every role when the principal is a sysadmin, which inflated a naive securityadmin check to 14 logins where the catalog holds 4.",
+  "post_title": "DBA Scripts: Get Login Security Audit",
+  "url": "https://sqldba.blog/dba-scripts-get-login-security-audit/"
+ },
+ {
+  "question": "Why read the error log instead of RING_BUFFER_SECURITY_ERROR?",
+  "answer": "The ring buffer does not hold login failures. On the lab instance it held 85 records and not one mentioned 18456; it carries Windows security API failures, with an APIName and a Windows error code instead of a login name.",
   "post_title": "DBA Scripts: Get Login Security Audit",
   "url": "https://sqldba.blog/dba-scripts-get-login-security-audit/"
  },
@@ -2161,7 +2191,7 @@
  },
  {
   "question": "Does Post-Migration Validation need sysadmin?",
-  "answer": "No. VIEW ANY DEFINITION and db_datareader on msdb returned the same 13 rows as sysadmin. Without msdb access the whole query fails on msdb.dbo.sysjobs with Msg 229. Without VIEW ANY DEFINITION it runs and is wrong: the login count dropped to 1, sysadmin_count and tempdb_data_file_count to 0. Run it on both servers under logins with the same permissions, or the counts will not compare.",
+  "answer": "No. VIEW ANY DEFINITION and db_datareader on msdb returned the same 13 rows as sysadmin. Without msdb access the whole query fails on msdb.dbo.sysjobs with Msg 229. Without VIEW ANY DEFINITION it runs and is wrong: the login count dropped to 1, sysadmin_count and tempdb_data_file_count to 0, and linked_server_count came back one short. Run it on both servers under logins with the same permissions, or the counts will not compare.",
   "post_title": "DBA Scripts: Get Migration Login Audit and Post-Migration Validation",
   "url": "https://sqldba.blog/dba-scripts-get-migration-login-audit-and-post-migration-validation/"
  },
@@ -2185,13 +2215,13 @@
  },
  {
   "question": "Why doesn\u2019t Post-Migration Validation do the diffing itself?",
-  "answer": "So it runs the same way on each server, with no link between them. Diffing the 2 outputs, by hand, in a spreadsheet or with a script, keeps the query simple and shows you exactly which check_name values don\u2019t match.",
+  "answer": "So it runs the same way on each server, with no link between them. Diffing the two outputs, by hand, in a spreadsheet or with a script, keeps the query simple and shows you exactly which check_name values don\u2019t match.",
   "post_title": "DBA Scripts: Get Migration Login Audit and Post-Migration Validation",
   "url": "https://sqldba.blog/dba-scripts-get-migration-login-audit-and-post-migration-validation/"
  },
  {
   "question": "Why is a login missing from the Migration Login Audit output?",
-  "answer": "2 reasons. The script reads principal types S, U, G, C and R, so an asymmetric key login (type K) never appears. And without VIEW ANY DEFINITION, sys.server_principals only shows your own login, the system logins and the fixed server roles. A lab login with no extra permission got 11 rows where sysadmin got 32, with no error.",
+  "answer": "Two reasons. The script reads principal types S, U, G, C and R, so an asymmetric key login (type K) never appears. And without VIEW ANY DEFINITION, sys.server_principals only shows your own login, the system logins and the fixed server roles. A lab login with no extra permission got 11 rows where sysadmin got 54, with no error.",
   "post_title": "DBA Scripts: Get Migration Login Audit and Post-Migration Validation",
   "url": "https://sqldba.blog/dba-scripts-get-migration-login-audit-and-post-migration-validation/"
  },
@@ -2209,13 +2239,13 @@
  },
  {
   "question": "Is Database Mirroring still supported?",
-  "answer": "It\u2019s deprecated since SQL Server 2012 but still functional in current versions. Microsoft\u2019s guidance is to migrate to Always On Availability Groups for any new deployment; mirroring remains for environments that haven\u2019t migrated yet.",
+  "answer": "It has been deprecated since SQL Server 2012 and still works in current versions, including SQL Server 2025. Microsoft\u2019s guidance is to use Always On Availability Groups for anything new; mirroring remains for environments that haven\u2019t migrated yet.",
   "post_title": "DBA Scripts: Get Mirroring Endpoint Health and Status",
   "url": "https://sqldba.blog/dba-scripts-get-mirroring-endpoint-health-and-status/"
  },
  {
   "question": "Why does Get-MirroringStatus filter to the PRINCIPAL role only?",
-  "answer": "Running it on the mirror side would show the same pairing from the other direction. Filtering to PRINCIPAL keeps the output to one row per mirrored database regardless of which server you run it from, as long as it\u2019s run on the current principal.",
+  "answer": "On the mirror the same pairing shows with the role MIRROR, and its values are only visible to a sysadmin. Filtering to PRINCIPAL keeps one row per mirrored database. Run it on whichever server is the principal right now; on the mirror it returns no rows.",
   "post_title": "DBA Scripts: Get Mirroring Endpoint Health and Status",
   "url": "https://sqldba.blog/dba-scripts-get-mirroring-endpoint-health-and-status/"
  },
@@ -2437,7 +2467,7 @@
  },
  {
   "question": "How far back does xp_readerrorlog go?",
-  "answer": "As far as the current error log cycle covers, which depends on how many archived logs SQL Server retains (7 by default, configurable) and how often the log has been cycled, whether by a scheduled job, a restart, or a manual sp_cycle_errorlog call. This script only reads the current, active log (log number 0).",
+  "answer": "As far as the current error log cycle covers, which depends on how many archived logs SQL Server retains (6 archived logs plus the current one by default, configurable ( MS Docs )) and how often the log has been cycled, whether by a scheduled job, a restart, or a manual sp_cycle_errorlog call. This script only reads the current, active log (log number 0).",
   "post_title": "DBA Scripts: Get Recent Error Log Entries",
   "url": "https://sqldba.blog/dba-scripts-get-recent-error-log-entries/"
  },
@@ -2569,13 +2599,19 @@
  },
  {
   "question": "How far back does job history go?",
-  "answer": "As far as msdb.dbo.sysjobhistory retains it, controlled by the SQL Agent job history retention settings (row count and per-job caps by default). This script only looks at the last 7 days; adjust the DATEADD filter for a longer window if needed.",
+  "answer": "Only as far as msdb.dbo.sysjobhistory keeps it. SQL Agent caps the history at 1,000 rows in total and 100 per job by default (SQL Server Agent Properties, History page), so on a busy server the oldest rows can roll off before 7 days are up. This script looks at the last 7 days; change the DATEADD filter for a longer window, and raise the caps if the history you need is already gone.",
   "post_title": "DBA Scripts: Get SQL Agent Job Failure Summary",
   "url": "https://sqldba.blog/dba-scripts-get-sql-agent-job-failure-summary/"
  },
  {
-  "question": "Why would a job fail with no error message?",
-  "answer": "Rare, but it happens when a step is killed externally (server restart mid-job, manual cancellation) rather than failing on its own. The absence of a specific error is itself a clue worth investigating.",
+  "question": "Why is a job I stopped not in the list?",
+  "answer": "Because stopping a job is not a failure. A job stopped from SSMS or with sp_stop_job is recorded as run_status 3, cancelled, with the message The job was stopped prior to completion by User and the login that stopped it. This script reads run_status = 0 only, so cancellations stay out. Change the filter to run_status IN (0, 3) to see both.",
+  "post_title": "DBA Scripts: Get SQL Agent Job Failure Summary",
+  "url": "https://sqldba.blog/dba-scripts-get-sql-agent-job-failure-summary/"
+ },
+ {
+  "question": "Why is the error message cut off?",
+  "answer": "The message column in sysjobhistory holds up to 4,000 characters, and a long step error, a PowerShell or SSIS step especially, can run past that. For the full text, set an output file on the job step (Advanced page of the step) and read that instead.",
   "post_title": "DBA Scripts: Get SQL Agent Job Failure Summary",
   "url": "https://sqldba.blog/dba-scripts-get-sql-agent-job-failure-summary/"
  },
@@ -2617,7 +2653,7 @@
  },
  {
   "question": "How often does SQL Server automatically update statistics?",
-  "answer": "Automatically, once the modification counter crosses a dynamic threshold ( SQRT(1000 \u00d7 rows) on modern compatibility levels). On large, slowly-changing tables, that threshold can take a long time to reach, leaving statistics stale in the meantime.",
+  "answer": "When the modification counter crosses a threshold and a query then compiles against the statistic. On compatibility level 130 and later the threshold is the lower of 500 + 20% of rows and SQRT(1000 \u00d7 rows), which for a 50,000-row table is 7,071 changes. On large, slowly-changing tables that can take a long time to reach, leaving statistics stale in the meantime.",
   "post_title": "DBA Scripts: Get Statistics Health",
   "url": "https://sqldba.blog/dba-scripts-get-statistics-health/"
  },
@@ -2628,14 +2664,14 @@
   "url": "https://sqldba.blog/dba-scripts-get-statistics-health/"
  },
  {
-  "question": "Does 0 rows from Get-SuspectPages guarantee no corruption exists?",
-  "answer": "No. It means nothing has been detected and recorded yet. msdb.dbo.suspect_pages only gets a row when SQL Server reads a bad page, in normal work or during a DBCC CHECKDB run. A database that has never been checked, and never happened to read a bad page, could still be corrupt. Last DBCC CHECKDB tells you whether anything has actually looked.",
+  "question": "Does a restore clear the rows from suspect_pages?",
+  "answer": "No. A full, file or page restore changes the row\u2019s event_type to 4, Restored, and a repair sets 5 or 7. In the lab, a full RESTORE... WITH REPLACE turned the row to 4 and kept it. Only DROP DATABASE, ALTER DATABASE... REMOVE FILE or your own DELETE removes them.",
   "post_title": "DBA Scripts: Get Suspect Pages and Integrity Checks",
   "url": "https://sqldba.blog/dba-scripts-get-suspect-pages-and-integrity-checks/"
  },
  {
-  "question": "Does a restore clear the rows from suspect_pages?",
-  "answer": "No. A full, file or page restore changes the row\u2019s event_type to 4, Restored, and a repair sets 5 or 7. In the lab, a full RESTORE... WITH REPLACE turned both rows to 4 and kept them. Only DROP DATABASE, ALTER DATABASE... REMOVE FILE or your own DELETE removes them.",
+  "question": "Does an empty Get-SuspectPages result guarantee no corruption exists?",
+  "answer": "No. It means nothing has been detected and recorded yet. msdb.dbo.suspect_pages only gets a row when SQL Server reads a bad page, in normal work or during a DBCC CHECKDB run. A database that has never been checked, and never happened to read a bad page, could still be corrupt. Last DBCC CHECKDB tells you whether anything has actually looked.",
   "post_title": "DBA Scripts: Get Suspect Pages and Integrity Checks",
   "url": "https://sqldba.blog/dba-scripts-get-suspect-pages-and-integrity-checks/"
  },
@@ -2683,7 +2719,7 @@
  },
  {
   "question": "Why does the script return fewer rows than I expect?",
-  "answer": "Almost always permissions. Listing every member of sysadmin needs VIEW ANY DEFINITION, which sysadmin and securityadmin hold implicitly. Without it SQL Server returns only the principals you can see instead of raising an error, so the result looks like a short, healthy list. Run the HAS_PERMS_BY_NAME check above before trusting a small number.",
+  "answer": "Almost always permissions. Seeing every login needs ALTER ANY LOGIN, which securityadmin holds, or VIEW ANY DEFINITION, or sysadmin ( MS Docs ). Without it SQL Server returns only the principals you can see instead of raising an error, so the result looks like a short, healthy list. Run the HAS_PERMS_BY_NAME check above before trusting a small number.",
   "post_title": "DBA Scripts: Get Sysadmin Members",
   "url": "https://sqldba.blog/dba-scripts-get-sysadmin-members/"
  },
@@ -2797,13 +2833,13 @@
  },
  {
   "question": "I ran DBCC TRACEOFF and the flag came back after a restart. Why?",
-  "answer": "Because it was set as a -T startup parameter on the service, not at runtime. DBCC TRACEOFF clears the flag from the running instance either way, so it looks like it worked, and the flag returns the next time SQL Server starts. Check the startup parameters in SQL Server Configuration Manager. If the flag is listed there, that is where it has to be removed, and the change needs a restart to take effect.",
+  "answer": "Because it was set as a -T startup parameter on the service, not at runtime. DBCC TRACEOFF clears the flag from the running instance either way, so it looks like it worked, and the flag returns the next time SQL Server starts. Where Each Flag Came From shows which kind it is. If it is a startup parameter, remove it in SQL Server Configuration Manager, and the change needs a restart to take effect.",
   "post_title": "DBA Scripts: Get Trace Flags and Resource Governor Configuration",
   "url": "https://sqldba.blog/dba-scripts-get-trace-flags-and-resource-governor/"
  },
  {
   "question": "Is it safe to just remove a trace flag I don\u2019t recognize?",
-  "answer": "Not without understanding why it\u2019s there first. Some trace flags fix a specific documented issue, removing one blindly can reintroduce the exact problem it was set to work around. Check the description this script provides, confirm it against the Microsoft trace flag reference, then decide.",
+  "answer": "Not without understanding why it\u2019s there first. Some trace flags fix a specific documented issue, and removing one blindly can reintroduce the exact problem it was set to work around. Check the description this script provides, confirm it against the Microsoft trace flag reference, then decide.",
   "post_title": "DBA Scripts: Get Trace Flags and Resource Governor Configuration",
   "url": "https://sqldba.blog/dba-scripts-get-trace-flags-and-resource-governor/"
  },
@@ -3085,7 +3121,7 @@
  },
  {
   "question": "Should I use this script or the manual Visual Studio Installer walkthrough?",
-  "answer": "Use this script for repeatable installs, fleet setups, or anything you want automated. Use the manual walkthrough for a one-off install on your own workstation where clicking through a GUI once isn't a burden.",
+  "answer": "Use this script for repeatable installs, fleet setups, or anything you want automated. Use the manual walkthrough for a one-off install on your own workstation where clicking through a GUI once isn't a burden. On your own machine or a single bastion host you may not need either: SSMS 22 shows an update notification in the bottom right corner when a release is out, with an option to update when you close it. The script is for rolling an update out to machines where nobody is there to click it.",
   "post_title": "DBA Scripts: Install and Update SSMS via PowerShell",
   "url": "https://sqldba.blog/dba-scripts-install-and-update-ssms-via-powershell/"
  },
@@ -3433,7 +3469,7 @@
  },
  {
   "question": "What is the fastest way to document a server I have just inherited?",
-  "answer": "Run the version, hardware and configuration snapshot scripts together and keep the output. That gives you a dated baseline, which is worth more than any single number: six months later it is the only way to answer what changed.",
+  "answer": "Run the version, hardware and configuration snapshot scripts together and keep the output. That gives you a dated baseline, which is worth more than any single number: 6 months later it is the only way to answer what changed.",
   "post_title": "DBA Scripts: Server Inventory",
   "url": "https://sqldba.blog/dba-scripts-server-inventory/"
  },
@@ -3876,6 +3912,78 @@
   "url": "https://sqldba.blog/how-to-add-columns-to-tables-in-sql-server/"
  },
  {
+  "question": "Can I back up while users are working?",
+  "answer": "Yes. A full backup is an online operation. It adds read I/O and, with compression, some CPU, so schedule big ones away from the busiest hours.",
+  "post_title": "How to Back Up a Database in SQL Server",
+  "url": "https://sqldba.blog/how-to-back-up-a-database-in-sql-server/"
+ },
+ {
+  "question": "Can I take backups on an Availability Group secondary?",
+  "answer": "Yes, and it takes the I/O and CPU off the primary. Up to SQL Server 2022 a secondary can take a COPY_ONLY full backup and regular log backups, but not a differential, and not a copy-only log backup. SQL Server 2025 adds normal full and differential backups on any secondary. Either way the secondary has to be SYNCHRONIZED or SYNCHRONIZING, and the availability group's backup preference decides where your jobs should run: check sys.fn_hadr_backup_is_preferred_replica(N'YourDatabase') at the start of each backup job. Microsoft Learn has the details in backups on secondary replicas.",
+  "post_title": "How to Back Up a Database in SQL Server",
+  "url": "https://sqldba.blog/how-to-back-up-a-database-in-sql-server/"
+ },
+ {
+  "question": "Can SQL Server Express compress backups?",
+  "answer": "No. Microsoft lists backup compression for Enterprise, Standard and Developer editions. Any edition can restore a compressed backup.",
+  "post_title": "How to Back Up a Database in SQL Server",
+  "url": "https://sqldba.blog/how-to-back-up-a-database-in-sql-server/"
+ },
+ {
+  "question": "Does a full backup truncate the transaction log?",
+  "answer": "No. In the FULL recovery model only a log backup lets the log be reused. If the log keeps growing, SQL Server Recovery Models Explained covers why.",
+  "post_title": "How to Back Up a Database in SQL Server",
+  "url": "https://sqldba.blog/how-to-back-up-a-database-in-sql-server/"
+ },
+ {
+  "question": "How do I see how far a running backup has got?",
+  "answer": "STATS = 10 reports progress on your own session. For a backup someone else started, percent_complete in sys.dm_exec_requests shows it, and Get Backup Restore Progress adds an estimated finish time.",
+  "post_title": "How to Back Up a Database in SQL Server",
+  "url": "https://sqldba.blog/how-to-back-up-a-database-in-sql-server/"
+ },
+ {
+  "question": "Should I encrypt backups?",
+  "answer": "If the files leave the server, yes. It needs a certificate, and that certificate must be backed up too. See Backing Up a SQL Server Database with Encryption.",
+  "post_title": "How to Back Up a Database in SQL Server",
+  "url": "https://sqldba.blog/how-to-back-up-a-database-in-sql-server/"
+ },
+ {
+  "question": "What is a copy-only backup, and when do I need one?",
+  "answer": "A full backup that does not become the base for later differential backups, so your backup schedule carries on exactly as it was. Use COPY_ONLY for any one-off backup on a server that already has a schedule: refreshing a test copy, a safety net before a risky change, or a file to hand to a developer. More in Copy-Only Backups.",
+  "post_title": "How to Back Up a Database in SQL Server",
+  "url": "https://sqldba.blog/how-to-back-up-a-database-in-sql-server/"
+ },
+ {
+  "question": "Why does BACKUP LOG fail with Msg 4214?",
+  "answer": "There is no full backup for the log chain to start from: the database has never had one, or has not had one since it was switched to the FULL recovery model. Take a full backup first. BACKUP LOG Cannot Be Performed (Error 4214) covers it.",
+  "post_title": "How to Back Up a Database in SQL Server",
+  "url": "https://sqldba.blog/how-to-back-up-a-database-in-sql-server/"
+ },
+ {
+  "question": "Do I need to back up the master key as well?",
+  "answer": "The certificate backup is enough to recreate the certificate elsewhere, as the restore test above shows: the target only needs a master key of its own. Backing up the database master key and the service master key as well makes a full rebuild of the original server simpler. Working with SQL Server Database Master Keys covers both.",
+  "post_title": "How to Back Up a SQL Server Certificate and Its Private Key",
+  "url": "https://sqldba.blog/how-to-back-up-a-sql-server-certificate/"
+ },
+ {
+  "question": "Is PFX better than.cer and.pvk?",
+  "answer": "One file instead of two, and a standard format a vault understands. It needs SQL Server 2022 or later, and it does not update pvt_key_last_backup_date. On a mixed estate the.cer and.pvk pair is the form every version can restore.",
+  "post_title": "How to Back Up a SQL Server Certificate and Its Private Key",
+  "url": "https://sqldba.blog/how-to-back-up-a-sql-server-certificate/"
+ },
+ {
+  "question": "What if the private key is already lost?",
+  "answer": "If the certificate still exists on the server, export it now; the server can still read the key even if nobody kept a copy. If the server is gone and there is no backup, the TDE data and encrypted backups cannot be recovered.",
+  "post_title": "How to Back Up a SQL Server Certificate and Its Private Key",
+  "url": "https://sqldba.blog/how-to-back-up-a-sql-server-certificate/"
+ },
+ {
+  "question": "When should I back it up?",
+  "answer": "Straight after creating the certificate, before you enable TDE or take the first encrypted backup. Again whenever it is renewed or rotated, because the new certificate is a different file.",
+  "post_title": "How to Back Up a SQL Server Certificate and Its Private Key",
+  "url": "https://sqldba.blog/how-to-back-up-a-sql-server-certificate/"
+ },
+ {
   "question": "Can I use SELECT DISTINCT into a new table instead?",
   "answer": "It works for rows that are identical in every column, but it copies the whole table, and the copy has none of the original indexes, constraints, triggers or permissions until you add them back. The ROW_NUMBER() delete changes only the duplicate rows and leaves everything else in place.",
   "post_title": "How to Delete Duplicate Rows in SQL Server",
@@ -4057,7 +4165,7 @@
  },
  {
   "question": "How do I update SSMS to the latest version?",
-  "answer": "Open the Visual Studio Installer, find the SSMS entry and choose Update. Since SSMS 21 there is no separate download to chase: the installer handles updates, and SSMS 22 ships them roughly every 1 to 2 weeks. SSMS has to be closed before an update applies. For more than one machine, the scripted install and update does the same thing silently.",
+  "answer": "On your own machine, the quickest route is inside SSMS: Help \u2192 Check for Updates, or Update on close on the update notification. Otherwise open the Visual Studio Installer, find the SSMS entry and choose Update. Since SSMS 21 there is no separate download to chase: the installer handles updates, and SSMS 22 ships them roughly every 1 to 2 weeks. SSMS has to be closed before an update applies. For more than one machine, the scripted install and update does the same thing silently.",
   "post_title": "Install and Update SQL Server Management Studio (SSMS)",
   "url": "https://sqldba.blog/install-and-update-sql-server-management-studio-ssms/"
  },
@@ -4489,7 +4597,7 @@
  },
  {
   "question": "Does disabling a leaver\u2019s SQL login stop their jobs?",
-  "answer": "Not on its own. The Agent check reads whether the login has CONNECT SQL, not whether it is disabled. On the lab a disabled login still showed hasaccess = 1, and EXECUTE AS LOGIN for it still worked. A job owned by a disabled SQL login also ran on the lab and succeeded, with the step history reading Executed as user that login. Change the owner rather than relying on the disable.",
+  "answer": "Not on its own. The Agent check reads whether the login has CONNECT SQL, not whether it is disabled. On the lab a disabled login still showed hasaccess = 1, and EXECUTE AS LOGIN for it still worked. A job owned by a disabled SQL login also ran on the lab and succeeded, on an earlier run with Agent XPs on, with the step history reading Executed as user that login. Change the owner rather than relying on the disable.",
   "post_title": "Unable to Determine if the Owner of Job Has Server Access (15404)",
   "url": "https://sqldba.blog/sql-agent-job-owner-server-access-15404/"
  },
@@ -5022,54 +5130,6 @@
   "url": "https://sqldba.blog/sql-server-column-name-or-number-of-supplied-values-213/"
  },
  {
-  "question": "Can I change the service account in Services instead?",
-  "answer": "Microsoft says not to. Services changes the account name but not the registry permissions SQL Server needs, so the service may not start. Use Configuration Manager, or SQL Server setup.",
-  "post_title": "SQL Server Configuration Manager: Where to Find It and What a DBA Uses It For",
-  "url": "https://sqldba.blog/sql-server-configuration-manager-2/"
- },
- {
-  "question": "I have several versions installed. Which file do I open?",
-  "answer": "Each version installs its own file, numbered as in the table. Open the one that matches the instance you are changing.",
-  "post_title": "SQL Server Configuration Manager: Where to Find It and What a DBA Uses It For",
-  "url": "https://sqldba.blog/sql-server-configuration-manager-2/"
- },
- {
-  "question": "It opens with \u201cCannot connect to WMI provider\u201d.",
-  "answer": "The WMI provider it depends on is no longer registered, usually after another SQL Server version was uninstalled. Cannot Connect to WMI Provider has the one-line fix.",
-  "post_title": "SQL Server Configuration Manager: Where to Find It and What a DBA Uses It For",
-  "url": "https://sqldba.blog/sql-server-configuration-manager-2/"
- },
- {
-  "question": "Where is SQL Server Configuration Manager in Windows 11?",
-  "answer": "Not in the app list, because it is an MMC snap-in rather than a program. Open it by name: Win+R, SQLServerManager17.msc for SQL Server 2025, 16 for 2022, 15 for 2019. Pin it once you have found it.",
-  "post_title": "SQL Server Configuration Manager: Where to Find It and What a DBA Uses It For",
-  "url": "https://sqldba.blog/sql-server-configuration-manager-2/"
- },
- {
-  "question": "Do I need to restart SQL Server after mofcomp?",
-  "answer": "No. Restart the WMI service, not SQL Server, then reopen Configuration Manager.",
-  "post_title": "Cannot Connect to WMI Provider: SQL Server Configuration Manager Will Not Open",
-  "url": "https://sqldba.blog/sql-server-configuration-manager-cannot-connect-to-wmi-provider-2/"
- },
- {
-  "question": "Is SQL Server down when this appears?",
-  "answer": "No. Only the management tool is affected. Check the service in Services or with the PowerShell query above; the instance keeps running.",
-  "post_title": "Cannot Connect to WMI Provider: SQL Server Configuration Manager Will Not Open",
-  "url": "https://sqldba.blog/sql-server-configuration-manager-cannot-connect-to-wmi-provider-2/"
- },
- {
-  "question": "It says access denied, 0x80070005.",
-  "answer": "That is a permission problem, not a missing provider. Run Configuration Manager as an administrator.",
-  "post_title": "Cannot Connect to WMI Provider: SQL Server Configuration Manager Will Not Open",
-  "url": "https://sqldba.blog/sql-server-configuration-manager-cannot-connect-to-wmi-provider-2/"
- },
- {
-  "question": "Which file do I use with several versions installed?",
-  "answer": "The one for the version whose Configuration Manager will not open. If more than one fails, run mofcomp for each.",
-  "post_title": "Cannot Connect to WMI Provider: SQL Server Configuration Manager Will Not Open",
-  "url": "https://sqldba.blog/sql-server-configuration-manager-cannot-connect-to-wmi-provider-2/"
- },
- {
   "question": "Do I need to restart SQL Server after mofcomp?",
   "answer": "No. Restart the WMI service, not SQL Server, then reopen Configuration Manager.",
   "post_title": "Cannot Connect to WMI Provider: SQL Server Configuration Manager Will Not Open",
@@ -5485,7 +5545,7 @@
  },
  {
   "question": "Why does it take so long to fail?",
-  "answer": "The client waits for a Browser reply that never comes, then reports the error when the login timeout expires. On the lab it failed after 15 seconds with a 15 second connect timeout.",
+  "answer": "The client waits for a Browser reply that never comes, then reports the error when the login timeout expires. On the lab sqlcmd gave up after 8 seconds, its default login timeout (-l); System.Data.SqlClient waits 15 seconds by default.",
   "post_title": "Error Locating Server/Instance Specified (Error 26)",
   "url": "https://sqldba.blog/sql-server-error-locating-server-instance-specified-26/"
  },
@@ -5971,7 +6031,7 @@
  },
  {
   "question": "Is there an official query for this?",
-  "answer": "Not a short one. The sys.databases reference page has three examples and none of them touch this column. What Microsoft does publish is a roughly 150 line diagnostic script, and it lives on the error 9002 troubleshooting page, not on the catalog view page. The three-column query above is the version you can actually remember at 2am.",
+  "answer": "Not a short one. The sys.databases reference page has three examples and none of them touch this column. What Microsoft does publish is a roughly 190 line diagnostic script, and it lives on the error 9002 troubleshooting page, not on the catalog view page. The three-column query above is the version you can actually remember at 2am.",
   "post_title": "SQL Server Log Won\u2019t Truncate: What log_reuse_wait_desc Is Telling You",
   "url": "https://sqldba.blog/sql-server-log-reuse-wait-desc/"
  },
@@ -5995,7 +6055,7 @@
  },
  {
   "question": "How do I find out who disabled it?",
-  "answer": "Start with modify_date in sys.server_principals for when. The default trace holds recent ALTER LOGIN events, and a server audit, if configured, has the full answer.",
+  "answer": "modify_date in sys.server_principals gives you when. The default trace does not record the DISABLE; a server audit with SERVER_PRINCIPAL_CHANGE_GROUP does, if it was already running.",
   "post_title": "Login Failed: The Account Is Disabled (Error 18470)",
   "url": "https://sqldba.blog/sql-server-login-disabled-18470/"
  },
@@ -6877,7 +6937,7 @@
  },
  {
   "question": "Is \u201cCannot generate SSPI context\u201d the same problem?",
-  "answer": "No. That one fails on the client before the server judges anything, so the error log has no 17806 for it. On the lab machine, which has no domain, connecting with Windows authentication by IP address gave it every time: tcp:127.0.0.1 failed with The message supplied for verification is out of sequence and the machine\u2019s own IP with No credentials are available in the security package, each followed by Cannot generate SSPI context, and neither wrote a line to the error log. The host name connected with NTLM. Connect by name, then work through the MS Docs guide.",
+  "answer": "No. That one fails on the client before the server judges anything, so the error log has no 17806 for it. On the lab machine, which has no domain, connecting with Windows authentication by IP address gave it every time: tcp:127.0.0.1 failed with The message supplied for verification is out of sequence and the machine\u2019s own IP with No credentials are available in the security package, each followed by Cannot generate SSPI context, and neither wrote a line to the error log. The host name connected with NTLM. Connect by name, then work through the MS Docs guide. SSMS 22 words the same attempt differently: by 127.0.0.1 it reported The target principal name is incorrect. Cannot generate SSPI context.",
   "post_title": "SSPI Handshake Failed in SQL Server (Error 17806)",
   "url": "https://sqldba.blog/sql-server-sspi-handshake-failed/"
  },
@@ -7062,6 +7122,60 @@
   "url": "https://sqldba.blog/sql-server-version-upgrade-runbook/"
  },
  {
+  "question": "Why does Get Wait Statistics not show FGCB_ADD_REMOVE?",
+  "answer": "Because it is not a wait type. Its time is inside LATCH_EX and LATCH_SH, and sys.dm_os_latch_stats is where the class is named.",
+  "post_title": "FGCB_ADD_REMOVE Wait Type in SQL Server",
+  "url": "https://sqldba.blog/sql-server-wait-fgcb-add-remove/"
+ },
+ {
+  "question": "Does this wait mean my secondary is not synchronized?",
+  "answer": "No. The flow control gates do not affect the synchronization health state of a replica, so the dashboard can show healthy while this wait climbs. What it does affect is how much log is waiting to be sent, and so your RPO.",
+  "post_title": "HADR_TRANSPORT_FLOW_CONTROL Wait Type in SQL Server",
+  "url": "https://sqldba.blog/sql-server-wait-hadr-transport-flow-control/"
+ },
+ {
+  "question": "What is the difference between HADR_TRANSPORT_FLOW_CONTROL and HADR_DATABASE_FLOW_CONTROL?",
+  "answer": "Scope. The transport gate counts unacknowledged messages to one replica across all of its databases; the database gate counts queued messages for one database. Transport flow control points at the path to a replica, database flow control at one database sending faster than the link carries it. HADR_DATABASE_FLOW_CONTROL has its own page.",
+  "post_title": "HADR_TRANSPORT_FLOW_CONTROL Wait Type in SQL Server",
+  "url": "https://sqldba.blog/sql-server-wait-hadr-transport-flow-control/"
+ },
+ {
+  "question": "Which permission does the check need?",
+  "answer": "VIEW SERVER STATE. On SQL Server 2022 and later, the narrower VIEW SERVER PERFORMANCE STATE permission is enough for the two DMVs.",
+  "post_title": "HADR_TRANSPORT_FLOW_CONTROL Wait Type in SQL Server",
+  "url": "https://sqldba.blog/sql-server-wait-hadr-transport-flow-control/"
+ },
+ {
+  "question": "Will trace flag 12310 make it go away?",
+  "answer": "It raises the transport gate from 8192 to 16384 messages and the database gate from 1792 to 7168, which helps when the limit itself is the bottleneck. If the link or the secondary's log disk is too slow for the log rate, the gate fills again, just later. It has to be set at startup, and SQL Server 2022 has the higher limits by default.",
+  "post_title": "HADR_TRANSPORT_FLOW_CONTROL Wait Type in SQL Server",
+  "url": "https://sqldba.blog/sql-server-wait-hadr-transport-flow-control/"
+ },
+ {
+  "question": "Do latch stats survive a restart?",
+  "answer": "No. The numbers are cumulative since SQL Server started or since the last DBCC SQLPERF ('sys.dm_os_latch_stats', CLEAR);, and they are not persisted across a restart.",
+  "post_title": "LATCH_EX Wait Type in SQL Server",
+  "url": "https://sqldba.blog/sql-server-wait-latch-ex/"
+ },
+ {
+  "question": "Is LATCH_EX the same as PAGELATCH_EX?",
+  "answer": "No. PAGELATCH_* is a latch on a data or index page in memory, and PAGEIOLATCH_* is the same page while it is being read from or written to disk. LATCH_* is every other in-memory structure. The common PAGELATCH_EX case, tempdb allocation contention, has its own page.",
+  "post_title": "LATCH_EX Wait Type in SQL Server",
+  "url": "https://sqldba.blog/sql-server-wait-latch-ex/"
+ },
+ {
+  "question": "Which permission does the query need?",
+  "answer": "VIEW SERVER STATE. On SQL Server 2022 and later, the narrower VIEW SERVER PERFORMANCE STATE permission is enough for this view.",
+  "post_title": "LATCH_EX Wait Type in SQL Server",
+  "url": "https://sqldba.blog/sql-server-wait-latch-ex/"
+ },
+ {
+  "question": "Why is LATCH_EX not in sys.dm_os_latch_stats?",
+  "answer": "The view is organised by latch class, not by wait type, and the LATCH_* modes are grouped together inside each class. Look for the class at the top of the result, not for the mode. It also only counts requests that had to wait, so a latch granted straight away never appears.",
+  "post_title": "LATCH_EX Wait Type in SQL Server",
+  "url": "https://sqldba.blog/sql-server-wait-latch-ex/"
+ },
+ {
   "question": "Does ONLINE = ON stop LCK_M_SCH_M?",
   "answer": "Not entirely. An online index rebuild needs a short lock at the start and a brief SCH-M in its final phase, and both wait for open write transactions on the table to finish. The difference is that the table stays usable for the rest of the rebuild.",
   "post_title": "LCK_M_SCH_M Wait Type in SQL Server",
@@ -7078,6 +7192,30 @@
   "answer": "Lock requests on an object queue in order. A new query needs a schema stability lock, which is compatible with the locks already granted but not with the SCH-M request waiting ahead of it, so it queues behind the DDL. Those queued queries show up as LCK_M_SCH_S.",
   "post_title": "LCK_M_SCH_M Wait Type in SQL Server",
   "url": "https://sqldba.blog/sql-server-wait-lck-m-sch-m/"
+ },
+ {
+  "question": "Does read committed snapshot or snapshot isolation avoid LCK_M_SCH_S?",
+  "answer": "No. Queries under row versioning still take Sch-S locks, so they queue behind DDL like any other query.",
+  "post_title": "LCK_M_SCH_S Wait Type in SQL Server",
+  "url": "https://sqldba.blog/sql-server-wait-lck-m-sch-s/"
+ },
+ {
+  "question": "What is the difference between LCK_M_SCH_S and LCK_M_SCH_M?",
+  "answer": "LCK_M_SCH_M is the DDL waiting to get its lock. LCK_M_SCH_S is everyone else waiting behind that DDL. In an incident you usually see one Sch-M waiter and many Sch-S waiters.",
+  "post_title": "LCK_M_SCH_S Wait Type in SQL Server",
+  "url": "https://sqldba.blog/sql-server-wait-lck-m-sch-s/"
+ },
+ {
+  "question": "Does instant file initialization help the transaction log?",
+  "answer": "Before SQL Server 2022, no: the log is always zeroed. From SQL Server 2022, log growths of up to 64 MB can use it, and they do not need the Perform volume maintenance tasks right. Larger log growths are still zeroed.",
+  "post_title": "PREEMPTIVE_OS_WRITEFILEGATHER Wait Type in SQL Server",
+  "url": "https://sqldba.blog/sql-server-wait-preemptive-os-writefilegather/"
+ },
+ {
+  "question": "Why is instant file initialization on but I still see this wait?",
+  "answer": "The wait can come from log growth, which is zeroed in most cases, and Transparent Data Encryption prevents instant file initialization for data files. Check which file grew in the autogrowth history.",
+  "post_title": "PREEMPTIVE_OS_WRITEFILEGATHER Wait Type in SQL Server",
+  "url": "https://sqldba.blog/sql-server-wait-preemptive-os-writefilegather/"
  },
  {
   "question": "Can I just run the DMV twice by hand instead of a collector job?",
@@ -7108,6 +7246,18 @@
   "answer": "Many wait types are internal housekeeping that a healthy instance accumulates constantly and nobody should chase. That is what the wait library is for: look the type up before acting on it, because \"top of the list\" and \"worth investigating\" are not the same claim.",
   "post_title": "Cumulative Wait Stats Lie: Measuring Waits Over an Interval",
   "url": "https://sqldba.blog/sql-server-wait-stats-interval-vs-cumulative/"
+ },
+ {
+  "question": "Does asynchronous statistics update apply to temporary tables?",
+  "answer": "Not to local temporary tables. Their statistics are always updated synchronously, whatever the database setting.",
+  "post_title": "WAIT_ON_SYNC_STATISTICS_REFRESH Wait Type in SQL Server",
+  "url": "https://sqldba.blog/sql-server-wait-wait-on-sync-statistics-refresh/"
+ },
+ {
+  "question": "Why do I not see this wait on SQL Server 2017?",
+  "answer": "It was added in SQL Server 2019. On older versions the same pause happens, it just is not named.",
+  "post_title": "WAIT_ON_SYNC_STATISTICS_REFRESH Wait Type in SQL Server",
+  "url": "https://sqldba.blog/sql-server-wait-wait-on-sync-statistics-refresh/"
  },
  {
   "question": "Are contained users a security risk?",
@@ -7669,7 +7819,7 @@
  },
  {
   "question": "Can I stop recovery to bring the database up faster?",
-  "answer": "No. There is no supported way to skip recovery, and the attempts people reach for \u2014 restarting the service, taking the database offline \u2014 discard the work already done, so the next startup begins again from the beginning. Every interruption makes the wait longer.",
+  "answer": "No. There is no supported way to skip recovery, and the attempts people reach for, restarting the service or taking the database offline, discard the work already done, so the next startup begins again from the beginning. Every interruption makes the wait longer.",
   "post_title": "Why Is the Database in \u201cIn Recovery\u201d Mode?",
   "url": "https://sqldba.blog/why-is-the-database-in-in-recovery-mode/"
  },
