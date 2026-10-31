@@ -10,6 +10,9 @@ Purpose     : Returns SQL Server error log entries that mention failover, alongs
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-last-node-blip/)
 Requires    : VIEW SERVER STATE, EXECUTE on xp_readerrorlog (sysadmin or securityadmin in practice)
 HealthCheck : Yes
+Notes       : days_up counts whole days from the start time. DATEDIFF(DAY) counts midnights, so an
+              instance restarted at 23:00 read as 1 day up an hour later. Tested on SQL Server 2025
+              (not clustered, so the no-entries row; the failover rows need an FCI).
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
@@ -33,7 +36,7 @@ BEGIN
         CAST(SERVERPROPERTY('ServerName') AS NVARCHAR(256)) AS server_name,
         CAST(SERVERPROPERTY('IsClustered') AS BIT) AS is_clustered,
         osi.sqlserver_start_time AS instance_last_started,
-        DATEDIFF(DAY, osi.sqlserver_start_time, GETDATE()) AS days_up
+        DATEDIFF(MINUTE, osi.sqlserver_start_time, GETDATE()) / 1440 AS days_up
     FROM sys.dm_os_sys_info osi;
 END
 ELSE
@@ -43,7 +46,7 @@ BEGIN
         CAST(SERVERPROPERTY('ServerName') AS NVARCHAR(256)) AS server_name,
         CAST(SERVERPROPERTY('IsClustered') AS BIT) AS is_clustered,
         osi.sqlserver_start_time AS instance_last_started,
-        DATEDIFF(DAY, osi.sqlserver_start_time, GETDATE()) AS days_up,
+        DATEDIFF(MINUTE, osi.sqlserver_start_time, GETDATE()) / 1440 AS days_up,
         e.ProcessInfo AS source,
         e.[Text] AS message
     FROM #ErrorLog e
