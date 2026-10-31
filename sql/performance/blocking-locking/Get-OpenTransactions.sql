@@ -4,10 +4,15 @@ Category    : performance
 Purpose     : Active transactions with age, session details, and the SQL currently running or last executed — long-running open transactions cause log growth and block readers in READ_COMMITTED isolation.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-open-transactions/)
 Requires    : VIEW SERVER STATE
+Notes       : sql_text is the statement running now, or for a sleeping session the last batch it
+              sent (sys.dm_exec_connections.most_recent_sql_handle). That second case is the one
+              that matters: an idle session holding a transaction open has no request to read.
+              Tested on SQL Server 2025.
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 SELECT
     s.session_id,
@@ -47,9 +52,13 @@ JOIN sys.dm_tran_session_transactions st ON st.session_id = s.session_id
 JOIN sys.dm_tran_active_transactions t ON t.transaction_id = st.transaction_id
 LEFT JOIN sys.dm_tran_database_transactions dt ON dt.transaction_id = t.transaction_id
 LEFT JOIN sys.dm_exec_requests r ON r.session_id = s.session_id
-OUTER APPLY sys.dm_exec_sql_text(r.sql_handle) current_sql
-/* Note: most_recent_sql_handle was removed from dm_exec_sessions in SQL Server 2025.
-   SQL text is only available for sessions with an active request (status = 'running'/'suspended').
-   Idle sessions holding open transactions will show NULL for sql_text. */
+/* The parent connection only: a MARS session has one extra connection row per logical session. */
+OUTER APPLY (
+    SELECT TOP (1) c.most_recent_sql_handle
+    FROM sys.dm_exec_connections AS c
+    WHERE c.session_id = s.session_id
+      AND c.parent_connection_id IS NULL
+) AS conn
+OUTER APPLY sys.dm_exec_sql_text(COALESCE(r.sql_handle, conn.most_recent_sql_handle)) AS current_sql
 WHERE s.is_user_process = 1
 ORDER BY tran_age_sec DESC;
