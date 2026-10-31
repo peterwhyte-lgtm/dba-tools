@@ -5,10 +5,15 @@ Purpose     : Reads the current SQL Server error log and groups entries by categ
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-error-log-patterns/)
 Requires    : EXECUTE on xp_readerrorlog, which is granted to sysadmin and securityadmin.
               VIEW SERVER STATE does not grant it.
+Notes       : The error log writes every error as two lines, an 'Error: 18456, Severity: 14,
+              State: 38.' header and then the message. occurrences counts the message line only
+              and categorises it with its header's error number attached, so 60 failed logins
+              read 60, not 120. Tested on SQL Server 2025.
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 
 /* ── How many hours back to read (default 24) ───────────────────────────── */
 DECLARE @HoursBack INT = 24;
@@ -20,6 +25,7 @@ CREATE TABLE #ErrLog (
     ProcessInfo NVARCHAR(50),
     Txt NVARCHAR(4000)
 );
+CREATE CLUSTERED INDEX cx_ErrLog ON #ErrLog (LogDate, ProcessInfo);
 
 DECLARE @StartDate DATETIME = DATEADD(HOUR, -@HoursBack, GETDATE());
 INSERT INTO #ErrLog
@@ -28,18 +34,36 @@ EXEC xp_readerrorlog 0, 1, NULL, NULL, @StartDate, NULL, N'desc';
 /* Categorise once, in a CTE. The CASE used to be written out twice, in the SELECT and
    again in the GROUP BY, so any change to a pattern had to be made in both places or the
    two would silently disagree. */
-WITH categorised AS (
+/* Each error is a header line plus a message line with the same time and spid. The header is
+   dropped from the count and its text is prefixed to the message (match_txt), so the error number
+   still decides the category (Error: 823 is corruption) without the event being counted twice. */
+WITH entries AS (
+    SELECT
+        e.LogDate,
+        e.Txt,
+        ISNULL(hdr.Txt + N' ', N'') + e.Txt AS match_txt
+    FROM #ErrLog AS e
+    OUTER APPLY (
+        SELECT TOP (1) h.Txt
+        FROM #ErrLog AS h
+        WHERE h.LogDate = e.LogDate
+          AND h.ProcessInfo = e.ProcessInfo
+          AND h.Txt LIKE N'Error: %, Severity: %, State: %'
+    ) AS hdr
+    WHERE e.Txt NOT LIKE N'Error: %, Severity: %, State: %'
+),
+categorised AS (
     SELECT
         LogDate,
         Txt,
         CASE
-            WHEN Txt LIKE '%paged out%'
-              OR Txt LIKE '%virtual address space%'
-              OR Txt LIKE '%out of memory%'
-              OR Txt LIKE '%cannot allocate%' THEN 'Memory Pressure'
-            WHEN Txt LIKE '%login failed%'
-              OR Txt LIKE '%18456%'
-              OR Txt LIKE '%password%incorrect%' THEN 'Login Failure'
+            WHEN match_txt LIKE '%paged out%'
+              OR match_txt LIKE '%virtual address space%'
+              OR match_txt LIKE '%out of memory%'
+              OR match_txt LIKE '%cannot allocate%' THEN 'Memory Pressure'
+            WHEN match_txt LIKE '%login failed%'
+              OR match_txt LIKE '%18456%'
+              OR match_txt LIKE '%password%incorrect%' THEN 'Login Failure'
             /* Corruption is tested BEFORE IO and Backup, and its patterns match the way the
                error log actually writes these lines. Verified 2026-08-30, and the category was
                inverted before that: 'Error: 823, Severity: 24' matched nothing at all and fell
@@ -47,51 +71,51 @@ WITH categorised AS (
                error') matched IO Issue first and never reached here, and the ONLY thing landing
                in Corruption / Integrity was 'CHECKDB ... finished without errors', a success
                message. The bucket a DBA scans first for corruption could not detect corruption. */
-            WHEN Txt LIKE '%corrupt%'
-              OR Txt LIKE '%consistency-based I/O error%'
-              OR Txt LIKE '%Error: 823%'
-              OR Txt LIKE '%Error: 824%'
-              OR Txt LIKE '%Error: 825%'
-              OR Txt LIKE '% 823 %'
-              OR Txt LIKE '% 824 %'
-              OR Txt LIKE '% 825 %'
-              OR Txt LIKE '%suspect_pages%'
-              OR (Txt LIKE '%CHECKDB%'
-                  AND Txt NOT LIKE '%without errors%'
-                  AND Txt NOT LIKE '%0 allocation errors and 0 consistency errors%')
+            WHEN match_txt LIKE '%corrupt%'
+              OR match_txt LIKE '%consistency-based I/O error%'
+              OR match_txt LIKE '%Error: 823%'
+              OR match_txt LIKE '%Error: 824%'
+              OR match_txt LIKE '%Error: 825%'
+              OR match_txt LIKE '% 823 %'
+              OR match_txt LIKE '% 824 %'
+              OR match_txt LIKE '% 825 %'
+              OR match_txt LIKE '%suspect_pages%'
+              OR (match_txt LIKE '%CHECKDB%'
+                  AND match_txt NOT LIKE '%without errors%'
+                  AND match_txt NOT LIKE '%0 allocation errors and 0 consistency errors%')
                  THEN 'Corruption / Integrity'
             /* A clean integrity check is good news and must not be filed as a failure. Both
                wordings are excluded above and caught here, because 'finished without errors'
                and 'found 0 allocation errors' both contain the word errors and would otherwise
                be swept up by the generic Error / Failure branch further down. */
-            WHEN Txt LIKE '%without errors%'
-              OR Txt LIKE '%0 allocation errors and 0 consistency errors%'
+            WHEN match_txt LIKE '%without errors%'
+              OR match_txt LIKE '%0 allocation errors and 0 consistency errors%'
                  THEN 'Informational'
-            WHEN Txt LIKE '%Backup%'
-              OR Txt LIKE '%BACKUP%'
-              OR Txt LIKE '%backup of database%'
-              OR Txt LIKE '%RESTORE%' THEN 'Backup / Restore'
-            WHEN Txt LIKE '%I/O%'
-              OR Txt LIKE '%stall%'
-              OR Txt LIKE '%stalled%'
-              OR Txt LIKE '%disk%' THEN 'IO Issue'
-            WHEN Txt LIKE '%suspect%'
-              OR Txt LIKE '%offline%'
-              OR Txt LIKE '%emergency%'
-              OR Txt LIKE '%recovery%' THEN 'Database State'
-            WHEN Txt LIKE '%autogrow%'
-              OR Txt LIKE '%Auto-grow%'
-              OR Txt LIKE '% grew %'
-              OR Txt LIKE '%Autogrow%' THEN 'Auto-Growth'
-            WHEN Txt LIKE '%deadlock%' THEN 'Deadlock'
-            WHEN Txt LIKE '%Error%'
-              OR Txt LIKE '%error%'
-              OR Txt LIKE '%failed%' THEN 'Error / Failure'
-            WHEN Txt LIKE '%Warning%'
-              OR Txt LIKE '%warning%' THEN 'Warning'
+            WHEN match_txt LIKE '%Backup%'
+              OR match_txt LIKE '%BACKUP%'
+              OR match_txt LIKE '%backup of database%'
+              OR match_txt LIKE '%RESTORE%' THEN 'Backup / Restore'
+            WHEN match_txt LIKE '%I/O%'
+              OR match_txt LIKE '%stall%'
+              OR match_txt LIKE '%stalled%'
+              OR match_txt LIKE '%disk%' THEN 'IO Issue'
+            WHEN match_txt LIKE '%suspect%'
+              OR match_txt LIKE '%offline%'
+              OR match_txt LIKE '%emergency%'
+              OR match_txt LIKE '%recovery%' THEN 'Database State'
+            WHEN match_txt LIKE '%autogrow%'
+              OR match_txt LIKE '%Auto-grow%'
+              OR match_txt LIKE '% grew %'
+              OR match_txt LIKE '%Autogrow%' THEN 'Auto-Growth'
+            WHEN match_txt LIKE '%deadlock%' THEN 'Deadlock'
+            WHEN match_txt LIKE '%Error%'
+              OR match_txt LIKE '%error%'
+              OR match_txt LIKE '%failed%' THEN 'Error / Failure'
+            WHEN match_txt LIKE '%Warning%'
+              OR match_txt LIKE '%warning%' THEN 'Warning'
             ELSE 'Informational'
         END AS category
-    FROM #ErrLog
+    FROM entries
 ),
 /* latest_message must be the most RECENT entry in the category. It used to be
    LEFT(MAX(Txt), 200), which is the alphabetically greatest text, not the newest one, and
