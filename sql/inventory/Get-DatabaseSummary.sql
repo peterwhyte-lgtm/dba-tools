@@ -7,6 +7,10 @@ Purpose     : One-row-per-database view of every database on the instance: state
               Reads from system metadata and msdb only — no per-database scan.
               For used vs free space detail run Get-DatabaseSizesAndFreeSpace.
               For file-level detail run Get-DatabaseFilesDetail.
+              Backup flags follow Microsoft's system database guidance: master, model and
+              msdb need full backups (model's age is not checked), tempdb and database
+              snapshots cannot be backed up. A distribution database is checked like a user
+              database. Tested on SQL Server 2025.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-database-summary/)
 Requires    : VIEW ANY DATABASE, SELECT on msdb.dbo.backupset
 */
@@ -59,14 +63,19 @@ SELECT
                THEN 'WARN:auto_shrink ' ELSE '' END
         + CASE WHEN d.is_auto_close_on = 1
                THEN 'WARN:auto_close ' ELSE '' END
-        -- Backup warnings apply to user databases only (database_id > 4); tempdb excluded implicitly
-        + CASE WHEN d.database_id > 4 AND bd.last_full IS NULL
+        -- Full backup warnings cover master, model and msdb too: Microsoft lists all three as
+        -- "backups required". tempdb (2) cannot be backed up, and a database snapshot
+        -- (source_database_id set) cannot either, so both are skipped.
+        + CASE WHEN d.database_id <> 2 AND d.source_database_id IS NULL AND bd.last_full IS NULL
                THEN 'WARN:never-backed-up ' ELSE '' END
-        + CASE WHEN d.database_id > 4 AND bd.last_full IS NOT NULL
+        -- model rarely changes (back it up after customising it), so its age is not checked
+        + CASE WHEN d.database_id NOT IN (2, 3) AND d.source_database_id IS NULL AND bd.last_full IS NOT NULL
                     AND DATEDIFF(DAY, bd.last_full, GETDATE()) > 7
                THEN 'WARN:full-' + CAST(DATEDIFF(DAY, bd.last_full, GETDATE()) AS VARCHAR) + 'd-ago '
                ELSE '' END
-        + CASE WHEN d.database_id > 4 AND d.recovery_model_desc = 'FULL'
+        -- Log backups: user databases only. master does not support them and model does not
+        -- need them, even though model ships in FULL recovery.
+        + CASE WHEN d.database_id > 4 AND d.source_database_id IS NULL AND d.recovery_model_desc = 'FULL'
                     AND (bd.last_log IS NULL OR DATEDIFF(HOUR, bd.last_log, GETDATE()) > 24)
                THEN 'WARN:log-backup-overdue ' ELSE '' END
         -- Log reuse waits other than NOTHING and LOG_BACKUP (expected) are worth noting
