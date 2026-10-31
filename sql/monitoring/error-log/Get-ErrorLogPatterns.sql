@@ -130,10 +130,10 @@ ranked AS (
 )
 SELECT
     category,
-    COUNT(*)                                        AS occurrences,
-    MIN(LogDate)                                    AS first_seen,
-    MAX(LogDate)                                    AS last_seen,
-    LEFT(MAX(CASE WHEN rn = 1 THEN Txt END), 200)   AS latest_message
+    COUNT(*) AS occurrences,
+    MIN(LogDate) AS first_seen,
+    MAX(LogDate) AS last_seen,
+    LEFT(MAX(CASE WHEN rn = 1 THEN Txt END), 200) AS latest_message
 FROM ranked
 GROUP BY category
 ORDER BY occurrences DESC;
