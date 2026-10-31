@@ -6,7 +6,9 @@ Purpose     : Find database users whose SID matches no server login, the state t
               Reports whether a login of the same name exists, which is what decides between
               a straight remap and creating a login first.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-orphaned-users/)
-Requires    : VIEW ANY DATABASE, plus access to each online database it inspects (it opens every database)
+Requires    : VIEW ANY DEFINITION, plus access to each online database it inspects (it opens every
+              database). Without VIEW ANY DEFINITION the catalog views hide other principals and
+              the script returns no rows, which reads as no orphans (tested 2026-10-31).
 HealthCheck : Yes
 Notes       : Orphaned users cause login failures for that account. Fix with
               ALTER USER [username] WITH LOGIN = [login_name]; or DROP USER [username].
