@@ -12,8 +12,8 @@ HealthCheck : Yes
 -- IMPACT:Low
 SET NOCOUNT ON;
 
--- msdb.dbo.cdc_jobs only exists when CDC has been configured (absent on fresh instances
--- or SQL Server 2025+). Use a temp table + dynamic SQL to avoid parse-time failures.
+-- msdb.dbo.cdc_jobs only exists once CDC has been enabled on the instance (absent on a fresh
+-- instance; present on SQL Server 2025 here). Temp table + dynamic SQL avoid parse-time failures.
 CREATE TABLE #cdc_ct (
     feature              NVARCHAR(50),
     database_name        SYSNAME,
@@ -37,12 +37,18 @@ BEGIN
     SELECT ''CDC'', d.name, d.is_cdc_enabled,
         cj.job_type, cj.maxtrans, cj.maxscans, cj.continuous, cj.pollinginterval,
         cj.retention, CAST(cj.retention / 60.0 AS DECIMAL(10,1)), cj.threshold,
+        /* msdb.dbo.cdc_jobs: retention is valid only for cleanup jobs (a capture row holds 0),
+           maxtrans/maxscans/continuous/pollinginterval only for capture jobs. */
         CASE
             WHEN d.is_cdc_enabled = 0
                 THEN ''INFO - CDC not enabled on this database''
-            WHEN cj.job_type = ''capture'' AND cj.retention IS NULL
-                THEN ''WARN - capture job exists but no cleanup job found; log growth risk''
-            WHEN cj.retention < 1440
+            WHEN cj.database_id IS NULL
+                THEN ''WARN - CDC enabled but no capture or cleanup job; changes are not harvested and the log cannot truncate (unless transactional replication reads the log)''
+            WHEN cj.job_type = ''capture''
+                 AND NOT EXISTS (SELECT 1 FROM msdb.dbo.cdc_jobs AS c2
+                                 WHERE c2.database_id = cj.database_id AND c2.job_type = ''cleanup'')
+                THEN ''WARN - capture job exists but no cleanup job; change tables grow without limit''
+            WHEN cj.job_type = ''cleanup'' AND cj.retention < 1440
                 THEN ''WARN - retention < 24 hours; downstream consumers may miss changes''
             ELSE ''OK''
         END

@@ -3,6 +3,13 @@ Script Name : Get-QueryStoreStatus
 Category    : monitoring
 Purpose     : Query Store enablement, fill ratio, capture mode, and health across all user databases.
               Surfaces databases where QS is off, full, or auto-switched to READ_ONLY.
+Notes       : readonly_reason is a bitmap. 1/2/4/8 mean the DATABASE is read-only, single-user,
+              in emergency mode or a readable secondary: Query Store follows it, so INFO, not a
+              fault. 65536 = max_storage_size_mb reached, 131072/262144 = internal memory limit,
+              524288 = database out of disk space: those are the WARNs. Size-based cleanup (AUTO)
+              starts at 90% of max_storage_size_mb. Query Store works at any compatibility level
+              (tested on a compat 100 database on SQL Server 2025); it needs SQL Server 2016+.
+              ERROR state: run sp_query_store_consistency_check (2017+), or SET QUERY_STORE CLEAR ALL.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-query-store-status/)
 Requires    : VIEW ANY DATABASE, VIEW DATABASE STATE
 HealthCheck : Yes
@@ -34,8 +41,7 @@ DECLARE db_cursor CURSOR FAST_FORWARD FOR
     SELECT name
     FROM sys.databases
     WHERE database_id > 4
-      AND state = 0
-      AND compatibility_level >= 130; -- QS requires 2016+ compat
+      AND state = 0;
 
 OPEN db_cursor;
 FETCH NEXT FROM db_cursor INTO @db;
@@ -60,10 +66,18 @@ BEGIN
             CASE
                 WHEN actual_state_desc = ''OFF''
                     THEN ''WARN - Query Store not enabled''
-                WHEN actual_state_desc = ''READ_ONLY'' AND readonly_reason <> 0
-                    THEN ''WARN - auto-switched to READ_ONLY (check fill ratio)''
+                WHEN actual_state_desc = ''ERROR''
+                    THEN ''WARN - Query Store in ERROR state; run sp_query_store_consistency_check''
+                WHEN actual_state_desc = ''READ_ONLY'' AND readonly_reason & 65536 <> 0
+                    THEN ''WARN - READ_ONLY: max_storage_size_mb reached''
+                WHEN actual_state_desc = ''READ_ONLY'' AND readonly_reason & 524288 <> 0
+                    THEN ''WARN - READ_ONLY: database is out of disk space''
+                WHEN actual_state_desc = ''READ_ONLY'' AND readonly_reason & (131072 | 262144) <> 0
+                    THEN ''WARN - READ_ONLY: Query Store internal memory limit''
+                WHEN actual_state_desc = ''READ_ONLY'' AND readonly_reason & 15 <> 0
+                    THEN ''INFO - READ_ONLY because the database is read-only, single-user, emergency or a secondary''
                 WHEN 100.0 * current_storage_size_mb / NULLIF(max_storage_size_mb, 0) > 80
-                    THEN ''WARN - fill > 80%; risk of auto READ_ONLY switch''
+                    THEN ''WARN - fill > 80%; READ_ONLY at 100% (size-based cleanup starts at 90% if AUTO)''
                 WHEN desired_state_desc <> actual_state_desc
                     THEN ''WARN - desired/actual state mismatch''
                 ELSE ''OK''
@@ -82,18 +96,6 @@ END;
 
 CLOSE db_cursor;
 DEALLOCATE db_cursor;
-
--- Also surface user databases that are below compat 130 (QS not applicable)
-INSERT INTO #qs_status (database_name, db_state, qs_state, status)
-SELECT
-    name,
-    state_desc,
-    'N/A',
-    'INFO - compat level ' + CAST(compatibility_level AS VARCHAR(5)) + ' (< 130); Query Store not supported'
-FROM sys.databases
-WHERE database_id > 4
-  AND state = 0
-  AND compatibility_level < 130;
 
 SELECT
     database_name,

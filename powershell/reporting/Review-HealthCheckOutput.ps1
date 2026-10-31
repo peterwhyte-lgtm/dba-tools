@@ -448,7 +448,10 @@ foreach ($row in $failedLogins) {
 # ── query-store-status ────────────────────────────────────────────────────────
 $qsStatus = Read-Csv-Safe 'query-store-status'
 foreach ($row in $qsStatus) {
-    if ($row.qs_state -eq 'READ_ONLY' -and $row.qs_desired_state -in @('READ_WRITE','AUTO')) {
+    # readonly_reason bits 1/2/4/8 = the database itself is read-only/single-user/emergency/secondary:
+    # Query Store follows the database, so that is not a Query Store fault.
+    $dbStateBits = if ($row.readonly_reason -match '^\d+$') { [int]$row.readonly_reason -band 15 } else { 0 }
+    if ($row.qs_state -eq 'READ_ONLY' -and $row.qs_desired_state -in @('READ_WRITE','AUTO') -and $dbStateBits -eq 0) {
         $fp = if ($row.fill_pct -and $row.fill_pct -ne '') { " ($([Math]::Round([double]$row.fill_pct,1))% full)" } else { '' }
         Add-Finding 'WARNING' 'Query Store' $row.database_name "QS switched to READ_ONLY$fp - storage full or error; plan history is paused"
     }
