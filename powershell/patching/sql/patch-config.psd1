@@ -43,10 +43,14 @@
         SQL2017 = @{
             MajorVersion  = 14
             CU            = 'CU31'
-            KB            = 'KB5050533'
+            KB            = 'KB5016884'
             TargetVersion = '14.0.3456.2'
-            Url           = 'https://download.microsoft.com/download/c/4/f/c4f908c9-98ed-4e5f-88d5-7d6a5004aebd/SQLServer2017-KB5050533-x64.exe'
-            FileName      = 'SQLServer2017-KB5050533-x64.exe'
+            # CU31 is the final 2017 CU. KB5050533 (14.0.3490.10) is the Azure Connect
+            # Pack, a separate line, not CU31. Direct exe URL not recorded here; the
+            # script asks the Update Catalog for the KB, or download via
+            # https://support.microsoft.com/help/5016884 into the patch folder.
+            Url           = ''
+            FileName      = 'SQLServer2017-KB5016884-x64.exe'
         }
 
         SQL2019 = @{
@@ -60,26 +64,26 @@
 
         SQL2022 = @{
             MajorVersion  = 16
-            CU            = 'CU26'
-            KB            = 'KB5093420'
-            TargetVersion = '16.0.4265.3'
+            CU            = 'CU27'
+            KB            = 'KB5104824'
+            TargetVersion = '16.0.4295.3'
             # Direct exe URL not published on the KB page; download via
-            # https://support.microsoft.com/help/5093420 (or the Update Catalog) into
+            # https://support.microsoft.com/help/5104824 (or the Update Catalog) into
             # the patch folder and the script picks the file up by name.
             Url           = ''
-            FileName      = 'SQLServer2022-KB5093420-x64.exe'
+            FileName      = 'SQLServer2022-KB5104824-x64.exe'
         }
 
         SQL2025 = @{
             MajorVersion  = 17
-            CU            = 'CU8'
-            KB            = 'KB5104822'
-            TargetVersion = '17.0.4075.5'
+            CU            = 'CU10'
+            KB            = 'KB5125471'
+            TargetVersion = '17.0.5035.5'
             # Direct exe URL not published on the KB page; download via
-            # https://support.microsoft.com/help/5104822 (or the Update Catalog) into
+            # https://support.microsoft.com/help/5125471 (or the Update Catalog) into
             # the patch folder and the script picks the file up by name.
             Url           = ''
-            FileName      = 'SQLServer2025-KB5104822-x64.exe'
+            FileName      = 'SQLServer2025-KB5125471-x64.exe'
         }
     }
 }

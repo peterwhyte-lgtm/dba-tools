@@ -32,7 +32,13 @@ $cuMap = @{
     '17.0.4060.2'  = 'SQL 2025 CU6 + GDR'
     '17.0.4065.4'  = 'SQL 2025 CU7'
     '17.0.4075.5'  = 'SQL 2025 CU8'
+    '17.0.4085.5'  = 'SQL 2025 CU8 + GDR'
+    '17.0.5005.3'  = 'SQL 2025 CU9'
+    '17.0.5015.4'  = 'SQL 2025 CU9 + GDR'
+    '17.0.5035.5'  = 'SQL 2025 CU10'
     '17.0.1125.2'  = 'SQL 2025 GDR (Jul 2026)'
+    '17.0.1135.8'  = 'SQL 2025 GDR (Sep 2026)'
+    '17.0.1145.4'  = 'SQL 2025 GDR (Oct 2026)'
     # SQL Server 2022 (16.x)
     '16.0.1000.6'  = 'SQL 2022 RTM'
     '16.0.4003.1'  = 'SQL 2022 CU1'
@@ -61,6 +67,11 @@ $cuMap = @{
     '16.0.4245.2'  = 'SQL 2022 CU24'
     '16.0.4255.1'  = 'SQL 2022 CU25'
     '16.0.4265.3'  = 'SQL 2022 CU26'
+    '16.0.4275.2'  = 'SQL 2022 CU26 + GDR'
+    '16.0.4295.3'  = 'SQL 2022 CU27'
+    '16.0.4305.5'  = 'SQL 2022 CU27 + GDR'
+    '16.0.1200.5'  = 'SQL 2022 GDR (Sep 2026)'
+    '16.0.1210.3'  = 'SQL 2022 GDR (Oct 2026)'
     # SQL Server 2019 (15.x)
     '15.0.2000.5'  = 'SQL 2019 RTM'
     '15.0.4003.23' = 'SQL 2019 CU1'
@@ -71,7 +82,8 @@ $cuMap = @{
     '15.0.4053.23' = 'SQL 2019 CU6'
     '15.0.4063.15' = 'SQL 2019 CU7'
     '15.0.4073.23' = 'SQL 2019 CU8'
-    '15.0.4083.2'  = 'SQL 2019 CU9'
+    '15.0.4083.2'  = 'SQL 2019 CU8 + GDR'
+    '15.0.4102.2'  = 'SQL 2019 CU9'
     '15.0.4123.1'  = 'SQL 2019 CU10'
     '15.0.4138.2'  = 'SQL 2019 CU11'
     '15.0.4153.1'  = 'SQL 2019 CU12'
@@ -90,32 +102,52 @@ $cuMap = @{
     '15.0.4355.3'  = 'SQL 2019 CU25'
     '15.0.4365.2'  = 'SQL 2019 CU26'
     '15.0.4375.4'  = 'SQL 2019 CU27'
+    '15.0.4385.2'  = 'SQL 2019 CU28'
+    '15.0.4405.4'  = 'SQL 2019 CU29'
+    '15.0.4415.2'  = 'SQL 2019 CU30'
+    '15.0.4420.2'  = 'SQL 2019 CU31'
+    '15.0.4430.1'  = 'SQL 2019 CU32'
+    '15.0.4490.9'  = 'SQL 2019 CU32 + GDR'
+    '15.0.4500.2'  = 'SQL 2019 CU32 + GDR'
+    '15.0.2190.7'  = 'SQL 2019 GDR (Sep 2026)'
+    '15.0.2200.2'  = 'SQL 2019 GDR (Oct 2026)'
     # SQL Server 2017 (14.x)
     '14.0.1000.169'= 'SQL 2017 RTM'
     '14.0.3006.16' = 'SQL 2017 CU1'
-    '14.0.3257.3'  = 'SQL 2017 CU22'
-    '14.0.3460.9'  = 'SQL 2017 CU31'
+    '14.0.3257.3'  = 'SQL 2017 CU18'
+    '14.0.3356.20' = 'SQL 2017 CU22'
+    '14.0.3456.2'  = 'SQL 2017 CU31'
+    '14.0.3460.9'  = 'SQL 2017 CU31 + GDR'
+    '14.0.3490.10' = 'SQL 2017 Azure Connect Pack'
+    '14.0.3550.4'  = 'SQL 2017 CU31 + GDR'
+    '14.0.3560.2'  = 'SQL 2017 CU31 + GDR'
+    '14.0.2130.4'  = 'SQL 2017 GDR (Sep 2026)'
+    '14.0.2140.2'  = 'SQL 2017 GDR (Oct 2026)'
     # SQL Server 2016 (13.x)
     '13.0.6300.2'  = 'SQL 2016 SP3'
-    '13.0.6419.1'  = 'SQL 2016 SP3 CU17'
+    '13.0.6419.1'  = 'SQL 2016 SP3 + GDR'
 }
 
-# Latest CU-train build per major version - update alongside the CU map each patch
-# cycle (same data as https://sqldba.blog/sql-server-builds-complete-version-list-and-support-lifecycle/).
+# Latest build on the CU train per major version: the newest CU, or the newest
+# CU + GDR on top of it where that is the higher build. An instance at or above this
+# build reports 'current'. Update alongside the CU map each patch cycle.
+# Source: https://learn.microsoft.com/en-us/troubleshoot/sql/releases/sqlserver-2025/build-versions
+# (and the 2022/2019/2017 equivalents), checked 2026-10-31.
 $latestBuild = @{
-    17 = '17.0.4075.5'   # SQL 2025 CU8
-    16 = '16.0.4265.3'   # SQL 2022 CU26
-    15 = '15.0.4430.1'   # SQL 2019 CU32
-    14 = '14.0.3495.9'   # SQL 2017 CU31 + GDR
+    17 = '17.0.5035.5'   # SQL 2025 CU10 (KB5125471)
+    16 = '16.0.4305.5'   # SQL 2022 CU27 + GDR (KB5126934)
+    15 = '15.0.4500.2'   # SQL 2019 CU32 + GDR (KB5128494)
+    14 = '14.0.3560.2'   # SQL 2017 CU31 + GDR (KB5128496)
 }
 
 function Get-CuLabel([string]$version) {
     if ($cuMap.ContainsKey($version)) { return $cuMap[$version] }
-    # Partial match on major.minor
+    # Nearest known build at or below this one on the same major.minor, so an
+    # unlisted build is never labelled with a newer update than it has.
     $parts = $version -split '\.'
     if ($parts.Count -ge 2) {
         $prefix = "$($parts[0]).$($parts[1])"
-        $match  = $cuMap.Keys | Where-Object { $_ -like "$prefix.*" } |
+        $match  = $cuMap.Keys | Where-Object { $_ -like "$prefix.*" -and [version]$_ -le [version]$version } |
                   Sort-Object { [version]$_ } -Descending | Select-Object -First 1
         if ($match) { return "$($cuMap[$match]) (near)" }
     }
@@ -173,8 +205,8 @@ Write-Host "  SSMS" -ForegroundColor Cyan
 
 $ssmsFound = $false
 # Latest released SSMS - update alongside the CU map each patch cycle.
-# Source: https://learn.microsoft.com/en-us/ssms/release-notes-ssms (checked 2026-10-28)
-$ssmsLatest = '22.11.2'
+# Source: https://learn.microsoft.com/en-us/ssms/release-notes-22 (22.11.3, released 2026-10-29; checked 2026-10-31)
+$ssmsLatest = '22.11.3'
 $paths = @(
     'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
     'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'
