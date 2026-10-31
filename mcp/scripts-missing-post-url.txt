@@ -19,4 +19,5 @@ sql/maintenance/Set-AgentJobState.sql
 sql/monitoring/databases/Get-IdentityColumnUsage.sql
 sql/monitoring/disk-space/Get-DatabaseGrowthEvents.sql
 sql/monitoring/jobs/Get-SqlAgentJobOwnerAccess.sql
+sql/performance/queries/Get-SingleUsePlanSources.sql
 sql/performance/query-store/Get-MemoryGrantFeedback.sql

@@ -871,7 +871,7 @@
  },
  {
   "title": "Get Current Date & Time in SQL Server",
-  "lead": "SQL Server has 6 functions that return the current date and time.",
+  "lead": "There is no NOW() in SQL Server.",
   "url": "https://sqldba.blog/get-current-date-time-in-sql-server/"
  },
  {
@@ -920,6 +920,16 @@
   "url": "https://sqldba.blog/how-to-add-columns-to-tables-in-sql-server/"
  },
  {
+  "title": "How to Back Up a Database in SQL Server",
+  "lead": "A full backup in T-SQL and SSMS with the options worth typing every time: CHECKSUM, COMPRESSION, INIT and COPY_ONLY, ZSTD on SQL Server 2025, then RESTORE VERIFYONLY and msdb to prove it.",
+  "url": "https://sqldba.blog/how-to-back-up-a-database-in-sql-server/"
+ },
+ {
+  "title": "How to Back Up a SQL Server Certificate and Its Private Key",
+  "lead": "BACKUP CERTIFICATE to.cer and.pvk or a single PFX, the errors each form throws, why a PFX export leaves pvt_key_last_backup_date NULL, and a thumbprint-checked restore test.",
+  "url": "https://sqldba.blog/how-to-back-up-a-sql-server-certificate/"
+ },
+ {
   "title": "How to Check Blocking SPIDs in SQL Server",
   "lead": "Blocking is one of the most common causes of performance issues in SQL Server.",
   "url": "https://sqldba.blog/how-to-check-blocking-spids-in-sql-server/"
@@ -956,7 +966,7 @@
  },
  {
   "title": "How to Get the SQL Server IP Address",
-  "lead": "The firewall team, or a vendor, wants the exact IP address and port before they will open an allow-list rule, and the server has more than one address.",
+  "lead": "The IP address and port SQL Server answered on are local_net_address and local_tcp_port in sys.dm_exec_connections.",
   "url": "https://sqldba.blog/how-to-get-the-sql-server-ip-address/"
  },
  {
@@ -1016,7 +1026,7 @@
  },
  {
   "title": "Instant File Initialization: What It Actually Does and How to Enable It",
-  "lead": "Instant File Initialization is one of the few SQL Server settings that's genuinely free performance, no license cost, no downside for the overwhelming majority of installs, and it's still routinely left unconfigured on real production servers because it's a Windows privilege grant, not a SQL Server...",
+  "lead": "Instant File Initialization is one of the few SQL Server settings that's genuinely free performance: no license cost and no downside for the overwhelming majority of installs.",
   "url": "https://sqldba.blog/instant-file-initialization-what-it-does-and-how-to-enable-it/"
  },
  {
@@ -1213,16 +1223,6 @@
   "title": "Compatibility Levels: What Actually Changes When You Bump It",
   "lead": "\"Bump the compatibility level after a migration\" is standard advice, and Version Upgrade Readiness already tells you which databases are behind.",
   "url": "https://sqldba.blog/sql-server-compatibility-level-what-actually-changes/"
- },
- {
-  "title": "SQL Server Configuration Manager: Where to Find It and What a DBA Uses It For",
-  "lead": "Not in the Start menu? Open it by name: SQLServerManager17.msc. Where to find it for every version, and the jobs a DBA uses it for: service accounts, TCP/IP, ports and encryption.",
-  "url": "https://sqldba.blog/sql-server-configuration-manager-2/"
- },
- {
-  "title": "Cannot Connect to WMI Provider: SQL Server Configuration Manager Will Not Open",
-  "lead": "Configuration Manager will not open: Cannot connect to WMI provider, Invalid namespace. Why it happens, the mofcomp fix with the right file for your version, and how to check it worked.",
-  "url": "https://sqldba.blog/sql-server-configuration-manager-cannot-connect-to-wmi-provider-2/"
  },
  {
   "title": "Cannot Connect to WMI Provider: SQL Server Configuration Manager Will Not Open",
@@ -1591,7 +1591,7 @@
  },
  {
   "title": "SQL Server: The Database Is in Single User Mode (Fix)",
-  "lead": "You try to connect to a database and get: The database is in single user mode.",
+  "lead": "\ud83d\udea8 Part of the SQL Server Errors series, the exact messages and what actually causes them.",
   "url": "https://sqldba.blog/sql-server-the-database-is-in-single-user-mode-fix/"
  },
  {
@@ -1943,6 +1943,11 @@
   "title": "HADR_TIMER_TASK Wait Type in SQL Server",
   "lead": "\u23f3 Part of the SQL Server Wait Types Library, every wait type explained.",
   "url": "https://sqldba.blog/sql-server-wait-hadr-timer-task/"
+ },
+ {
+  "title": "HADR_TRANSPORT_FLOW_CONTROL Wait Type in SQL Server",
+  "lead": "HADR_TRANSPORT_FLOW_CONTROL is an Availability Group primary pausing sends to one replica because too many messages to it are unacknowledged, and this page shows how to tell it from database flow control and find the replica.",
+  "url": "https://sqldba.blog/sql-server-wait-hadr-transport-flow-control/"
  },
  {
   "title": "HADR_WORK_POOL Wait Type in SQL Server",
@@ -2866,7 +2871,7 @@
  },
  {
   "title": "Testing Remote Server Port Connectivity with PowerShell",
-  "lead": "An application cannot connect to SQL Server, and before anyone goes near a configuration file there is 1 question to settle: is the port reachable from this server, or is something in the path blocking it?",
+  "lead": "An application cannot connect to SQL Server, and before anyone goes near a configuration file there is one question to settle: is the port reachable from this server, or is something in the path blocking it?",
   "url": "https://sqldba.blog/testing-remote-server-port-connectivity-with-powershell/"
  },
  {
