@@ -16,8 +16,9 @@ Notes       : Orphaned users cause login failures for that account. Fix with
               deliberately excluded, they are not orphans.
               The matching_login lookup compares names in the server collation, so a database on
               another collation (e.g. case-sensitive) no longer stops the run with Msg 468.
-              Windows users and groups are listed only when the instance has no Windows group
-              login (with one, they may connect through it). Check them with xp_logininfo.
+              status ORPHANED: no way in, remap or drop. status CHECK: a Windows user or group with
+              no login of its own on a server that has Windows group logins, so it may connect
+              through a group. Confirm with EXEC xp_logininfo 'DOMAIN\user', 'all'.
               SQL Server 2012+ (sys.database_principals.authentication_type). Tested on 2025.
 */
 -- SAFE:ReadOnly
@@ -40,7 +41,7 @@ DECLARE @sql NVARCHAR(MAX) = N'';
    vendor database, say) makes a bare sp2.name = dp.name fail with Msg 468 and abort the whole run. */
 DECLARE @server_collation SYSNAME = CONVERT(SYSNAME, SERVERPROPERTY('Collation'));
 /* A Windows user or group with no login of its own can still connect through a Windows group login,
-   so it is only certain to be orphaned when the server has no group logins at all. */
+   so it is only certain to be orphaned when the server has no group logins at all: otherwise CHECK. */
 DECLARE @has_group_login BIT = CASE WHEN EXISTS (SELECT 1 FROM sys.server_principals WHERE type = 'G') THEN 1 ELSE 0 END;
 
 SELECT @sql += N'
@@ -60,7 +61,6 @@ WHERE dp.type IN (''S'', ''U'', ''G'')
   AND dp.principal_id > 4
   AND dp.sid IS NOT NULL
   AND dp.authentication_type IN (1, 3)   /* 1 INSTANCE, 3 WINDOWS. Excludes 0 NONE (WITHOUT LOGIN) and 2 DATABASE (contained). */
-  AND (dp.authentication_type = 1 OR ' + CAST(@has_group_login AS NCHAR(1)) + N' = 0)
   AND dp.name NOT IN (''guest'', ''INFORMATION_SCHEMA'', ''sys'', ''dbo'')
   AND NOT EXISTS (
       SELECT 1
@@ -80,8 +80,11 @@ SELECT
     user_name,
     user_type,
     matching_login,
-    create_date
+    create_date,
+    CASE WHEN user_type = 'SQL_USER' OR @has_group_login = 0 THEN 'ORPHANED'
+         ELSE 'CHECK - may connect through a Windows group login' END AS status
 FROM #orphaned
-ORDER BY CASE WHEN matching_login IS NULL THEN 1 ELSE 0 END, database_name, user_name;
+ORDER BY CASE WHEN user_type = 'SQL_USER' OR @has_group_login = 0 THEN 0 ELSE 1 END,
+         CASE WHEN matching_login IS NULL THEN 1 ELSE 0 END, database_name, user_name;
 
 DROP TABLE #orphaned;

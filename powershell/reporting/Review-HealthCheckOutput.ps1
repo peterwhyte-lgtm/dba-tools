@@ -534,6 +534,11 @@ foreach ($row in $certs) {
 $orphans = Read-Csv-Safe 'orphaned-users'
 foreach ($row in $orphans) {
     if (-not $row.user_name) { continue }
+    if ($row.status -like 'CHECK*') {
+        Add-Finding 'INFO' 'Orphaned Users' "$($row.database_name) / $($row.user_name)" (
+            "Windows principal with no login of its own - may connect through a group login; confirm with xp_logininfo")
+        continue
+    }
     Add-Finding 'WARNING' 'Orphaned Users' "$($row.database_name) / $($row.user_name)" (
         "Database user has no matching server login - remap or drop (see Fix-OrphanedUsers)")
 }
