@@ -3,8 +3,12 @@ Script Name : Get-DatabaseFilesDetail
 Category    : storage-capacity-management
 Purpose     : Show per-file details for all user databases: path, size, max size, growth settings.
 Author      : Peter Whyte (https://sqldba.blog/dba-scripts-get-sql-server-database-file-details/)
-Requires    : VIEW ANY DATABASE
+Requires    : VIEW ANY DEFINITION (or CREATE DATABASE / ALTER ANY DATABASE). With only VIEW ANY
+              DATABASE, sys.master_files returns no rows at all (tested 2026-10-31).
 HealthCheck : Yes
+Notes       : Database snapshots are skipped. sys.master_files reports a snapshot's sparse file
+              at the size it could grow to (the source file's size), not what it uses on disk,
+              and growth settings do not apply to it. Tested on SQL Server 2025.
 */
 -- SAFE:ReadOnly
 -- IMPACT:Low
@@ -38,4 +42,5 @@ SELECT
 FROM sys.master_files AS mf
 INNER JOIN sys.databases AS d ON d.database_id = mf.database_id
 WHERE d.database_id > 4
+  AND d.source_database_id IS NULL   /* database snapshot */
 ORDER BY d.name, mf.type, mf.file_id;
